@@ -64,6 +64,7 @@ fn setup_scene(
     // Add Combat components to player
     commands.entity(player)
         .insert((
+            Player,
             MeleeCombat {
                 damage: 15.0,
                 combo_enabled: true,

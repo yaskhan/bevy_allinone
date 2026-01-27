@@ -8,10 +8,14 @@ use crate::interaction::InteractionDetector;
 
 
 pub struct CharacterPlugin;
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct Player;
 
 impl Plugin for CharacterPlugin {
     fn build(&self, app: &mut App) {
         app
+            .register_type::<Player>()
             .add_systems(Update, (
                 handle_character_input,
                 update_character_movement,
@@ -189,11 +193,10 @@ pub struct CharacterAnimationState {
 // ============================================================================
 
 fn handle_character_input(
-    input: Res<InputState>,
     time: Res<Time>,
-    mut query: Query<(&CharacterController, &mut CharacterMovementState)>,
+    mut query: Query<(&CharacterController, &InputState, &mut CharacterMovementState)>,
 ) {
-    for (controller, mut state) in query.iter_mut() {
+    for (controller, input, mut state) in query.iter_mut() {
         if !controller.can_move || controller.is_dead {
             state.raw_move_dir = Vec3::ZERO;
             state.lerped_move_dir = Vec3::ZERO;
@@ -348,7 +351,6 @@ fn check_ground_state(
 fn apply_character_physics(
     time: Res<Time>,
     spatial_query: SpatialQuery,
-    input: Res<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
     mut query: Query<(
         Entity,
@@ -358,9 +360,10 @@ fn apply_character_physics(
         &mut LinearVelocity, 
         &CharacterController,
         &mut Transform,
+        &InputState,
     )>,
 ) {
-    for (entity, mut movement, mut ground, settings, mut velocity, controller, mut transform) in query.iter_mut() {
+    for (entity, mut movement, mut ground, settings, mut velocity, controller, mut transform, input) in query.iter_mut() {
         // Horizontal movement
         let move_dir = if controller.use_tank_controls {
              Vec3::new(0.0, 0.0, movement.lerped_move_dir.z)
@@ -626,6 +629,7 @@ pub fn spawn_character(
         CharacterMovementState::default(),
         CharacterAnimationState::default(),
         crate::combat::Health::default(),
+        InputState::default(),
         Transform::from_translation(position),
         GlobalTransform::default(),
     ))

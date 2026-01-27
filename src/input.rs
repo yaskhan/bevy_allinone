@@ -21,10 +21,12 @@ impl Plugin for InputPlugin {
                 update_input_state,
                 handle_rebinding,
                 cleanup_input_buffer,
+                player_input_sync_system, // Moved here as per instruction to "fix syncing"
             ).chain())
             .add_systems(Update, (
                 process_movement_input,
                 process_action_input,
+                player_input_sync_system,
             ));
     }
 }
@@ -125,8 +127,9 @@ impl InputBuffer {
     }
 }
 
-/// Global input state resource
-#[derive(Resource, Debug, Default)]
+/// Global input state resource and per-entity input component
+#[derive(Component, Resource, Debug, Default, Reflect, Clone)]
+#[reflect(Component, Resource)]
 pub struct InputState {
     pub movement: Vec2,
     pub look: Vec2,
@@ -296,14 +299,18 @@ fn cleanup_input_buffer(
     input_buffer.actions.retain(|ba| now - ba.timestamp <= config.buffer_ttl);
 }
 
-/// Process movement input
-fn process_movement_input(
-    _input_state: Res<InputState>,
-) {
-}
+/// Process movement input (Stub)
+fn process_movement_input(_input: Res<InputState>) {}
 
-/// Process action input
-fn process_action_input(
-    _input_state: Res<InputState>,
+/// Process action input (Stub)
+fn process_action_input(_input: Res<InputState>) {}
+
+/// System to sync global input state to the player entity's component
+fn player_input_sync_system(
+    input_state: Res<InputState>,
+    mut query: Query<&mut InputState, (With<crate::character::Player>, Without<crate::ai::AiController>)>,
 ) {
+    for mut player_input in query.iter_mut() {
+        *player_input = input_state.clone();
+    }
 }

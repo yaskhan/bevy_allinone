@@ -158,10 +158,9 @@ pub struct WeaponManager {
 }
 
 fn handle_weapon_switching(
-    input: Res<InputState>,
-    mut query: Query<(&mut Weapon, &mut WeaponManager)>,
+    mut query: Query<(&InputState, &mut Weapon, &mut WeaponManager)>,
 ) {
-    for (mut weapon, mut manager) in query.iter_mut() {
+    for (input, mut weapon, mut manager) in query.iter_mut() {
         let mut changed = false;
         if input.next_weapon_pressed {
             manager.current_index = (manager.current_index + 1) % manager.available_weapons.len();
@@ -270,10 +269,9 @@ fn update_weapons(
 }
 
 fn update_weapon_aim(
-    input: Res<InputState>,
-    mut query: Query<&mut Weapon>,
+    mut query: Query<(&InputState, &mut Weapon)>,
 ) {
-    for mut weapon in query.iter_mut() {
+    for (input, mut weapon) in query.iter_mut() {
         if input.aim_pressed {
             weapon.spread = weapon.base_spread * weapon.aim_spread_mult;
         } else {
@@ -329,10 +327,9 @@ fn update_projectiles(
 }
 
 fn handle_reloading(
-    input: Res<InputState>,
-    mut query: Query<&mut Weapon>,
+    mut query: Query<(&InputState, &mut Weapon)>,
 ) {
-    for mut weapon in query.iter_mut() {
+    for (input, mut weapon) in query.iter_mut() {
         if input.reload_pressed && !weapon.is_reloading && weapon.current_ammo < weapon.ammo_capacity {
             weapon.is_reloading = true;
             weapon.current_reload_timer = weapon.reload_time;
@@ -343,18 +340,17 @@ fn handle_reloading(
 
 fn handle_weapon_firing(
     mut commands: Commands,
-    input: Res<InputState>,
     time: Res<Time>,
     mut damage_events: ResMut<DamageEventQueue>,
     spatial_query: SpatialQuery,
-    mut query: Query<(Entity, &GlobalTransform, &mut Weapon)>, 
+    mut query: Query<(Entity, &GlobalTransform, &mut Weapon, &InputState)>, 
     // We assume the gun is child of player or has access to camera. 
     // To keep it simple, we'll try to find the "aim direction" from the gun's global transform for now.
     // In a real setup, we might query the camera or the parent player.
     // parent_query: Query<&Parent>, // Unused for now
     transform_query: Query<&GlobalTransform>,
 ) {
-    for (entity, gun_transform, mut weapon) in query.iter_mut() {
+    for (entity, gun_transform, mut weapon, input) in query.iter_mut() {
         // Only active if weapon manager selected it? 
         // For this step, if it has a Weapon component, we check fire input.
         // We need to know who owns this weapon to check inputs properly?
