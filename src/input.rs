@@ -99,6 +99,11 @@ fn update_input_state(
     input_state.jump_pressed = keyboard.just_pressed(KeyCode::Space);
     input_state.crouch_pressed = keyboard.pressed(KeyCode::ControlLeft);
     input_state.sprint_pressed = keyboard.pressed(KeyCode::ShiftLeft);
+    input_state.interact_pressed = keyboard.just_pressed(KeyCode::KeyE);
+    input_state.aim_pressed = mouse.pressed(MouseButton::Right);
+
+    // Look input from mouse motion
+    // This requires an event reader in a real implementation
 }
 
 /// Process movement input
