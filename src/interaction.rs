@@ -3,6 +3,7 @@
 //! Object interaction, pickups, and usable devices.
 
 use bevy::prelude::*;
+use bevy::ecs::event::Event;
 use avian3d::prelude::*;
 
 pub struct InteractionPlugin;
@@ -10,10 +11,12 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app
+            // .add_event::<InteractionEvent>()
             .init_resource::<CurrentInteractable>()
             .init_resource::<InteractionDebugSettings>()
             .add_systems(Update, (
                 detect_interactables,
+                validate_interactions,
                 process_interactions,
                 debug_draw_interaction_rays,
             ).chain());
@@ -108,6 +111,62 @@ pub enum InteractionType {
     Examine,
     Toggle,
     Grab,
+}
+
+/// Data specific to the interaction
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct InteractionData {
+    /// Duration for the interaction (0.0 for instant)
+    pub duration: f32,
+    /// Cooldown after interaction
+    pub cooldown: f32,
+    /// Current cooldown timer
+    pub cooldown_timer: f32,
+    /// Whether the interaction triggers automatically when in range
+    pub auto_trigger: bool,
+    /// Custom data string (e.g., item ID, door key, dialogue ID)
+    pub data: String,
+}
+
+impl Default for InteractionData {
+    fn default() -> Self {
+        Self {
+            duration: 0.0,
+            cooldown: 0.5,
+            cooldown_timer: 0.0,
+            auto_trigger: false,
+            data: String::new(),
+        }
+    }
+}
+
+/// Event triggered when a valid interaction occurs
+#[derive(Event, Debug, Clone)]
+pub struct InteractionEvent {
+    pub source: Entity,
+    pub target: Entity,
+    pub interaction_type: InteractionType,
+}
+
+/// System to validate interactions (cooldowns, states)
+fn validate_interactions(
+    time: Res<Time>,
+    mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>)>,
+) {
+    for (mut interactable, data_opt) in interactables.iter_mut() {
+        if let Some(mut data) = data_opt {
+            // Update cooldown
+            if data.cooldown_timer > 0.0 {
+                data.cooldown_timer -= time.delta_secs();
+                if data.cooldown_timer <= 0.0 {
+                    interactable.can_interact = true;
+                } else {
+                    interactable.can_interact = false;
+                }
+            }
+        }
+    }
 }
 
 /// System to detect interactables using raycasting

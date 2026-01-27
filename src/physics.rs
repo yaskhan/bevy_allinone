@@ -1,7 +1,6 @@
 use bevy::prelude::*;
-// use bevy::ecs::event::EventReader;
 use avian3d::prelude::*;
-use avian3d::external_force::ExternalForce;
+// use avian3d::external_force::ExternalForce;
 
 pub struct PhysicsPlugin;
 
@@ -79,15 +78,20 @@ impl Default for GroundDetectionSettings {
 
 /// System to apply custom gravity to entities with an Avian3D Rigidbody.
 fn apply_custom_gravity(
-    mut query: Query<(&CustomGravity, &mut ExternalForce)>,
-    global_gravity: Res<avian3d::prelude::Gravity>,
+    time: Res<Time>,
+    mut query: Query<(&CustomGravity, &mut LinearVelocity)>,
+    global_gravity: Res<avian3d::prelude::Gravity>, // Keep global gravity for Option::unwrap_or
 ) {
-    for (custom, mut force) in query.iter_mut() {
-        let g = custom.gravity.unwrap_or(global_gravity.0);
-        // Direct field assignment to avoid type inference issues
-        let force_vec: Vec3 = g * custom.multiplier;
-        // Assuming ExternalForce is a component that wraps Vec3 or fields
-        *force = ExternalForce::new(force_vec).with_persistence(false);
+    for (custom, mut velocity) in query.iter_mut() {
+        // Apply gravity acceleration: v += g * dt
+        // custom.gravity is Vec3 (acceleration) or Force? name implies gravity vector (acceleration typically)
+        // Standard gravity is 9.81.
+        // Assuming CustomGravity holds the acceleration vector itself or direction?
+        // Let's assume it's acceleration or force/mass.
+        let g = custom.gravity.unwrap_or(global_gravity.0); // Use unwrap_or to handle Option<Vec3>
+        
+        let accel = g * custom.multiplier;
+        velocity.0 += accel * time.delta_secs();
     }
 }
 

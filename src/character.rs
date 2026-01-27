@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 use avian3d::prelude::*;
-use avian3d::external_force::{ExternalForce, ExternalImpulse};
-use bevy::prelude::EventWriter;
 use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
 use crate::input::{InputState, InputAction, InputBuffer};
 use crate::combat::{DamageEvent, DamageType};
+use crate::interaction::InteractionDetector;
 
 
 pub struct CharacterPlugin;
@@ -20,7 +19,7 @@ impl Plugin for CharacterPlugin {
                 update_character_animation,
             ).chain())
             .add_systems(FixedUpdate, (
-                // apply_character_physics,
+                apply_character_physics,
                 check_ground_state,
                 update_friction_material,
                 handle_falling_damage,
@@ -357,13 +356,11 @@ fn apply_character_physics(
         &mut GroundDetection, 
         &GroundDetectionSettings,
         &mut LinearVelocity, 
-        &mut ExternalImpulse,
-        &mut ExternalForce,
         &CharacterController,
         &mut Transform,
     )>,
 ) {
-    for (entity, mut movement, mut ground, settings, mut velocity, mut impulse, mut force, controller, mut transform) in query.iter_mut() {
+    for (entity, mut movement, mut ground, settings, mut velocity, controller, mut transform) in query.iter_mut() {
         // Horizontal movement
         let move_dir = if controller.use_tank_controls {
              Vec3::new(0.0, 0.0, movement.lerped_move_dir.z)
@@ -383,7 +380,7 @@ fn apply_character_physics(
             velocity.y = 0.0;
             if let Some(normal) = movement.wall_side {
                 // Stick to wall by applying slight force towards it
-                velocity -= normal * 2.0;
+                velocity.0 -= normal * 2.0;
             }
         }
 
@@ -473,8 +470,8 @@ fn apply_character_physics(
         let jump_requested = movement.wants_to_jump || input_buffer.consume(InputAction::Jump);
         
         if jump_requested && ground.is_grounded {
-            let impulse_vec: Vec3 = Vec3::Y * controller.jump_power;
-            *impulse = ExternalImpulse::new(impulse_vec);
+            // Apply jump impulse directly to velocity
+            velocity.y = controller.jump_power;
             movement.jump_hold_timer = controller.max_jump_hold_time;
             movement.wants_to_jump = false;
         }
@@ -482,8 +479,9 @@ fn apply_character_physics(
         // Variable Jump Bonus
         if movement.jump_held && movement.jump_hold_timer > 0.0 && !ground.is_grounded {
             movement.jump_hold_timer -= time.delta_secs();
-            let force_vec: Vec3 = Vec3::Y * controller.jump_hold_bonus * 100.0;
-            *force = ExternalForce::new(force_vec).with_persistence(false);
+            // Apply hover acceleration directly
+            let accel = controller.jump_hold_bonus * 100.0 * time.delta_secs();
+            velocity.y += accel;
         }
 
         // Axis Constraints (2.5D)
@@ -512,7 +510,7 @@ fn update_friction_material(
 
 fn handle_falling_damage(
     time: Res<Time>,
-    mut damage_events: EventWriter<DamageEvent>,
+    // mut damage_events: EventWriter<DamageEvent>,
     mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &LinearVelocity, &GroundDetection)>,
 ) {
     for (entity, controller, mut state, velocity, ground) in query.iter_mut() {
@@ -630,18 +628,23 @@ pub fn spawn_character(
         crate::combat::Health::default(),
         Transform::from_translation(position),
         GlobalTransform::default(),
-        // Physics
+    ))
+    .insert((
+        // Physics components
         RigidBody::Dynamic,
         Collider::capsule(0.4, 1.0),
         LockedAxes::ROTATION_LOCKED,
-        LinearVelocity::ZERO,
-        ExternalForce::ZERO,
-        ExternalImpulse::ZERO,
-        Friction::new(1.0),
+        GravityScale(1.0),
+        Friction::new(0.0),
         Restitution::new(0.0),
+        LinearVelocity::default(),
+        AngularVelocity::default(),
         CustomGravity::default(),
         GroundDetection::default(),
         crate::physics::GroundDetectionSettings::default(),
+        crate::interaction::InteractionDetector::default(),
+    ))
+    .insert((
         // Visibility
         Visibility::default(),
         InheritedVisibility::default(),
