@@ -74,6 +74,9 @@ pub struct CharacterController {
 
     // Root Motion
     pub use_root_motion: bool,
+
+    // Environmental States
+    pub zero_gravity_mode: bool,
 }
 
 impl Default for CharacterController {
@@ -112,6 +115,7 @@ impl Default for CharacterController {
             
             fixed_axis: None,
             use_root_motion: false,
+            zero_gravity_mode: false,
         }
     }
 }
@@ -313,9 +317,15 @@ fn update_character_animation(
 }
 
 fn check_ground_state(
-    mut query: Query<(&GroundDetection, &mut CharacterMovementState)>,
+    mut query: Query<(&CharacterController, &GroundDetection, &mut CharacterMovementState)>,
 ) {
-    for (detection, mut state) in query.iter_mut() {
+    for (controller, detection, mut state) in query.iter_mut() {
+        if controller.zero_gravity_mode {
+            state.current_normal = Vec3::Y;
+            state.air_time = 0.0;
+            return;
+        }
+
         if detection.is_grounded {
             state.current_normal = detection.ground_normal;
             state.air_time = 0.0;
@@ -355,6 +365,12 @@ fn apply_character_physics(
         
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
+
+        if controller.zero_gravity_mode {
+            // In zero gravity, movement is 3D and has inertia
+            velocity.y = target_vel.y; 
+            return;
+        }
 
         // --- ROOT MOTION ---
         if controller.use_root_motion {
