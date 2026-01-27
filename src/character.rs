@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity};
 use crate::input::InputState;
+use crate::combat::{DamageEvent, DamageType};
 
 pub struct CharacterPlugin;
 
@@ -18,6 +19,8 @@ impl Plugin for CharacterPlugin {
                 apply_character_physics,
                 check_ground_state,
                 update_friction_material,
+                handle_falling_damage,
+                handle_crouch_sliding,
             ));
     }
 }
@@ -36,6 +39,7 @@ pub struct CharacterController {
     pub turn_speed: f32,
     pub stationary_turn_speed: f32,
     pub moving_turn_speed: f32,
+    pub use_tank_controls: bool,
     
     // Jump
     pub jump_power: f32,
@@ -48,6 +52,16 @@ pub struct CharacterController {
     // GKC Alignment: Input Smoothing
     pub input_horizontal_lerp_speed: f32,
     pub input_vertical_lerp_speed: f32,
+
+    // GKC Alignment: Falling Damage
+    pub fall_damage_enabled: bool,
+    pub min_velocity_for_damage: f32,
+    pub falling_damage_multiplier: f32,
+
+    // GKC Alignment: Crouch Sliding
+    pub crouch_sliding_enabled: bool,
+    pub crouch_sliding_speed: f32,
+    pub crouch_sliding_duration: f32,
 }
 
 impl Default for CharacterController {
@@ -61,6 +75,7 @@ impl Default for CharacterController {
             turn_speed: 10.0,
             stationary_turn_speed: 180.0,
             moving_turn_speed: 200.0,
+            use_tank_controls: false,
             
             jump_power: 6.0,
             
@@ -70,6 +85,14 @@ impl Default for CharacterController {
             
             input_horizontal_lerp_speed: 10.0,
             input_vertical_lerp_speed: 10.0,
+
+            fall_damage_enabled: true,
+            min_velocity_for_damage: 12.0,
+            falling_damage_multiplier: 5.0,
+
+            crouch_sliding_enabled: true,
+            crouch_sliding_speed: 12.0,
+            crouch_sliding_duration: 1.0,
         }
     }
 }
@@ -86,6 +109,11 @@ pub struct CharacterMovementState {
     pub wants_to_jump: bool,
     pub current_speed: f32,
     pub current_normal: Vec3,
+
+    // Internal state for advanced features
+    pub last_vertical_velocity: f32,
+    pub crouch_sliding_active: bool,
+    pub crouch_sliding_timer: f32,
 }
 
 /// Character animation state
@@ -122,6 +150,13 @@ fn handle_character_input(
 
         state.is_running = true; 
         state.is_sprinting = input.sprint_pressed;
+        
+        // Crouch input triggers sliding if sprinting
+        if input.crouch_pressed && !state.is_crouching && state.is_sprinting && controller.crouch_sliding_enabled {
+            state.crouch_sliding_active = true;
+            state.crouch_sliding_timer = controller.crouch_sliding_duration;
+        }
+        
         state.is_crouching = input.crouch_pressed;
         state.wants_to_jump = input.jump_pressed;
     }
@@ -131,13 +166,18 @@ fn update_character_movement(
     mut query: Query<(&CharacterController, &mut CharacterMovementState)>,
 ) {
     for (controller, mut state) in query.iter_mut() {
-        let base_speed = if state.is_crouching {
+        let mut base_speed = if state.is_crouching {
             controller.crouch_speed
         } else if state.is_sprinting {
             controller.sprint_speed
         } else {
             controller.run_speed
         };
+
+        // GKC Alignment: Crouch Sliding speed overwrite
+        if state.crouch_sliding_active {
+            base_speed = controller.crouch_sliding_speed;
+        }
 
         state.current_speed = base_speed;
     }
@@ -146,14 +186,15 @@ fn update_character_movement(
 fn update_character_rotation(
     time: Res<Time>,
     mut query: Query<(Entity, &CharacterController, &CharacterMovementState, &mut Transform)>,
-    // Assuming we might need camera look direction for strafing
 ) {
     for (_entity, controller, state, mut transform) in query.iter_mut() {
         if state.lerped_move_dir.length_squared() > 0.001 {
-            // GKC Alignment: Strafe Mode Rotation
-            if controller.is_strafing {
-                // TODO: Rotate to face camera direction
-                // For now, keep facing forward but allow side movement logic
+            // GKC Alignment: Tank Controls
+            if controller.use_tank_controls {
+                let rotation = Quat::from_rotation_y(-state.lerped_move_dir.x * controller.stationary_turn_speed.to_radians() * time.delta_secs());
+                transform.rotation *= rotation;
+            } else if controller.is_strafing {
+                // Strafe mode handled elsewhere or with camera alignment
             } else {
                 // Free movement rotation
                 let target_rotation = Quat::from_rotation_arc(Vec3::NEG_Z, state.lerped_move_dir.normalize());
@@ -161,7 +202,7 @@ fn update_character_rotation(
             }
         }
         
-        // GKC Alignment: Surface Alignment (Rotating Up to Normal)
+        // GKC Alignment: Surface Alignment
         if state.current_normal.length_squared() > 0.0 {
             let target_up = state.current_normal;
             let current_up = transform.up();
@@ -176,7 +217,6 @@ fn update_character_animation(
 ) {
     for (movement, mut anim) in query.iter_mut() {
         anim.forward = movement.lerped_move_dir.length() * movement.current_speed;
-        // Turn amount calculation for animation blending
         anim.turn = 0.0; 
     }
 }
@@ -185,7 +225,6 @@ fn check_ground_state(
     mut query: Query<(&GroundDetection, &mut CharacterMovementState)>,
 ) {
     for (detection, mut state) in query.iter_mut() {
-        // GKC Alignment: Track current surface normal
         if detection.is_grounded {
             state.current_normal = detection.ground_normal;
         } else {
@@ -204,8 +243,15 @@ fn apply_character_physics(
     )>,
 ) {
     for (movement, ground, mut velocity, mut impulse, controller) in query.iter_mut() {
-        // Horizontal movement using lerped input
-        let target_vel = movement.lerped_move_dir * movement.current_speed;
+        // Horizontal movement
+        let move_dir = if controller.use_tank_controls {
+             // In tank controls, move dir is forward/backward
+             Vec3::new(0.0, 0.0, movement.lerped_move_dir.z)
+        } else {
+            movement.lerped_move_dir
+        };
+
+        let target_vel = move_dir * movement.current_speed;
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
 
@@ -216,7 +262,6 @@ fn apply_character_physics(
     }
 }
 
-/// GKC Alignment: Dynamic friction material management
 fn update_friction_material(
     mut query: Query<(&CharacterMovementState, &mut Friction)>,
 ) {
@@ -227,6 +272,52 @@ fn update_friction_material(
         } else {
             friction.combined_static_coefficient = 0.1;
             friction.combined_dynamic_coefficient = 0.1;
+        }
+    }
+}
+
+/// GKC Alignment: Falling Damage System
+fn handle_falling_damage(
+    mut damage_events: EventWriter<DamageEvent>,
+    mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &LinearVelocity, &GroundDetection)>,
+) {
+    for (entity, controller, mut state, velocity, ground) in query.iter_mut() {
+        if !controller.fall_damage_enabled { continue; }
+
+        if !ground.is_grounded {
+            // Track negative vertical velocity (downward)
+            state.last_vertical_velocity = velocity.y;
+        } else if state.last_vertical_velocity < -controller.min_velocity_for_damage {
+            // Landed after a hard fall
+            let impact_speed = state.last_vertical_velocity.abs();
+            let damage = (impact_speed - controller.min_velocity_for_damage) * controller.falling_damage_multiplier;
+            
+            damage_events.send(DamageEvent {
+                target: entity,
+                amount: damage,
+                damage_type: DamageType::Fall,
+                source: None,
+            });
+            
+            // Reset
+            state.last_vertical_velocity = 0.0;
+        } else {
+            state.last_vertical_velocity = 0.0;
+        }
+    }
+}
+
+/// GKC Alignment: Crouch Sliding Logic
+fn handle_crouch_sliding(
+    time: Res<Time>,
+    mut query: Query<(&CharacterController, &mut CharacterMovementState)>,
+) {
+    for (controller, mut state) in query.iter_mut() {
+        if state.crouch_sliding_active {
+            state.crouch_sliding_timer -= time.delta_secs();
+            if state.crouch_sliding_timer <= 0.0 || !state.is_crouching {
+                state.crouch_sliding_active = false;
+            }
         }
     }
 }
@@ -244,6 +335,7 @@ pub fn spawn_character(
         CharacterController::default(),
         CharacterMovementState::default(),
         CharacterAnimationState::default(),
+        crate::combat::Health::default(),
         Transform::from_translation(position),
         GlobalTransform::default(),
         // Physics
