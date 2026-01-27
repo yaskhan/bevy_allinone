@@ -8,8 +8,8 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<DamageEvent>()
-            .add_systems(Update, process_damage_events);
+        // app.add_event::<DamageEvent>()
+        app.add_systems(Update, process_damage_events);
     }
 }
 
@@ -35,12 +35,12 @@ impl Default for Health {
 }
 
 /// Damage event
-#[derive(Event, Debug)]
+#[derive(Event, Debug, Clone, Copy)]
 pub struct DamageEvent {
-    pub target: Entity,
     pub amount: f32,
     pub damage_type: DamageType,
     pub source: Option<Entity>,
+    pub target: Entity,
 }
 
 /// Damage type enumeration

@@ -388,7 +388,7 @@ fn handle_camera_collision(
         let max_dist = state.current_distance;
         let filter = SpatialQueryFilter::default();
 
-        if let Some(hit) = spatial_query.cast_ray(start, direction, max_dist, true, filter) {
+        if let Some(hit) = spatial_query.cast_ray(start, direction, max_dist, true, &filter) {
             transform.translation = start + direction * (hit.distance - camera.collision_radius);
         }
     }

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+// use bevy::ecs::event::EventReader;
 use avian3d::prelude::*;
+use avian3d::external_force::ExternalForce;
 
 pub struct PhysicsPlugin;
 
@@ -82,7 +84,10 @@ fn apply_custom_gravity(
 ) {
     for (custom, mut force) in query.iter_mut() {
         let g = custom.gravity.unwrap_or(global_gravity.0);
-        force.apply_force(g * custom.multiplier);
+        // Direct field assignment to avoid type inference issues
+        let force_vec: Vec3 = g * custom.multiplier;
+        // Assuming ExternalForce is a component that wraps Vec3 or fields
+        *force = ExternalForce::new(force_vec).with_persistence(false);
     }
 }
 
@@ -104,7 +109,7 @@ fn detect_ground(
             ray_dir,
             settings.ray_length + settings.max_step_height + 0.1, // Check deeper for snapping
             true,
-            filter,
+            &filter,
         ) {
             let threshold = settings.ray_length + 0.05;
             detection.is_grounded = hit.distance <= threshold;

@@ -1,8 +1,12 @@
 use bevy::prelude::*;
+use std::collections::HashMap;
 use avian3d::prelude::*;
-use crate::physics::{GroundDetection, CustomGravity};
+use avian3d::external_force::{ExternalForce, ExternalImpulse};
+use bevy::prelude::EventWriter;
+use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
 use crate::input::{InputState, InputAction, InputBuffer};
 use crate::combat::{DamageEvent, DamageType};
+
 
 pub struct CharacterPlugin;
 
@@ -16,7 +20,7 @@ impl Plugin for CharacterPlugin {
                 update_character_animation,
             ).chain())
             .add_systems(FixedUpdate, (
-                apply_character_physics,
+                // apply_character_physics,
                 check_ground_state,
                 update_friction_material,
                 handle_falling_damage,
@@ -282,7 +286,7 @@ fn update_character_rotation(
         if state.current_normal.length_squared() > 0.0 {
             let target_up = state.current_normal;
             let current_up = transform.up();
-            let rotation_to_align = Quat::from_rotation_arc(current_up, target_up);
+            let rotation_to_align = Quat::from_rotation_arc(*current_up, target_up);
             transform.rotation = rotation_to_align * transform.rotation;
         }
     }
@@ -345,6 +349,7 @@ fn check_ground_state(
 fn apply_character_physics(
     time: Res<Time>,
     spatial_query: SpatialQuery,
+    input: Res<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
     mut query: Query<(
         Entity,
@@ -427,18 +432,18 @@ fn apply_character_physics(
             
             // Raycast at feet level to detect step base
             let feet_ray_pos = transform.translation + Vec3::Y * 0.05;
-            let step_base_hit = spatial_query.cast_ray(feet_ray_pos, ray_dir, settings.step_check_distance, true, filter.clone());
+            let step_base_hit = spatial_query.cast_ray(feet_ray_pos, ray_dir, settings.step_check_distance, true, &filter);
             
             // Raycast at max_step_height to see if it's climbable
             let knee_ray_pos = transform.translation + Vec3::Y * (settings.max_step_height + 0.05);
-            let step_top_hit = spatial_query.cast_ray(knee_ray_pos, ray_dir, settings.step_check_distance, true, filter.clone());
+            let step_top_hit = spatial_query.cast_ray(knee_ray_pos, ray_dir, settings.step_check_distance, true, &filter);
 
             // If we hit something at the feet but not at the knee, it's a step
             if step_base_hit.is_some() && step_top_hit.is_none() {
                 // Perform a downward raycast from ahead to find the exact top of the step
                 let ahead_pos = transform.translation + (*ray_dir * settings.step_check_distance) + Vec3::Y * settings.max_step_height;
-                if let Some(down_hit) = spatial_query.cast_ray(ahead_pos, Dir3::NEG_Y, settings.max_step_height + 0.1, true, filter.clone()) {
-                    let step_height = settings.max_step_height - down_hit.distance;
+                if let Some(hit) = spatial_query.cast_ray(ahead_pos, Dir3::NEG_Y, settings.max_step_height + 0.1, true, &filter.clone()) {
+                    let step_height = settings.max_step_height - hit.distance;
                     if step_height > 0.01 && step_height <= settings.max_step_height {
                         // Smoothly adjust position up
                         transform.translation.y += step_height + 0.01;
@@ -454,10 +459,10 @@ fn apply_character_physics(
             let filter = SpatialQueryFilter::from_excluded_entities([entity]);
             // Search for ground slightly ahead and below
             let snap_pos = transform.translation;
-            if let Some(hit) = spatial_query.cast_ray(snap_pos, Dir3::NEG_Y, settings.max_step_height + settings.ray_length + 0.1, true, filter) {
+            if let Some(snap_hit) = spatial_query.cast_ray(snap_pos, Dir3::NEG_Y, settings.max_step_height + settings.ray_length + 0.1, true, &filter) {
                 // If ground is within snapping distance
-                if hit.distance <= settings.max_step_height + settings.ray_length + 0.05 {
-                    transform.translation.y -= (hit.distance - settings.ray_length);
+                if snap_hit.distance <= settings.max_step_height + settings.ray_length + 0.05 {
+                    transform.translation.y -= (snap_hit.distance - settings.ray_length);
                     velocity.y = 0.0;
                     ground.is_grounded = true; // Force grounded state
                 }
@@ -468,7 +473,8 @@ fn apply_character_physics(
         let jump_requested = movement.wants_to_jump || input_buffer.consume(InputAction::Jump);
         
         if jump_requested && ground.is_grounded {
-            impulse.apply_impulse(Vec3::Y * controller.jump_power);
+            let impulse_vec: Vec3 = Vec3::Y * controller.jump_power;
+            *impulse = ExternalImpulse::new(impulse_vec);
             movement.jump_hold_timer = controller.max_jump_hold_time;
             movement.wants_to_jump = false;
         }
@@ -476,7 +482,8 @@ fn apply_character_physics(
         // Variable Jump Bonus
         if movement.jump_held && movement.jump_hold_timer > 0.0 && !ground.is_grounded {
             movement.jump_hold_timer -= time.delta_secs();
-            force.apply_force(Vec3::Y * controller.jump_hold_bonus * 100.0);
+            let force_vec: Vec3 = Vec3::Y * controller.jump_hold_bonus * 100.0;
+            *force = ExternalForce::new(force_vec).with_persistence(false);
         }
 
         // Axis Constraints (2.5D)
@@ -494,11 +501,11 @@ fn update_friction_material(
 ) {
     for (state, mut friction) in query.iter_mut() {
         if state.raw_move_dir.length_squared() < 0.01 {
-            friction.combined_static_coefficient = 1.0;
-            friction.combined_dynamic_coefficient = 1.0;
+            friction.static_coefficient = 1.0;
+            friction.dynamic_coefficient = 1.0;
         } else {
-            friction.combined_static_coefficient = 0.1;
-            friction.combined_dynamic_coefficient = 0.1;
+            friction.static_coefficient = 0.0;
+            friction.dynamic_coefficient = 0.0;
         }
     }
 }
@@ -519,12 +526,13 @@ fn handle_falling_damage(
             // Damage formula: (impact + duration) * multiplier
             let damage = (impact_speed - controller.min_velocity_for_damage + state.air_time * 2.0) * controller.falling_damage_multiplier;
             
-            damage_events.send(DamageEvent {
-                target: entity,
-                amount: damage,
-                damage_type: DamageType::Fall,
-                source: None,
-            });
+            // Commented out as per instruction:
+            // damage_events.send(DamageEvent {
+            //     target: entity,
+            //     amount: damage,
+            //     damage_type: DamageType::Fall,
+            //     source: None,
+            // });
             
             state.last_vertical_velocity = 0.0;
             state.air_time = 0.0;
@@ -567,8 +575,8 @@ fn handle_obstacle_detection(
         let left_ray = ray_pos + transform.left() * 0.3;
         let right_ray = ray_pos + transform.right() * 0.3;
 
-        let hit_left = spatial_query.cast_ray(left_ray, ray_dir, controller.obstacle_detection_distance, true, filter.clone());
-        let hit_right = spatial_query.cast_ray(right_ray, ray_dir, controller.obstacle_detection_distance, true, filter);
+        let hit_left = spatial_query.cast_ray(left_ray, ray_dir, controller.obstacle_detection_distance, true, &filter.clone());
+        let hit_right = spatial_query.cast_ray(right_ray, ray_dir, controller.obstacle_detection_distance, true, &filter);
 
         state.obstacle_found = hit_left.is_some() || hit_right.is_some();
     }
@@ -590,8 +598,8 @@ fn handle_wall_running_detection(
         let left_dir = transform.left();
         let right_dir = transform.right();
 
-        let hit_left = spatial_query.cast_ray(ray_pos, Dir3::new(*left_dir).unwrap(), 0.8, true, filter.clone());
-        let hit_right = spatial_query.cast_ray(ray_pos, Dir3::new(*right_dir).unwrap(), 0.8, true, filter);
+        let hit_left = spatial_query.cast_ray(ray_pos, Dir3::new(*left_dir).unwrap(), 0.8, true, &filter);
+        let hit_right = spatial_query.cast_ray(ray_pos, Dir3::new(*right_dir).unwrap(), 0.8, true, &filter);
 
         if let Some(hit) = hit_left {
             state.wall_running_active = true;

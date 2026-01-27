@@ -3,7 +3,9 @@
 //! Flexible input handling with action remapping and buffering support.
 
 use bevy::prelude::*;
-use bevy::utils::HashMap;
+use std::collections::HashMap;
+// use bevy::ecs::event::EventReader;
+use bevy::input::mouse::MouseMotion;
 
 pub struct InputPlugin;
 
@@ -18,7 +20,9 @@ impl Plugin for InputPlugin {
             .add_systems(Update, (
                 update_input_state,
                 handle_rebinding,
-                cleanup_input_buffer, // New system
+                cleanup_input_buffer,
+            ).chain())
+            .add_systems(Update, (
                 process_movement_input,
                 process_action_input,
             ));
@@ -153,7 +157,7 @@ fn update_input_state(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
-    mut mouse_motion: EventReader<bevy::input::mouse::MouseMotion>,
+    // mut mouse_motion: EventReader<MouseMotion>,
     input_map: Res<InputMap>,
     mut input_state: ResMut<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
@@ -161,8 +165,8 @@ fn update_input_state(
     let check_action = |action: InputAction| -> bool {
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
-                InputBinding::Key(code) => keyboard.pressed(*code),
-                InputBinding::Mouse(button) => mouse_buttons.pressed(*button),
+                InputBinding::Key(code) => keyboard.pressed(code.clone()),
+                InputBinding::Mouse(button) => mouse_buttons.pressed(button.clone()),
             })
         } else {
             false
@@ -172,8 +176,8 @@ fn update_input_state(
     let check_action_just_pressed = |action: InputAction| -> bool {
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
-                InputBinding::Key(code) => keyboard.just_pressed(*code),
-                InputBinding::Mouse(button) => mouse_buttons.just_pressed(*button),
+                InputBinding::Key(code) => keyboard.just_pressed(code.clone()),
+                InputBinding::Mouse(button) => mouse_buttons.just_pressed(button.clone()),
             })
         } else {
             false
@@ -217,9 +221,9 @@ fn update_input_state(
 
     // Look motion
     let mut look = Vec2::ZERO;
-    for event in mouse_motion.read() {
-        look += event.delta;
-    }
+    // for event in mouse_motion.read() {
+    //     look += event.delta;
+    // }
     input_state.look = look;
 }
 
@@ -235,9 +239,9 @@ fn handle_rebinding(
     // Find the first key or mouse button just pressed
     let mut new_binding = None;
     if let Some(key) = keyboard.get_just_pressed().next() {
-        new_binding = Some(InputBinding::Key(*key));
+        new_binding = Some(InputBinding::Key(key.clone()));
     } else if let Some(button) = mouse_buttons.get_just_pressed().next() {
-        new_binding = Some(InputBinding::Mouse(*button));
+        new_binding = Some(InputBinding::Mouse(button.clone()));
     }
 
     if let Some(binding) = new_binding {
