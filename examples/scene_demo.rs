@@ -70,6 +70,17 @@ fn setup_scene(
                  ..default() 
             },
             Blocking::default(),
+            Weapon {
+                weapon_name: "Prototype Pistol".to_string(),
+                range: 50.0,
+                damage: 25.0,
+                fire_rate: 2.0, // 2 shots per second
+                ammo_capacity: 12,
+                current_ammo: 12,
+                reload_time: 1.5,
+                weapon_type: WeaponType::Pistol,
+                 ..default() 
+            },
         ));
 
     // Interactive Object (Cube)
@@ -138,7 +149,7 @@ fn setup_scene(
 
     // Instructions UI
     commands.spawn((
-        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack\nRight Click - Block\nE - Interact\nR - Lock On"),
+        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block\nR - Reload\nE - Interact"),
         TextFont {
             font_size: 20.0,
             ..default()

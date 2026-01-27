@@ -11,6 +11,8 @@ impl Plugin for WeaponsPlugin {
         app.add_systems(Update, (
             update_weapons,
             handle_weapon_firing,
+            handle_reloading,
+            update_projectiles, // New system
         ));
     }
 }
@@ -40,6 +42,15 @@ pub struct Weapon {
     pub spread: f32,
     pub projectile_speed: f32,
     pub weapon_type: WeaponType,
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct Projectile {
+    pub velocity: Vec3,
+    pub damage: f32,
+    pub lifetime: f32,
+    pub owner: Entity,
 }
 
 impl Default for Weapon {
@@ -105,6 +116,65 @@ fn update_weapons(
                 weapon.current_ammo = weapon.ammo_capacity;
                 info!("Reloaded {}", weapon.weapon_name);
             }
+        }
+    }
+}
+
+fn update_projectiles(
+    mut commands: Commands,
+    time: Res<Time>,
+    spatial_query: SpatialQuery,
+    mut damage_events: ResMut<DamageEventQueue>,
+    mut query: Query<(Entity, &mut Transform, &mut Projectile)>,
+) {
+    for (entity, mut transform, mut projectile) in query.iter_mut() {
+        projectile.lifetime -= time.delta_secs();
+        if projectile.lifetime <= 0.0 {
+            commands.entity(entity).despawn();
+            continue;
+        }
+
+        let movement = projectile.velocity * time.delta_secs();
+        let ray_dir = movement.normalize_or_zero();
+        let ray_dist = movement.length();
+
+        if ray_dist > 0.0001 {
+            // Raycast ahead to check collision
+            let filter = SpatialQueryFilter::from_excluded_entities([projectile.owner]);
+            if let Some(hit) = spatial_query.cast_ray(
+                transform.translation,
+                Dir3::new(ray_dir).unwrap(),
+                ray_dist,
+                true,
+                &filter
+            ) {
+                 // Hit something
+                 info!("Projectile hit {:?}!", hit.entity);
+                 damage_events.0.push(DamageEvent {
+                    amount: projectile.damage,
+                    damage_type: DamageType::Ranged,
+                    source: Some(projectile.owner),
+                    target: hit.entity,
+                 });
+                 
+                 commands.entity(entity).despawn();
+                 continue;
+            }
+        }
+        
+        transform.translation += movement;
+    }
+}
+
+fn handle_reloading(
+    input: Res<InputState>,
+    mut query: Query<&mut Weapon>,
+) {
+    for mut weapon in query.iter_mut() {
+        if input.reload_pressed && !weapon.is_reloading && weapon.current_ammo < weapon.ammo_capacity {
+            weapon.is_reloading = true;
+            weapon.current_reload_timer = weapon.reload_time;
+            info!("Reloading started for {}...", weapon.weapon_name);
         }
     }
 }
@@ -221,7 +291,26 @@ fn fire_weapon(
              info!("Missed!");
         }
     } else {
-        // Projectile TODO
-        info!("Projectile firing not implemented yet");
+         // Projectile Logic
+         // Spawn actual projectile entity
+         let spawn_pos = transform.translation() + transform.forward() * 1.0; // Offset from barrel
+         let velocity = transform.forward() * weapon.projectile_speed;
+         
+         commands.spawn((
+            Mesh3d(Default::default()), // Placeholder mesh (should be resource)
+            // Ideally we use a asset handle here, but for now empty mesh or primitive
+            // We can't easily access meshes resource here without SystemParam. 
+            // Just spawn a transform + Component for logic.
+            Transform::from_translation(spawn_pos),
+            GlobalTransform::default(),
+            Projectile {
+                velocity,
+                damage: weapon.damage,
+                lifetime: 5.0,
+                owner: source_entity,
+            },
+            Name::new("Projectile"),
+         ));
+         info!("Fired projectile!");
     }
 }
