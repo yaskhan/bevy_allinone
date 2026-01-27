@@ -49,16 +49,16 @@ pub struct CharacterController {
     pub is_dead: bool,
     pub is_strafing: bool,
     
-    // GKC Alignment: Input Smoothing
+    // Movement Smoothing
     pub input_horizontal_lerp_speed: f32,
     pub input_vertical_lerp_speed: f32,
 
-    // GKC Alignment: Falling Damage
+    // Falling Damage
     pub fall_damage_enabled: bool,
     pub min_velocity_for_damage: f32,
     pub falling_damage_multiplier: f32,
 
-    // GKC Alignment: Crouch Sliding
+    // Crouch Sliding
     pub crouch_sliding_enabled: bool,
     pub crouch_sliding_speed: f32,
     pub crouch_sliding_duration: f32,
@@ -143,7 +143,7 @@ fn handle_character_input(
         // Horizontal input mapping
         state.raw_move_dir = Vec3::new(input.movement.x, 0.0, -input.movement.y);
         
-        // GKC Alignment: Smooth input transition (Lerping)
+        // Smooth input transition (Lerping)
         let target_dir = state.raw_move_dir;
         state.lerped_move_dir.x = state.lerped_move_dir.x + (target_dir.x - state.lerped_move_dir.x) * controller.input_horizontal_lerp_speed * time.delta_secs();
         state.lerped_move_dir.z = state.lerped_move_dir.z + (target_dir.z - state.lerped_move_dir.z) * controller.input_vertical_lerp_speed * time.delta_secs();
@@ -174,7 +174,7 @@ fn update_character_movement(
             controller.run_speed
         };
 
-        // GKC Alignment: Crouch Sliding speed overwrite
+        // Crouch Sliding speed overwrite
         if state.crouch_sliding_active {
             base_speed = controller.crouch_sliding_speed;
         }
@@ -189,7 +189,7 @@ fn update_character_rotation(
 ) {
     for (_entity, controller, state, mut transform) in query.iter_mut() {
         if state.lerped_move_dir.length_squared() > 0.001 {
-            // GKC Alignment: Tank Controls
+            // Tank Controls
             if controller.use_tank_controls {
                 let rotation = Quat::from_rotation_y(-state.lerped_move_dir.x * controller.stationary_turn_speed.to_radians() * time.delta_secs());
                 transform.rotation *= rotation;
@@ -202,7 +202,7 @@ fn update_character_rotation(
             }
         }
         
-        // GKC Alignment: Surface Alignment
+        // Surface Alignment
         if state.current_normal.length_squared() > 0.0 {
             let target_up = state.current_normal;
             let current_up = transform.up();
@@ -276,7 +276,7 @@ fn update_friction_material(
     }
 }
 
-/// GKC Alignment: Falling Damage System
+/// Falling Damage System
 fn handle_falling_damage(
     mut damage_events: EventWriter<DamageEvent>,
     mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &LinearVelocity, &GroundDetection)>,
@@ -307,7 +307,7 @@ fn handle_falling_damage(
     }
 }
 
-/// GKC Alignment: Crouch Sliding Logic
+/// Crouch Sliding Logic
 fn handle_crouch_sliding(
     time: Res<Time>,
     mut query: Query<(&CharacterController, &mut CharacterMovementState)>,

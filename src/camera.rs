@@ -152,7 +152,6 @@ fn update_camera_zoom(
     mut query: Query<(&GameCamera, &mut CameraState)>,
 ) {
     for (camera, mut state) in query.iter_mut() {
-        // Zoom logic can be added here if we have scroll input in InputState
         state.current_distance = camera.distance; 
     }
 }
@@ -168,7 +167,7 @@ fn handle_camera_collision(
         let direction = transform.back();
         let max_dist = camera.distance;
 
-        let filter = SpatialQueryFilter::default(); // Exclude player if needed
+        let filter = SpatialQueryFilter::default();
 
         if let Some(hit) = spatial_query.cast_ray(
             start,
