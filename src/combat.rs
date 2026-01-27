@@ -11,9 +11,11 @@ impl Plugin for CombatPlugin {
             .init_resource::<DeathEventQueue>()
             .register_type::<Health>()
             .register_type::<MeleeCombat>()
+            .register_type::<Blocking>()
             .add_systems(Update, (
                 regenerate_health,
                 perform_melee_attacks,
+                perform_blocking,
                 process_damage_events,
             ));
     }
@@ -169,22 +171,86 @@ fn perform_melee_attacks(
     }
 }
 
+
+
+/// Blocking component
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct Blocking {
+    pub is_blocking: bool,
+    pub block_reduction: f32, // Multiplier (0.0 = full block, 1.0 = no block)
+    pub parry_window: f32, // Time window for parry
+    pub current_block_time: f32,
+}
+
+impl Default for Blocking {
+    fn default() -> Self {
+        Self {
+            is_blocking: false,
+            block_reduction: 0.5,
+            parry_window: 0.2,
+            current_block_time: 0.0,
+        }
+    }
+}
+
+/// System to handle blocking input
+fn perform_blocking(
+    time: Res<Time>,
+    input: Res<InputState>,
+    mut query: Query<&mut Blocking>,
+) {
+    for mut blocking in query.iter_mut() {
+        if input.block_pressed {
+            if !blocking.is_blocking {
+                // Just started blocking
+                blocking.is_blocking = true;
+                blocking.current_block_time = 0.0;
+            } else {
+                // Continue blocking
+                blocking.current_block_time += time.delta_secs();
+            }
+        } else {
+            blocking.is_blocking = false;
+            blocking.current_block_time = 0.0;
+        }
+    }
+}
+
 /// System to process damage events and reduce health
 fn process_damage_events(
     mut damage_queue: ResMut<DamageEventQueue>,
     mut death_queue: ResMut<DeathEventQueue>,
-    mut health_query: Query<&mut Health>,
+    mut health_query: Query<(&mut Health, Option<&Blocking>)>, // Check for Blocking component
     time: Res<Time>,
 ) {
     // Process all events in queue
     for event in damage_queue.0.drain(..) {
-        if let Ok(mut health) = health_query.get_mut(event.target) {
+        if let Ok((mut health, blocking_opt)) = health_query.get_mut(event.target) {
             if health.is_invulnerable {
                 continue;
             }
 
+            let mut final_damage = event.amount;
+
+            // Check blocking/parrying
+            if let Some(blocking) = blocking_opt {
+                if blocking.is_blocking {
+                    if blocking.current_block_time <= blocking.parry_window {
+                        // Parry!
+                        final_damage = 0.0;
+                        info!("Entity {:?} PARRIED the attack!", event.target);
+                        // TODO: trigger parry effect/event
+                    } else {
+                        // Block
+                        final_damage *= blocking.block_reduction;
+                        info!("Entity {:?} BLOCKED the attack (reduced to {})!", event.target, final_damage);
+                    }
+                }
+            }
+
             // Apply damage
-            health.current -= event.amount;
+            health.current -= final_damage;
             health.last_damage_time = time.elapsed_secs();
             
             // Clamp health
@@ -193,7 +259,7 @@ fn process_damage_events(
                 death_queue.0.push(DeathEvent { entity: event.target });
                 info!("Entity {:?} died!", event.target);
             } else {
-                debug!("Entity {:?} took {} damage. Current Health: {}", event.target, event.amount, health.current);
+                debug!("Entity {:?} took {} damage. Current Health: {}", event.target, final_damage, health.current);
             }
         }
     }
