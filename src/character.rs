@@ -276,10 +276,13 @@ fn check_ground_state(
 
 fn apply_character_physics(
     time: Res<Time>,
+    spatial_query: SpatialQuery,
     mut input_buffer: ResMut<InputBuffer>,
     mut query: Query<(
+        Entity,
         &mut CharacterMovementState, 
-        &GroundDetection, 
+        &mut GroundDetection, 
+        &GroundDetectionSettings,
         &mut LinearVelocity, 
         &mut ExternalImpulse,
         &mut ExternalForce,
@@ -287,7 +290,7 @@ fn apply_character_physics(
         &mut Transform,
     )>,
 ) {
-    for (mut movement, ground, mut velocity, mut impulse, mut force, controller, mut transform) in query.iter_mut() {
+    for (entity, mut movement, mut ground, settings, mut velocity, mut impulse, mut force, controller, mut transform) in query.iter_mut() {
         // Horizontal movement
         let move_dir = if controller.use_tank_controls {
              Vec3::new(0.0, 0.0, movement.lerped_move_dir.z)
@@ -301,6 +304,50 @@ fn apply_character_physics(
         
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
+
+        // --- STEP UP LOGIC ---
+        if move_dir.length_squared() > 0.01 && ground.is_grounded {
+            let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+            let ray_dir = Dir3::new(move_dir.normalize()).unwrap_or(Dir3::NEG_Z);
+            
+            // Raycast at feet level to detect step base
+            let feet_ray_pos = transform.translation + Vec3::Y * 0.05;
+            let step_base_hit = spatial_query.cast_ray(feet_ray_pos, ray_dir, settings.step_check_distance, true, filter.clone());
+            
+            // Raycast at max_step_height to see if it's climbable
+            let knee_ray_pos = transform.translation + Vec3::Y * (settings.max_step_height + 0.05);
+            let step_top_hit = spatial_query.cast_ray(knee_ray_pos, ray_dir, settings.step_check_distance, true, filter.clone());
+
+            // If we hit something at the feet but not at the knee, it's a step
+            if step_base_hit.is_some() && step_top_hit.is_none() {
+                // Perform a downward raycast from ahead to find the exact top of the step
+                let ahead_pos = transform.translation + (*ray_dir * settings.step_check_distance) + Vec3::Y * settings.max_step_height;
+                if let Some(down_hit) = spatial_query.cast_ray(ahead_pos, Dir3::NEG_Y, settings.max_step_height + 0.1, true, filter.clone()) {
+                    let step_height = settings.max_step_height - down_hit.distance;
+                    if step_height > 0.01 && step_height <= settings.max_step_height {
+                        // Smoothly adjust position up
+                        transform.translation.y += step_height + 0.01;
+                        velocity.y = 0.0; // Prevent upward bounce
+                    }
+                }
+            }
+        }
+
+        // --- STEP DOWN (SNAPPING) LOGIC ---
+        // If we were grounded last frame, but not this frame, and not jumping
+        if !ground.is_grounded && ground.last_is_grounded && !movement.wants_to_jump && velocity.y <= 0.0 {
+            let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+            // Search for ground slightly ahead and below
+            let snap_pos = transform.translation;
+            if let Some(hit) = spatial_query.cast_ray(snap_pos, Dir3::NEG_Y, settings.max_step_height + settings.ray_length + 0.1, true, filter) {
+                // If ground is within snapping distance
+                if hit.distance <= settings.max_step_height + settings.ray_length + 0.05 {
+                    transform.translation.y -= (hit.distance - settings.ray_length);
+                    velocity.y = 0.0;
+                    ground.is_grounded = true; // Force grounded state
+                }
+            }
+        }
 
         // Jump logic with buffering
         let jump_requested = movement.wants_to_jump || input_buffer.consume(InputAction::Jump);
