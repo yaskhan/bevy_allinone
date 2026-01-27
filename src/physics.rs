@@ -45,6 +45,7 @@ pub struct GroundDetection {
     pub is_grounded: bool,
     pub ground_normal: Vec3,
     pub ground_distance: f32,
+    pub ground_angle: f32,
     pub entity_below: Option<Entity>,
 }
 
@@ -101,11 +102,13 @@ fn detect_ground(
             detection.is_grounded = hit.distance <= settings.ray_length + 0.05;
             detection.ground_normal = hit.normal;
             detection.ground_distance = hit.distance;
+            detection.ground_angle = hit.normal.angle_between(Vec3::Y).to_degrees();
             detection.entity_below = Some(hit.entity);
         } else {
             detection.is_grounded = false;
             detection.ground_normal = Vec3::Y;
             detection.ground_distance = f32::MAX;
+            detection.ground_angle = 0.0;
             detection.entity_below = None;
         }
     }

@@ -21,6 +21,7 @@ impl Plugin for CharacterPlugin {
                 update_friction_material,
                 handle_falling_damage,
                 handle_crouch_sliding,
+                handle_obstacle_detection,
             ));
     }
 }
@@ -43,6 +44,8 @@ pub struct CharacterController {
     
     // Jump
     pub jump_power: f32,
+    pub jump_hold_bonus: f32,
+    pub max_jump_hold_time: f32,
     
     // Feedback/State
     pub can_move: bool,
@@ -50,8 +53,8 @@ pub struct CharacterController {
     pub is_strafing: bool,
     
     // Movement Smoothing
-    pub input_horizontal_lerp_speed: f32,
-    pub input_vertical_lerp_speed: f32,
+    pub acceleration: f32,
+    pub deceleration: f32,
 
     // Falling Damage
     pub fall_damage_enabled: bool,
@@ -62,6 +65,12 @@ pub struct CharacterController {
     pub crouch_sliding_enabled: bool,
     pub crouch_sliding_speed: f32,
     pub crouch_sliding_duration: f32,
+
+    // Obstacle Detection
+    pub obstacle_detection_distance: f32,
+    
+    // Axis Constraints (for 2.5D)
+    pub fixed_axis: Option<Vec3>,
 }
 
 impl Default for CharacterController {
@@ -78,13 +87,15 @@ impl Default for CharacterController {
             use_tank_controls: false,
             
             jump_power: 6.0,
+            jump_hold_bonus: 2.0,
+            max_jump_hold_time: 0.25,
             
             can_move: true,
             is_dead: false,
             is_strafing: false,
             
-            input_horizontal_lerp_speed: 10.0,
-            input_vertical_lerp_speed: 10.0,
+            acceleration: 10.0,
+            deceleration: 15.0,
 
             fall_damage_enabled: true,
             min_velocity_for_damage: 12.0,
@@ -93,6 +104,10 @@ impl Default for CharacterController {
             crouch_sliding_enabled: true,
             crouch_sliding_speed: 12.0,
             crouch_sliding_duration: 1.0,
+
+            obstacle_detection_distance: 0.5,
+            
+            fixed_axis: None,
         }
     }
 }
@@ -107,13 +122,19 @@ pub struct CharacterMovementState {
     pub is_sprinting: bool,
     pub is_crouching: bool,
     pub wants_to_jump: bool,
+    pub jump_held: bool,
     pub current_speed: f32,
     pub current_normal: Vec3,
 
-    // Internal state for advanced features
+    // Internal state
     pub last_vertical_velocity: f32,
+    pub air_time: f32,
+    pub jump_hold_timer: f32,
     pub crouch_sliding_active: bool,
     pub crouch_sliding_timer: f32,
+    pub obstacle_found: bool,
+    pub quick_turn_active: bool,
+    pub quick_turn_timer: f32,
 }
 
 /// Character animation state
@@ -141,17 +162,22 @@ fn handle_character_input(
         }
 
         // Horizontal input mapping
-        state.raw_move_dir = Vec3::new(input.movement.x, 0.0, -input.movement.y);
+        let move_dir = Vec3::new(input.movement.x, 0.0, -input.movement.y);
+        state.raw_move_dir = move_dir;
         
-        // Smooth input transition (Lerping)
-        let target_dir = state.raw_move_dir;
-        state.lerped_move_dir.x = state.lerped_move_dir.x + (target_dir.x - state.lerped_move_dir.x) * controller.input_horizontal_lerp_speed * time.delta_secs();
-        state.lerped_move_dir.z = state.lerped_move_dir.z + (target_dir.z - state.lerped_move_dir.z) * controller.input_vertical_lerp_speed * time.delta_secs();
+        // Smooth input transition with separate Accel/Decel
+        let lerp_speed = if move_dir.length_squared() > 0.01 {
+            controller.acceleration
+        } else {
+            controller.deceleration
+        };
+
+        state.lerped_move_dir = state.lerped_move_dir.lerp(move_dir, lerp_speed * time.delta_secs());
 
         state.is_running = true; 
         state.is_sprinting = input.sprint_pressed;
         
-        // Crouch input triggers sliding if sprinting
+        // Crouch sliding check
         if input.crouch_pressed && !state.is_crouching && state.is_sprinting && controller.crouch_sliding_enabled {
             state.crouch_sliding_active = true;
             state.crouch_sliding_timer = controller.crouch_sliding_duration;
@@ -159,6 +185,7 @@ fn handle_character_input(
         
         state.is_crouching = input.crouch_pressed;
         state.wants_to_jump = input.jump_pressed;
+        state.jump_held = input.jump_pressed; // Simple hold tracking
     }
 }
 
@@ -174,7 +201,6 @@ fn update_character_movement(
             controller.run_speed
         };
 
-        // Crouch Sliding speed overwrite
         if state.crouch_sliding_active {
             base_speed = controller.crouch_sliding_speed;
         }
@@ -185,20 +211,34 @@ fn update_character_movement(
 
 fn update_character_rotation(
     time: Res<Time>,
-    mut query: Query<(Entity, &CharacterController, &CharacterMovementState, &mut Transform)>,
+    mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &mut Transform)>,
 ) {
-    for (_entity, controller, state, mut transform) in query.iter_mut() {
+    for (_entity, controller, mut state, mut transform) in query.iter_mut() {
         if state.lerped_move_dir.length_squared() > 0.001 {
-            // Tank Controls
             if controller.use_tank_controls {
                 let rotation = Quat::from_rotation_y(-state.lerped_move_dir.x * controller.stationary_turn_speed.to_radians() * time.delta_secs());
                 transform.rotation *= rotation;
             } else if controller.is_strafing {
-                // Strafe mode handled elsewhere or with camera alignment
+                // Strafe mode
             } else {
-                // Free movement rotation
-                let target_rotation = Quat::from_rotation_arc(Vec3::NEG_Z, state.lerped_move_dir.normalize());
-                transform.rotation = transform.rotation.slerp(target_rotation, controller.turn_speed * time.delta_secs());
+                // Quick Turn Logic
+                if !state.quick_turn_active && state.lerped_move_dir.dot(transform.forward().into()) < -0.8 {
+                    state.quick_turn_active = true;
+                    state.quick_turn_timer = 0.15;
+                }
+
+                if state.quick_turn_active {
+                    state.quick_turn_timer -= time.delta_secs();
+                    if state.quick_turn_timer <= 0.0 {
+                        state.quick_turn_active = false;
+                    }
+                    // Snap or fast slerp for quick turn
+                    let target_rotation = Quat::from_rotation_arc(Vec3::NEG_Z, state.lerped_move_dir.normalize());
+                    transform.rotation = transform.rotation.slerp(target_rotation, 20.0 * time.delta_secs());
+                } else {
+                    let target_rotation = Quat::from_rotation_arc(Vec3::NEG_Z, state.lerped_move_dir.normalize());
+                    transform.rotation = transform.rotation.slerp(target_rotation, controller.turn_speed * time.delta_secs());
+                }
             }
         }
         
@@ -227,6 +267,7 @@ fn check_ground_state(
     for (detection, mut state) in query.iter_mut() {
         if detection.is_grounded {
             state.current_normal = detection.ground_normal;
+            state.air_time = 0.0;
         } else {
             state.current_normal = Vec3::Y;
         }
@@ -234,30 +275,50 @@ fn check_ground_state(
 }
 
 fn apply_character_physics(
+    time: Res<Time>,
     mut query: Query<(
-        &CharacterMovementState, 
+        &mut CharacterMovementState, 
         &GroundDetection, 
         &mut LinearVelocity, 
         &mut ExternalImpulse,
-        &CharacterController
+        &mut ExternalForce,
+        &CharacterController,
+        &mut Transform,
     )>,
 ) {
-    for (movement, ground, mut velocity, mut impulse, controller) in query.iter_mut() {
+    for (mut movement, ground, mut velocity, mut impulse, mut force, controller, mut transform) in query.iter_mut() {
         // Horizontal movement
         let move_dir = if controller.use_tank_controls {
-             // In tank controls, move dir is forward/backward
              Vec3::new(0.0, 0.0, movement.lerped_move_dir.z)
         } else {
             movement.lerped_move_dir
         };
 
-        let target_vel = move_dir * movement.current_speed;
+        // Obstacle detection affects movement
+        let final_move_dir = if movement.obstacle_found { Vec3::ZERO } else { move_dir };
+        let target_vel = final_move_dir * movement.current_speed;
+        
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
 
         // Jump logic
         if movement.wants_to_jump && ground.is_grounded {
             impulse.apply_impulse(Vec3::Y * controller.jump_power);
+            movement.jump_hold_timer = controller.max_jump_hold_time;
+        }
+
+        // Variable Jump Bonus
+        if movement.jump_held && movement.jump_hold_timer > 0.0 && !ground.is_grounded {
+            movement.jump_hold_timer -= time.delta_secs();
+            force.apply_force(Vec3::Y * controller.jump_hold_bonus * 100.0);
+        }
+
+        // Axis Constraints (2.5D)
+        if let Some(axis) = controller.fixed_axis {
+            let offset = transform.translation - axis;
+            transform.translation -= offset * Vec3::new(1.0, 0.0, 1.0); // Simple projection
+            velocity.x *= (1.0 - axis.x.abs());
+            velocity.z *= (1.0 - axis.z.abs());
         }
     }
 }
@@ -276,8 +337,8 @@ fn update_friction_material(
     }
 }
 
-/// Falling Damage System
 fn handle_falling_damage(
+    time: Res<Time>,
     mut damage_events: EventWriter<DamageEvent>,
     mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &LinearVelocity, &GroundDetection)>,
 ) {
@@ -285,12 +346,12 @@ fn handle_falling_damage(
         if !controller.fall_damage_enabled { continue; }
 
         if !ground.is_grounded {
-            // Track negative vertical velocity (downward)
             state.last_vertical_velocity = velocity.y;
+            state.air_time += time.delta_secs();
         } else if state.last_vertical_velocity < -controller.min_velocity_for_damage {
-            // Landed after a hard fall
             let impact_speed = state.last_vertical_velocity.abs();
-            let damage = (impact_speed - controller.min_velocity_for_damage) * controller.falling_damage_multiplier;
+            // Damage formula: (impact + duration) * multiplier
+            let damage = (impact_speed - controller.min_velocity_for_damage + state.air_time * 2.0) * controller.falling_damage_multiplier;
             
             damage_events.send(DamageEvent {
                 target: entity,
@@ -299,15 +360,15 @@ fn handle_falling_damage(
                 source: None,
             });
             
-            // Reset
             state.last_vertical_velocity = 0.0;
+            state.air_time = 0.0;
         } else {
             state.last_vertical_velocity = 0.0;
+            state.air_time = 0.0;
         }
     }
 }
 
-/// Crouch Sliding Logic
 fn handle_crouch_sliding(
     time: Res<Time>,
     mut query: Query<(&CharacterController, &mut CharacterMovementState)>,
@@ -319,6 +380,31 @@ fn handle_crouch_sliding(
                 state.crouch_sliding_active = false;
             }
         }
+    }
+}
+
+fn handle_obstacle_detection(
+    spatial_query: SpatialQuery,
+    mut query: Query<(Entity, &Transform, &CharacterController, &mut CharacterMovementState)>,
+) {
+    for (entity, transform, controller, mut state) in query.iter_mut() {
+        if state.raw_move_dir.length_squared() < 0.01 {
+            state.obstacle_found = false;
+            continue;
+        }
+
+        let ray_pos = transform.translation + Vec3::Y * 0.5;
+        let ray_dir = Dir3::new(state.raw_move_dir.normalize()).unwrap_or(Dir3::NEG_Z);
+        let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+
+        // Dual raycasts for feet level
+        let left_ray = ray_pos + transform.left() * 0.3;
+        let right_ray = ray_pos + transform.right() * 0.3;
+
+        let hit_left = spatial_query.cast_ray(left_ray, ray_dir, controller.obstacle_detection_distance, true, filter.clone());
+        let hit_right = spatial_query.cast_ray(right_ray, ray_dir, controller.obstacle_detection_distance, true, filter);
+
+        state.obstacle_found = hit_left.is_some() || hit_right.is_some();
     }
 }
 
