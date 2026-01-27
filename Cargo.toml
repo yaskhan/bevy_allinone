@@ -1,0 +1,22 @@
+[package]
+name = "bevy_allinone"
+version = "0.1.0"
+edition = "2021"
+authors = ["Yaskhan <yaskhan@mail.ru>"]
+description = "Bevy all in one Controller - A powerful 3D/2.5D game controller plugin"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yaskhan/bevy_allinone"
+keywords = ["bevy", "game", "controller", "character", "3d"]
+categories = ["game-engines", "game-development"]
+
+[dependencies]
+bevy = { version = "0.18", default-features = true }
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+bevy = { version = "0.18", default-features = true }
+
+[features]
+default = ["3d"]
+3d = []
+2d = []
