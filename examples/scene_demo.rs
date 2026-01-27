@@ -79,7 +79,16 @@ fn setup_scene(
                 current_ammo: 12,
                 reload_time: 1.5,
                 weapon_type: WeaponType::Pistol,
+                attachments: vec![], // Add default attachments
                  ..default() 
+            },
+            WeaponManager {
+                available_weapons: vec![
+                    WeaponType::Pistol,
+                    WeaponType::Shotgun,
+                    WeaponType::Rifle
+                ],
+                current_index: 0,
             },
         ));
 
@@ -149,7 +158,7 @@ fn setup_scene(
 
     // Instructions UI
     commands.spawn((
-        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block\nR - Reload\nE - Interact"),
+        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block/Aim\nR - Reload\n1/2 - Switch Weapon\nE - Interact"),
         TextFont {
             font_size: 20.0,
             ..default()

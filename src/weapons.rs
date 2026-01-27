@@ -12,7 +12,9 @@ impl Plugin for WeaponsPlugin {
             update_weapons,
             handle_weapon_firing,
             handle_reloading,
-            update_projectiles, // New system
+            update_projectiles,
+            update_weapon_aim,
+            handle_weapon_switching, // New system
         ));
     }
 }
@@ -40,8 +42,21 @@ pub struct Weapon {
     pub is_reloading: bool,
     pub is_automatic: bool,
     pub spread: f32,
+    pub base_spread: f32, 
+    pub aim_spread_mult: f32,
+    pub projectiles_per_shot: u32,
     pub projectile_speed: f32,
     pub weapon_type: WeaponType,
+    pub attachments: Vec<Attachment>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+pub enum Attachment {
+    Silencer,
+    ExtendedMag,
+    Scope,
+    HeavyBarrel,
+    LaserSight,
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -68,8 +83,50 @@ impl Default for Weapon {
             is_reloading: false,
             is_automatic: false,
             spread: 0.0,
+            base_spread: 2.0, // Degrees
+            aim_spread_mult: 0.2, // Tighter when aiming
+            projectiles_per_shot: 1,
             projectile_speed: 0.0, // 0 = hitscan
             weapon_type: WeaponType::Pistol,
+            attachments: Vec::new(),
+        }
+    }
+}
+
+// System to apply attachment modifiers (could be run on change)
+// For now, we'll just have a helper function called during switching/setup
+// or a system that runs when `Changed<Weapon>`? 
+// Running on `Changed<Weapon>` might cycle if we modify weapon inside.
+// Let's implement `apply_attachments` and call it manually in `handle_weapon_switching`.
+
+fn apply_attachments(weapon: &mut Weapon) {
+    // Reset to base stats (conceptually - in this simple version we assume base is set before this call)
+    // Actually, distinct base/current separation is best, but to save refactor,
+    // we'll apply multipliers. Ideally we store `base_damage` etc.
+    // For this demo: Modifiers apply to the CURRENT values. 
+    // This implies we must set base values THEN apply attachments every time we switch/spawn.
+    
+    for attachment in &weapon.attachments {
+        match attachment {
+            Attachment::Silencer => {
+                // Quieter? 
+                weapon.damage *= 0.9; // Slight damage reduction
+            },
+            Attachment::ExtendedMag => {
+                weapon.ammo_capacity = (weapon.ammo_capacity as f32 * 1.5) as i32;
+                weapon.current_ammo = weapon.ammo_capacity; // Refill for demo
+            },
+            Attachment::Scope => {
+                weapon.aim_spread_mult *= 0.5; // Better zoom accuracy
+                weapon.base_spread *= 0.9;
+            },
+             Attachment::HeavyBarrel => {
+                weapon.damage *= 1.2;
+                weapon.fire_rate *= 0.8;
+            },
+             Attachment::LaserSight => {
+                weapon.base_spread *= 0.6; // Hip accuracy
+            },
         }
     }
 }
@@ -92,9 +149,101 @@ pub enum WeaponType {
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct WeaponManager {
-    pub equipped_weapons: Vec<Entity>,
-    pub current_weapon_index: usize,
-    pub can_switch_weapons: bool,
+    // For this simple demo, we won't use Entity references since we can't easily spawn them upfront without hierarchy.
+    // Instead we'll store definitions or just swap component data.
+    // Real approach: Spawn Weapon entities as children, disable visibility/systems.
+    // Demo approach: Mutate the single Weapon component on the player.
+    pub available_weapons: Vec<WeaponType>, 
+    pub current_index: usize,
+}
+
+fn handle_weapon_switching(
+    input: Res<InputState>,
+    mut query: Query<(&mut Weapon, &mut WeaponManager)>,
+) {
+    for (mut weapon, mut manager) in query.iter_mut() {
+        let mut changed = false;
+        if input.next_weapon_pressed {
+            manager.current_index = (manager.current_index + 1) % manager.available_weapons.len();
+            changed = true;
+        } else if input.prev_weapon_pressed {
+             if manager.current_index == 0 {
+                manager.current_index = manager.available_weapons.len() - 1;
+             } else {
+                manager.current_index -= 1;
+             }
+             changed = true;
+        }
+
+        if changed {
+             let new_type = manager.available_weapons[manager.current_index];
+             // Apply presets based on type
+             match new_type {
+                WeaponType::Pistol => {
+                    *weapon = Weapon {
+                        weapon_name: "Pistol".to_string(),
+                        damage: 25.0,
+                        fire_rate: 2.0,
+                        range: 50.0,
+                        ammo_capacity: 12,
+                        current_ammo: 12, // Refill on switch for demo simplicity
+                        reload_time: 1.5,
+                        base_spread: 2.0,
+                        spread: 2.0,
+                        aim_spread_mult: 0.1,
+                        projectiles_per_shot: 1,
+                        is_automatic: false,
+                        weapon_type: WeaponType::Pistol,
+                        attachments: vec![Attachment::Silencer, Attachment::LaserSight],
+                        ..default()
+                    };
+                    apply_attachments(&mut weapon);
+                },
+                 WeaponType::Shotgun => {
+                    *weapon = Weapon {
+                        weapon_name: "Shotgun".to_string(),
+                        damage: 10.0, // Per pellet
+                        fire_rate: 1.0,
+                        range: 20.0,
+                        ammo_capacity: 6,
+                        current_ammo: 6,
+                        reload_time: 2.5,
+                        base_spread: 15.0,
+                        spread: 15.0,
+                        aim_spread_mult: 0.8, // Minimal zoom benefit
+                        projectiles_per_shot: 8,
+                        is_automatic: false,
+                        weapon_type: WeaponType::Shotgun,
+                        attachments: vec![],
+                         ..default()
+                    };
+                    apply_attachments(&mut weapon);
+                },
+                 WeaponType::Rifle => {
+                    *weapon = Weapon {
+                        weapon_name: "Assault Rifle".to_string(),
+                        damage: 18.0, 
+                        fire_rate: 10.0, // Fast
+                        range: 100.0,
+                        ammo_capacity: 30,
+                        current_ammo: 30,
+                        reload_time: 2.0,
+                        base_spread: 3.0,
+                        spread: 3.0,
+                        aim_spread_mult: 0.3, 
+                        projectiles_per_shot: 1,
+                        is_automatic: true,
+                        weapon_type: WeaponType::Rifle,
+                        attachments: vec![Attachment::Scope, Attachment::ExtendedMag],
+                         ..default()
+                    };
+                    apply_attachments(&mut weapon);
+                },
+                _ => {}
+             }
+             info!("Switched to {}", weapon.weapon_name);
+        }
+    }
 }
 
 fn update_weapons(
@@ -116,6 +265,19 @@ fn update_weapons(
                 weapon.current_ammo = weapon.ammo_capacity;
                 info!("Reloaded {}", weapon.weapon_name);
             }
+        }
+    }
+}
+
+fn update_weapon_aim(
+    input: Res<InputState>,
+    mut query: Query<&mut Weapon>,
+) {
+    for mut weapon in query.iter_mut() {
+        if input.aim_pressed {
+            weapon.spread = weapon.base_spread * weapon.aim_spread_mult;
+        } else {
+            weapon.spread = weapon.base_spread;
         }
     }
 }
@@ -248,69 +410,79 @@ fn fire_weapon(
     weapon.current_ammo -= 1;
     weapon.current_fire_timer = 1.0 / weapon.fire_rate;
 
-    // Hitscan Logic
-    if weapon.projectile_speed <= 0.0 {
-        let ray_origin = transform.translation(); // + Forward * offset
-        let ray_dir = transform.forward(); 
-        // Note: For 3rd person, usually we raycast from Camera to center of screen.
-        // Since Weapon is on Player in example scene, it shoots from player feet/center?
-        // Example scene put weapon components ON player. 
-        // Player forward is horizontal. 
+    let forward = transform.forward();
+    let right = transform.right();
+    let up = transform.up();
 
-        let max_distance = weapon.range;
-        
-        // Exclude shooter
-        let filter = SpatialQueryFilter::from_excluded_entities([source_entity]); 
+    for _ in 0..weapon.projectiles_per_shot {
+        // Calculate spread
+        // Simple uniform spread in circle (Pseudo-random)
+        let spread_angle = weapon.spread.to_radians();
+        let time_factor = weapon.current_fire_timer * 1000.0 + (weapon.projectiles_per_shot as f32);
+        let s_x = (time_factor.sin()) * spread_angle * 0.5;
+        let s_y = (time_factor.cos()) * spread_angle * 0.5;
 
-        if let Some(hit) = spatial_query.cast_ray(
-            ray_origin + Vec3::Y * 1.5, // Eye level estimate if on player
-            ray_dir.into(),
-            max_distance,
-            true,
-            &filter
-        ) {
-            info!("Hit entity {:?} with {}", hit.entity, weapon.weapon_name);
+        let spread_rot = Quat::from_euler(EulerRot::XYZ, s_y, s_x, 0.0);
+        let final_dir = transform.rotation() * spread_rot * Vec3::NEG_Z; 
+
+
+        // Hitscan Logic
+        if weapon.projectile_speed <= 0.0 {
+            let ray_origin = transform.translation(); 
+            let max_distance = weapon.range;
             
-            // Apply Damage
-            damage_events.0.push(DamageEvent {
-                amount: weapon.damage,
-                damage_type: DamageType::Ranged,
-                source: Some(source_entity),
-                target: hit.entity,
-            });
+            // Exclude shooter
+            let filter = SpatialQueryFilter::from_excluded_entities([source_entity]); 
 
-            // Debug Visual
-            // Spawning a temporary tracer?
-             let hit_point = ray_origin + *ray_dir * hit.distance;
-             commands.spawn((
-                Transform::from_translation(hit_point),
-                GlobalTransform::default(),
-                // Visual marker...
-            ));
+            if let Some(hit) = spatial_query.cast_ray(
+                ray_origin + Vec3::Y * 1.5, 
+                Dir3::new(final_dir).unwrap_or(Dir3::NEG_Z),
+                max_distance,
+                true,
+                &filter
+            ) {
+                // ... (Logic same as before, just inside loop)
+                // We'll duplicate the hit logic here for the loop
+                 info!("Hit entity {:?} with {}", hit.entity, weapon.weapon_name);
+                damage_events.0.push(DamageEvent {
+                    amount: weapon.damage,
+                    damage_type: DamageType::Ranged,
+                    source: Some(source_entity),
+                    target: hit.entity,
+                });
+
+                 let hit_point = ray_origin + Vec3::Y * 1.5 + final_dir * hit.distance;
+                 commands.spawn((
+                    Transform::from_translation(hit_point),
+                    GlobalTransform::default(),
+                    // Marker
+                 ));
+            }
         } else {
-             info!("Missed!");
+             // Projectile Logic
+             let spawn_pos = transform.translation() + forward * 1.0; 
+             let velocity = final_dir * weapon.projectile_speed;
+             
+             commands.spawn((
+                Mesh3d(Default::default()),
+                Transform::from_translation(spawn_pos),
+                GlobalTransform::default(),
+                Projectile {
+                    velocity,
+                    damage: weapon.damage,
+                    lifetime: 5.0,
+                    owner: source_entity,
+                },
+                Name::new("Projectile"),
+             ));
         }
+    }
+    
+    if weapon.projectiles_per_shot > 1 {
+        info!("Fired shotgun blast!");
+    } else if weapon.projectile_speed > 0.0 {
+        info!("Fired projectile!");
     } else {
-         // Projectile Logic
-         // Spawn actual projectile entity
-         let spawn_pos = transform.translation() + transform.forward() * 1.0; // Offset from barrel
-         let velocity = transform.forward() * weapon.projectile_speed;
-         
-         commands.spawn((
-            Mesh3d(Default::default()), // Placeholder mesh (should be resource)
-            // Ideally we use a asset handle here, but for now empty mesh or primitive
-            // We can't easily access meshes resource here without SystemParam. 
-            // Just spawn a transform + Component for logic.
-            Transform::from_translation(spawn_pos),
-            GlobalTransform::default(),
-            Projectile {
-                velocity,
-                damage: weapon.damage,
-                lifetime: 5.0,
-                owner: source_entity,
-            },
-            Name::new("Projectile"),
-         ));
-         info!("Fired projectile!");
+        // Hitscan log already handled per hit
     }
 }
