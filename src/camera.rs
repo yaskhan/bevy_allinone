@@ -1,8 +1,6 @@
-//! Camera system module
-//!
-//! Advanced camera management for 3rd/1st person views, locked cameras, and more.
-
 use bevy::prelude::*;
+use avian3d::prelude::*;
+use crate::input::InputState;
 
 pub struct CameraPlugin;
 
@@ -10,252 +8,189 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Update, (
-                update_camera_follow,
                 update_camera_rotation,
+                update_camera_follow,
                 update_camera_zoom,
                 handle_camera_collision,
+                update_camera_fov,
             ).chain());
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
+pub enum CameraMode {
+    #[default]
+    ThirdPerson,
+    FirstPerson,
+    Locked,
+    SideScroller,
+}
+
 /// Camera controller component
-///
-/// Manages camera behavior for character following, rotation, and special modes.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct GameCamera {
-    // Follow settings
     pub follow_target: Option<Entity>,
+    pub mode: CameraMode,
+    
+    // Rotation
+    pub rotation_speed: f32,
+    pub min_vertical_angle: f32,
+    pub max_vertical_angle: f32,
+    
+    // Zoom/Distance
+    pub distance: f32,
+    pub min_distance: f32,
+    pub max_distance: f32,
+    pub zoom_speed: f32,
+    
+    // Smoothing
+    pub smooth_follow_speed: f32,
+    pub smooth_rotation_speed: f32,
+    
+    // Offsets
     pub pivot_offset: Vec3,
     pub camera_offset: Vec3,
     
-    // Rotation settings
-    pub rotation_speed: f32,
-    pub vertical_rotation_speed: f32,
-    pub horizontal_rotation_speed: f32,
-    
-    // Limits
-    pub min_vertical_angle: f32,
-    pub max_vertical_angle: f32,
-    pub min_distance: f32,
-    pub max_distance: f32,
-    
-    // Zoom settings
-    pub current_distance: f32,
-    pub zoom_speed: f32,
-    pub smooth_zoom: bool,
-    
-    // FOV settings
+    // FOV
     pub default_fov: f32,
-    pub aim_fov: f32,
-    pub sprint_fov: f32,
-    pub fov_change_speed: f32,
+    pub target_fov: f32,
+    pub fov_speed: f32,
     
-    // Collision settings
-    pub check_collision: bool,
-    pub collision_layers: u32,
+    // Collision
+    pub use_collision: bool,
     pub collision_radius: f32,
-    
-    // State
-    pub is_locked: bool,
-    pub is_first_person: bool,
-    pub shake_active: bool,
-    
-    // TODO: Add more fields
 }
 
 impl Default for GameCamera {
     fn default() -> Self {
         Self {
             follow_target: None,
-            pivot_offset: Vec3::new(0.0, 1.5, 0.0),
-            camera_offset: Vec3::new(0.0, 0.0, -3.0),
+            mode: CameraMode::ThirdPerson,
             
-            rotation_speed: 5.0,
-            vertical_rotation_speed: 5.0,
-            horizontal_rotation_speed: 5.0,
+            rotation_speed: 0.1,
+            min_vertical_angle: -80.0,
+            max_vertical_angle: 80.0,
             
-            min_vertical_angle: -60.0,
-            max_vertical_angle: 60.0,
+            distance: 4.0,
             min_distance: 1.0,
             max_distance: 10.0,
+            zoom_speed: 1.0,
             
-            current_distance: 3.0,
-            zoom_speed: 2.0,
-            smooth_zoom: true,
+            smooth_follow_speed: 10.0,
+            smooth_rotation_speed: 15.0,
+            
+            pivot_offset: Vec3::new(0.0, 1.5, 0.0),
+            camera_offset: Vec3::ZERO,
             
             default_fov: 60.0,
-            aim_fov: 45.0,
-            sprint_fov: 70.0,
-            fov_change_speed: 5.0,
+            target_fov: 60.0,
+            fov_speed: 5.0,
             
-            check_collision: true,
-            collision_layers: 1,
+            use_collision: true,
             collision_radius: 0.2,
-            
-            is_locked: false,
-            is_first_person: false,
-            shake_active: false,
         }
     }
 }
 
-/// Camera state component
-///
-/// Tracks current camera angles and position
-#[derive(Component, Debug, Default)]
+/// Camera state tracking current angles
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
 pub struct CameraState {
-    pub current_horizontal_angle: f32,
-    pub current_vertical_angle: f32,
-    pub target_distance: f32,
-    pub current_fov: f32,
-    
-    // TODO: Add more state tracking
-}
-
-/// Camera shake effect
-///
-/// TODO: Implement camera shake system
-#[derive(Component, Debug)]
-pub struct CameraShake {
-    pub intensity: f32,
-    pub duration: f32,
-    pub frequency: f32,
-    pub elapsed: f32,
-}
-
-/// Locked camera mode
-///
-/// For fixed camera angles (like classic survival horror games)
-///
-/// TODO: Implement locked camera system
-#[derive(Component, Debug)]
-pub struct LockedCamera {
-    pub camera_position: Vec3,
-    pub look_at_target: Vec3,
-    pub transition_speed: f32,
-}
-
-/// Camera waypoint system
-///
-/// For cinematic camera paths
-///
-/// TODO: Implement waypoint system
-#[derive(Component, Debug)]
-pub struct CameraWaypoint {
-    pub waypoints: Vec<Vec3>,
-    pub current_waypoint: usize,
-    pub movement_speed: f32,
-    pub rotation_speed: f32,
+    pub yaw: f32,
+    pub pitch: f32,
+    pub current_distance: f32,
+    pub smoothed_pivot: Vec3,
 }
 
 // ============================================================================
 // SYSTEMS
 // ============================================================================
 
-/// Update camera to follow target
-///
-/// TODO: Implement follow logic
+fn update_camera_rotation(
+    input: Res<InputState>,
+    mut query: Query<(&GameCamera, &mut CameraState)>,
+) {
+    for (camera, mut state) in query.iter_mut() {
+        if camera.mode == CameraMode::Locked {
+            continue;
+        }
+
+        state.yaw -= input.look.x * camera.rotation_speed;
+        state.pitch -= input.look.y * camera.rotation_speed;
+        state.pitch = state.pitch.clamp(camera.min_vertical_angle, camera.max_vertical_angle);
+    }
+}
+
 fn update_camera_follow(
     time: Res<Time>,
-    mut camera_query: Query<(
-        &GameCamera,
-        &CameraState,
-        &mut Transform,
-    )>,
+    mut camera_query: Query<(&GameCamera, &mut CameraState, &mut Transform)>,
     target_query: Query<&Transform, Without<GameCamera>>,
 ) {
-    for (camera, state, mut camera_transform) in camera_query.iter_mut() {
-        if let Some(target_entity) = camera.follow_target {
-            if let Ok(target_transform) = target_query.get(target_entity) {
-                // TODO: Calculate pivot position
-                // TODO: Apply camera offset
-                // TODO: Smooth camera movement
-                // TODO: Handle first person mode
-                
-                let _delta = time.delta_secs();
-                let _target_pos = target_transform.translation;
-                let _pivot_pos = _target_pos + camera.pivot_offset;
-                
-                // Placeholder
-                camera_transform.translation = _pivot_pos + camera.camera_offset;
-            }
-        }
+    for (camera, mut state, mut transform) in camera_query.iter_mut() {
+        let Some(target_entity) = camera.follow_target else { continue };
+        let Ok(target_transform) = target_query.get(target_entity) else { continue };
+
+        let pivot_pos = target_transform.translation + camera.pivot_offset;
+        
+        // Smooth pivot following
+        state.smoothed_pivot = state.smoothed_pivot.lerp(pivot_pos, camera.smooth_follow_speed * time.delta_secs());
+
+        // Calculate rotation based on yaw/pitch
+        let rotation = Quat::from_rotation_y(state.yaw.to_radians()) * Quat::from_rotation_x(state.pitch.to_radians());
+        
+        // Smooth rotation update
+        transform.rotation = transform.rotation.slerp(rotation, camera.smooth_rotation_speed * time.delta_secs());
+
+        // Initial position calculation (before collision)
+        let direction = transform.back();
+        transform.translation = state.smoothed_pivot + direction * state.current_distance;
     }
 }
 
-/// Update camera rotation based on input
-///
-/// TODO: Implement rotation logic
-fn update_camera_rotation(
-    time: Res<Time>,
-    mut query: Query<(
-        &GameCamera,
-        &mut CameraState,
-        &mut Transform,
-    )>,
-) {
-    for (camera, mut state, mut transform) in query.iter_mut() {
-        if camera.is_locked {
-            continue;
-        }
-        
-        // TODO: Read mouse/gamepad input
-        // TODO: Apply rotation speed
-        // TODO: Clamp vertical angle
-        // TODO: Update transform rotation
-        
-        let _delta = time.delta_secs();
-        
-        // Clamp vertical angle
-        state.current_vertical_angle = state.current_vertical_angle
-            .clamp(camera.min_vertical_angle, camera.max_vertical_angle);
-        
-        // TODO: Apply rotation to transform
-    }
-}
-
-/// Update camera zoom
-///
-/// TODO: Implement zoom logic
 fn update_camera_zoom(
-    time: Res<Time>,
-    mut query: Query<(
-        &mut GameCamera,
-        &mut CameraState,
-    )>,
+    mut query: Query<(&GameCamera, &mut CameraState)>,
 ) {
-    for (mut camera, mut state) in query.iter_mut() {
-        // TODO: Read zoom input
-        // TODO: Smooth zoom transition
-        // TODO: Clamp distance
-        
-        let _delta = time.delta_secs();
-        
-        // Clamp distance
-        camera.current_distance = camera.current_distance
-            .clamp(camera.min_distance, camera.max_distance);
-        
-        state.target_distance = camera.current_distance;
+    for (camera, mut state) in query.iter_mut() {
+        // Zoom logic can be added here if we have scroll input in InputState
+        state.current_distance = camera.distance; 
     }
 }
 
-/// Handle camera collision with environment
-///
-/// TODO: Implement collision logic
 fn handle_camera_collision(
-    mut query: Query<(
-        &GameCamera,
-        &mut Transform,
-    )>,
+    spatial_query: SpatialQuery,
+    mut query: Query<(&GameCamera, &CameraState, &mut Transform)>,
 ) {
-    for (camera, mut _transform) in query.iter_mut() {
-        if !camera.check_collision {
-            continue;
+    for (camera, state, mut transform) in query.iter_mut() {
+        if !camera.use_collision { continue; }
+
+        let start = state.smoothed_pivot;
+        let direction = transform.back();
+        let max_dist = camera.distance;
+
+        let filter = SpatialQueryFilter::default(); // Exclude player if needed
+
+        if let Some(hit) = spatial_query.cast_ray(
+            start,
+            direction,
+            max_dist,
+            true,
+            filter,
+        ) {
+            transform.translation = start + direction * (hit.distance - camera.collision_radius);
         }
-        
-        // TODO: Raycast from pivot to camera position
-        // TODO: Adjust camera distance on collision
-        // TODO: Smooth collision response
+    }
+}
+
+fn update_camera_fov(
+    time: Res<Time>,
+    mut query: Query<(&GameCamera, &mut Projection)>,
+) {
+    for (camera, mut projection) in query.iter_mut() {
+        if let Projection::Perspective(ref mut p) = *projection {
+            let target_rad = camera.target_fov.to_radians();
+            p.fov = p.fov + (target_rad - p.fov) * camera.fov_speed * time.delta_secs();
+        }
     }
 }
 
@@ -263,13 +198,9 @@ fn handle_camera_collision(
 // HELPER FUNCTIONS
 // ============================================================================
 
-/// Spawn a game camera
-///
-/// TODO: Add more configuration options
 pub fn spawn_camera(
     commands: &mut Commands,
     target: Entity,
-    position: Vec3,
 ) -> Entity {
     commands.spawn((
         Camera3d::default(),
@@ -277,30 +208,12 @@ pub fn spawn_camera(
             follow_target: Some(target),
             ..default()
         },
-        CameraState::default(),
-        Transform::from_translation(position),
+        CameraState {
+            current_distance: 4.0,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         GlobalTransform::default(),
     ))
     .id()
-}
-
-/// Set camera target
-pub fn set_camera_target(
-    camera: &mut GameCamera,
-    target: Entity,
-) {
-    camera.follow_target = Some(target);
-}
-
-/// Toggle first person mode
-///
-/// TODO: Implement first person transition
-pub fn toggle_first_person(
-    camera: &mut GameCamera,
-) {
-    camera.is_first_person = !camera.is_first_person;
-    
-    // TODO: Adjust camera offset
-    // TODO: Adjust FOV
-    // TODO: Trigger transition animation
 }

@@ -80,15 +80,10 @@ impl Default for InputConfig {
 fn update_input_state(
     keyboard: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
+    mut mouse_motion: EventReader<bevy::input::mouse::MouseMotion>,
     mut input_state: ResMut<InputState>,
 ) {
-    // TODO: Read keyboard input
-    // TODO: Read mouse input
-    // TODO: Read gamepad input
-    // TODO: Apply sensitivity settings
-    // TODO: Handle input buffering
-    
-    // Placeholder
+    // Read keyboard movement
     let mut movement = Vec2::ZERO;
     if keyboard.pressed(KeyCode::KeyW) { movement.y += 1.0; }
     if keyboard.pressed(KeyCode::KeyS) { movement.y -= 1.0; }
@@ -102,8 +97,12 @@ fn update_input_state(
     input_state.interact_pressed = keyboard.just_pressed(KeyCode::KeyE);
     input_state.aim_pressed = mouse.pressed(MouseButton::Right);
 
-    // Look input from mouse motion
-    // This requires an event reader in a real implementation
+    // Read mouse motion for looking
+    let mut look = Vec2::ZERO;
+    for event in mouse_motion.read() {
+        look += event.delta;
+    }
+    input_state.look = look;
 }
 
 /// Process movement input
