@@ -43,7 +43,11 @@ pub enum InputAction {
     Aim,
     LeanLeft,
     LeanRight,
+    Result, // 'R' key for LockOn or Reload? 
+    // LockOn was defined below. Let's add Attack.
     LockOn,
+    Attack,
+    Block,
 }
 
 /// Input binding types
@@ -74,6 +78,8 @@ impl Default for InputMap {
         bindings.insert(InputAction::LeanLeft, vec![InputBinding::Key(KeyCode::KeyQ)]);
         bindings.insert(InputAction::LeanRight, vec![InputBinding::Key(KeyCode::KeyE)]);
         bindings.insert(InputAction::LockOn, vec![InputBinding::Mouse(MouseButton::Middle), InputBinding::Key(KeyCode::KeyR)]);
+        bindings.insert(InputAction::Attack, vec![InputBinding::Mouse(MouseButton::Left)]);
+        bindings.insert(InputAction::Block, vec![InputBinding::Mouse(MouseButton::Right)]);
         Self { bindings }
     }
 }
@@ -120,6 +126,8 @@ pub struct InputState {
     pub lean_left: bool,
     pub lean_right: bool,
     pub lock_on_pressed: bool,
+    pub attack_pressed: bool,
+    pub block_pressed: bool,
 }
 
 /// Input configuration
@@ -218,6 +226,8 @@ fn update_input_state(
     input_state.lean_left = check_action(InputAction::LeanLeft);
     input_state.lean_right = check_action(InputAction::LeanRight);
     input_state.lock_on_pressed = check_action_just_pressed(InputAction::LockOn);
+    input_state.attack_pressed = check_action_just_pressed(InputAction::Attack);
+    input_state.block_pressed = check_action(InputAction::Block);
 
     // Look motion
     let mut look = Vec2::ZERO;
