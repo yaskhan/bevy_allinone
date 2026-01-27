@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity};
-use crate::input::InputState;
+use crate::input::{InputState, InputAction, InputBuffer};
 use crate::combat::{DamageEvent, DamageType};
 
 pub struct CharacterPlugin;
@@ -276,6 +276,7 @@ fn check_ground_state(
 
 fn apply_character_physics(
     time: Res<Time>,
+    mut input_buffer: ResMut<InputBuffer>,
     mut query: Query<(
         &mut CharacterMovementState, 
         &GroundDetection, 
@@ -301,10 +302,13 @@ fn apply_character_physics(
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
 
-        // Jump logic
-        if movement.wants_to_jump && ground.is_grounded {
+        // Jump logic with buffering
+        let jump_requested = movement.wants_to_jump || input_buffer.consume(InputAction::Jump);
+        
+        if jump_requested && ground.is_grounded {
             impulse.apply_impulse(Vec3::Y * controller.jump_power);
             movement.jump_hold_timer = controller.max_jump_hold_time;
+            movement.wants_to_jump = false;
         }
 
         // Variable Jump Bonus

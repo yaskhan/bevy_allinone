@@ -1,6 +1,6 @@
 //! Input system module
 //!
-//! Flexible input handling with action remapping support.
+//! Flexible input handling with action remapping and buffering support.
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -13,19 +13,16 @@ impl Plugin for InputPlugin {
             .init_resource::<InputState>()
             .init_resource::<InputMap>()
             .init_resource::<RebindState>()
+            .init_resource::<InputBuffer>()
+            .init_resource::<InputConfig>()
             .add_systems(Update, (
                 update_input_state,
-                handle_rebinding, // New system
+                handle_rebinding,
+                cleanup_input_buffer, // New system
                 process_movement_input,
                 process_action_input,
             ));
     }
-}
-
-/// Resource to track if we are currently waiting for a key to rebind an action
-#[derive(Resource, Debug, Default)]
-pub struct RebindState {
-    pub action: Option<InputAction>,
 }
 
 /// Logical game actions
@@ -77,6 +74,35 @@ impl Default for InputMap {
     }
 }
 
+/// A buffered action that was recently pressed
+#[derive(Debug, Clone)]
+pub struct BufferedAction {
+    pub action: InputAction,
+    pub timestamp: f32,
+}
+
+/// Buffer for storing recently pressed actions
+#[derive(Resource, Debug, Default)]
+pub struct InputBuffer {
+    pub actions: Vec<BufferedAction>,
+}
+
+impl InputBuffer {
+    /// Check if an action is in the buffer and consume it if found
+    pub fn consume(&mut self, action: InputAction) -> bool {
+        if let Some(index) = self.actions.iter().position(|ba| ba.action == action) {
+            self.actions.remove(index);
+            return true;
+        }
+        false
+    }
+    
+    /// Check if an action is in the buffer without consuming it
+    pub fn is_buffered(&self, action: InputAction) -> bool {
+        self.actions.iter().any(|ba| ba.action == action)
+    }
+}
+
 /// Global input state resource
 #[derive(Resource, Debug, Default)]
 pub struct InputState {
@@ -98,16 +124,24 @@ pub struct InputConfig {
     pub mouse_sensitivity: f32,
     pub gamepad_sensitivity: f32,
     pub invert_y_axis: bool,
+    pub buffer_ttl: f32, // Time to live for buffered inputs
 }
 
 impl Default for InputConfig {
     fn default() -> Self {
         Self {
-            mouse_sensitivity: 1.0,
+            mouse_sensitivity: 0.15,
             gamepad_sensitivity: 1.0,
             invert_y_axis: false,
+            buffer_ttl: 0.15, // 150ms buffer
         }
     }
+}
+
+/// Resource to track if we are currently waiting for a key to rebind an action
+#[derive(Resource, Debug, Default)]
+pub struct RebindState {
+    pub action: Option<InputAction>,
 }
 
 // ============================================================================
@@ -116,11 +150,13 @@ impl Default for InputConfig {
 
 /// Update input state from devices based on current InputMap
 fn update_input_state(
+    time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mut mouse_motion: EventReader<bevy::input::mouse::MouseMotion>,
     input_map: Res<InputMap>,
     mut input_state: ResMut<InputState>,
+    mut input_buffer: ResMut<InputBuffer>,
 ) {
     let check_action = |action: InputAction| -> bool {
         if let Some(bindings) = input_map.bindings.get(&action) {
@@ -143,6 +179,22 @@ fn update_input_state(
             false
         }
     };
+
+    // Buffer actions that were just pressed
+    let actions_to_buffer = [
+        InputAction::Jump,
+        InputAction::Interact,
+        InputAction::LockOn,
+    ];
+
+    for action in actions_to_buffer {
+        if check_action_just_pressed(action) {
+            input_buffer.actions.push(BufferedAction {
+                action,
+                timestamp: time.elapsed_secs(),
+            });
+        }
+    }
 
     // Movement
     let mut movement = Vec2::ZERO;
@@ -193,6 +245,16 @@ fn handle_rebinding(
         input_map.bindings.insert(action, vec![binding]);
         rebind_state.action = None;
     }
+}
+
+/// Remove expired inputs from the buffer
+fn cleanup_input_buffer(
+    time: Res<Time>,
+    config: Res<InputConfig>,
+    mut input_buffer: ResMut<InputBuffer>,
+) {
+    let now = time.elapsed_secs();
+    input_buffer.actions.retain(|ba| now - ba.timestamp <= config.buffer_ttl);
 }
 
 /// Process movement input
