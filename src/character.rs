@@ -71,6 +71,9 @@ pub struct CharacterController {
     
     // Axis Constraints (for 2.5D)
     pub fixed_axis: Option<Vec3>,
+
+    // Root Motion
+    pub use_root_motion: bool,
 }
 
 impl Default for CharacterController {
@@ -108,6 +111,7 @@ impl Default for CharacterController {
             obstacle_detection_distance: 0.5,
             
             fixed_axis: None,
+            use_root_motion: false,
         }
     }
 }
@@ -135,6 +139,10 @@ pub struct CharacterMovementState {
     pub obstacle_found: bool,
     pub quick_turn_active: bool,
     pub quick_turn_timer: f32,
+
+    // Root Motion Deltas (to be filled by animation systems)
+    pub root_motion_translation: Vec3,
+    pub root_motion_rotation: Quat,
 }
 
 /// Character animation state
@@ -304,6 +312,26 @@ fn apply_character_physics(
         
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
+
+        // --- ROOT MOTION ---
+        if controller.use_root_motion {
+            // Convert translation delta to velocity
+            let dt = time.delta_secs();
+            if dt > 0.0 {
+                let rm_velocity = movement.root_motion_translation / dt;
+                velocity.x = rm_velocity.x;
+                velocity.z = rm_velocity.z;
+                if rm_velocity.y.abs() > 0.001 {
+                    velocity.y = rm_velocity.y;
+                }
+            }
+            // Apply rotation delta
+            transform.rotation *= movement.root_motion_rotation;
+            
+            // Reset deltas after consumption
+            movement.root_motion_translation = Vec3::ZERO;
+            movement.root_motion_rotation = Quat::IDENTITY;
+        }
 
         // --- STEP UP LOGIC ---
         if move_dir.length_squared() > 0.01 && ground.is_grounded {
