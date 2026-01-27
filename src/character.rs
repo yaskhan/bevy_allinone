@@ -77,6 +77,7 @@ pub struct CharacterController {
 
     // Environmental States
     pub zero_gravity_mode: bool,
+    pub free_floating_mode: bool,
 }
 
 impl Default for CharacterController {
@@ -116,6 +117,7 @@ impl Default for CharacterController {
             fixed_axis: None,
             use_root_motion: false,
             zero_gravity_mode: false,
+            free_floating_mode: false,
         }
     }
 }
@@ -366,9 +368,21 @@ fn apply_character_physics(
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
 
-        if controller.zero_gravity_mode {
-            // In zero gravity, movement is 3D and has inertia
-            velocity.y = target_vel.y; 
+        if controller.zero_gravity_mode || controller.free_floating_mode {
+            // In zero gravity or free float, movement is 3D
+            let mut free_vel = transform.rotation * Vec3::new(input.movement.x, 0.0, -input.movement.y) * movement.current_speed;
+            
+            // Vertical propulsion
+            if input.jump_pressed {
+                free_vel.y += movement.current_speed;
+            }
+            if input.crouch_pressed {
+                free_vel.y -= movement.current_speed;
+            }
+
+            velocity.x = free_vel.x;
+            velocity.y = free_vel.y;
+            velocity.z = free_vel.z;
             return;
         }
 
