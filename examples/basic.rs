@@ -47,7 +47,7 @@ fn setup(
     });
 
     // Spawn a camera following the character
-    spawn_camera(&mut commands, character, Vec3::new(0.0, 5.0, -10.0));
+    spawn_camera(&mut commands, character);
 
     info!("Bevy Game Controller Example - Character controller spawned!");
     info!("Note: Most functionality is not yet implemented (TODO)");
