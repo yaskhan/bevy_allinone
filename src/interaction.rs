@@ -18,8 +18,10 @@ impl Plugin for InteractionPlugin {
                 detect_interactables,
                 validate_interactions,
                 process_interactions,
+                update_interaction_ui,
                 debug_draw_interaction_rays,
-            ).chain());
+            ).chain())
+            .add_systems(Startup, setup_interaction_ui);
     }
 }
 
@@ -111,6 +113,92 @@ pub enum InteractionType {
     Examine,
     Toggle,
     Grab,
+}
+
+/// Component for the interaction UI prompt text
+#[derive(Component)]
+pub struct InteractionPrompt;
+
+/// Resource to manage interaction UI state
+#[derive(Resource, Default)]
+pub struct InteractionUIState {
+    pub is_visible: bool,
+    pub current_text: String,
+}
+
+/// System to setup the interaction UI
+fn setup_interaction_ui(mut commands: Commands) {
+    let text_style = TextFont {
+        font_size: 24.0,
+        ..default()
+    };
+
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Percent(20.0),
+                left: Val::Auto,
+                right: Val::Auto,
+                align_self: AlignSelf::Center,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                margin: UiRect::all(Val::Auto),
+                ..default()
+            },
+            InteractionPrompt,
+            Visibility::Hidden,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Interact"),
+                text_style,
+                TextColor(Color::WHITE),
+                TextLayout::default(),
+            ));
+        });
+}
+
+/// System to update the interaction UI based on current detection
+fn update_interaction_ui(
+    current_interactable: Res<CurrentInteractable>,
+    interactables: Query<&Interactable>,
+    mut ui_query: Query<(&mut Visibility, &Children), With<InteractionPrompt>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (mut visibility, children) in ui_query.iter_mut() {
+        if let Some(entity) = current_interactable.entity {
+            if let Ok(interactable) = interactables.get(entity) {
+                *visibility = Visibility::Visible;
+                
+                // Update text
+                for child in children.iter() {
+                    if let Ok(mut text) = text_query.get_mut(child) {
+                        // In real implementation, get keybinding from InputMap
+                        let key_text = "E"; 
+                        text.0 = format!("Press {} to {} {}", 
+                            key_text, 
+                            match interactable.interaction_type {
+                                InteractionType::Pickup => "pick up",
+                                InteractionType::Use => "use",
+                                InteractionType::Talk => "talk to",
+                                InteractionType::Open => "open",
+                                InteractionType::Activate => "activate",
+                                InteractionType::Examine => "examine",
+                                InteractionType::Toggle => "toggle",
+                                InteractionType::Grab => "grab",
+                            },
+                            interactable.interaction_text
+                        );
+                    }
+                }
+            } else {
+                *visibility = Visibility::Hidden;
+            }
+        } else {
+            *visibility = Visibility::Hidden;
+        }
+    }
 }
 
 /// Data specific to the interaction
