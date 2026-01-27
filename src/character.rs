@@ -22,6 +22,7 @@ impl Plugin for CharacterPlugin {
                 handle_falling_damage,
                 handle_crouch_sliding,
                 handle_obstacle_detection,
+                handle_wall_running_detection,
             ));
     }
 }
@@ -145,6 +146,10 @@ pub struct CharacterMovementState {
     pub obstacle_found: bool,
     pub quick_turn_active: bool,
     pub quick_turn_timer: f32,
+
+    // Wall Running
+    pub wall_running_active: bool,
+    pub wall_side: Option<Vec3>, // Normal of the wall we are running on
 
     // Root Motion Deltas (to be filled by animation systems)
     pub root_motion_translation: Vec3,
@@ -368,6 +373,15 @@ fn apply_character_physics(
         velocity.x = target_vel.x;
         velocity.z = target_vel.z;
 
+        if movement.wall_running_active {
+            // Counteract gravity and maintain forward momentum
+            velocity.y = 0.0;
+            if let Some(normal) = movement.wall_side {
+                // Stick to wall by applying slight force towards it
+                velocity -= normal * 2.0;
+            }
+        }
+
         if controller.zero_gravity_mode || controller.free_floating_mode {
             // In zero gravity or free float, movement is 3D
             let mut free_vel = transform.rotation * Vec3::new(input.movement.x, 0.0, -input.movement.y) * movement.current_speed;
@@ -557,6 +571,38 @@ fn handle_obstacle_detection(
         let hit_right = spatial_query.cast_ray(right_ray, ray_dir, controller.obstacle_detection_distance, true, filter);
 
         state.obstacle_found = hit_left.is_some() || hit_right.is_some();
+    }
+}
+
+fn handle_wall_running_detection(
+    spatial_query: SpatialQuery,
+    mut query: Query<(Entity, &Transform, &CharacterController, &mut CharacterMovementState, &GroundDetection)>,
+) {
+    for (entity, transform, _controller, mut state, ground) in query.iter_mut() {
+        if ground.is_grounded || state.lerped_move_dir.length_squared() < 0.1 {
+            state.wall_running_active = false;
+            state.wall_side = None;
+            continue;
+        }
+
+        let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+        let ray_pos = transform.translation + Vec3::Y * 0.5;
+        let left_dir = transform.left();
+        let right_dir = transform.right();
+
+        let hit_left = spatial_query.cast_ray(ray_pos, Dir3::new(*left_dir).unwrap(), 0.8, true, filter.clone());
+        let hit_right = spatial_query.cast_ray(ray_pos, Dir3::new(*right_dir).unwrap(), 0.8, true, filter);
+
+        if let Some(hit) = hit_left {
+            state.wall_running_active = true;
+            state.wall_side = Some(hit.normal);
+        } else if let Some(hit) = hit_right {
+            state.wall_running_active = true;
+            state.wall_side = Some(hit.normal);
+        } else {
+            state.wall_running_active = false;
+            state.wall_side = None;
+        }
     }
 }
 
