@@ -140,6 +140,9 @@ fn setup_scene(
         },
     ));
 
+    // Vehicle
+    bevy_allinone::vehicles::spawn_vehicle(&mut commands, &mut meshes, &mut materials, Vec3::new(-5.0, 0.5, -5.0));
+
     // Pickup Items
     // Rusty Sword
     commands.spawn((

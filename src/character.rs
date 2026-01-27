@@ -1,10 +1,8 @@
 use bevy::prelude::*;
-use std::collections::HashMap;
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
 use crate::input::{InputState, InputAction, InputBuffer};
 use crate::combat::{DamageEvent, DamageType};
-use crate::interaction::InteractionDetector;
 
 
 pub struct CharacterPlugin;
@@ -462,7 +460,7 @@ fn apply_character_physics(
             if let Some(snap_hit) = spatial_query.cast_ray(snap_pos, Dir3::NEG_Y, settings.max_step_height + settings.ray_length + 0.1, true, &filter) {
                 // If ground is within snapping distance
                 if snap_hit.distance <= settings.max_step_height + settings.ray_length + 0.05 {
-                    transform.translation.y -= (snap_hit.distance - settings.ray_length);
+                    transform.translation.y -= snap_hit.distance - settings.ray_length;
                     velocity.y = 0.0;
                     ground.is_grounded = true; // Force grounded state
                 }
@@ -491,8 +489,8 @@ fn apply_character_physics(
         if let Some(axis) = controller.fixed_axis {
             let offset = transform.translation - axis;
             transform.translation -= offset * Vec3::new(1.0, 0.0, 1.0); // Simple projection
-            velocity.x *= (1.0 - axis.x.abs());
-            velocity.z *= (1.0 - axis.z.abs());
+            velocity.x *= 1.0 - axis.x.abs();
+            velocity.z *= 1.0 - axis.z.abs();
         }
     }
 }
