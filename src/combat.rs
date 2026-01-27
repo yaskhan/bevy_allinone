@@ -92,6 +92,9 @@ pub struct MeleeCombat {
     pub attack_timer: f32,
     pub is_attacking: bool,
     pub combo_enabled: bool,
+    pub combo_count: usize,
+    pub combo_window: f32,
+    pub last_attack_finish_time: f32, // When the last attack finished
     pub hit_angle: f32, // Angle in front of character to hit
 }
 
@@ -100,10 +103,13 @@ impl Default for MeleeCombat {
         Self {
             damage: 10.0,
             range: 2.0,
-            attack_speed: 1.0, // Seconds per attack
+            attack_speed: 0.6, // Seconds per attack
             attack_timer: 0.0,
             is_attacking: false,
-            combo_enabled: false,
+            combo_enabled: true,
+            combo_count: 0,
+            combo_window: 1.0, // 1 second to chain next attack
+            last_attack_finish_time: -10.0,
             hit_angle: 90.0,
         }
     }
@@ -125,13 +131,36 @@ fn perform_melee_attacks(
             combat.attack_timer -= time.delta_secs();
             if combat.attack_timer <= 0.0 {
                 combat.is_attacking = false;
+                combat.last_attack_finish_time = time.elapsed_secs();
             }
         }
 
         // Start attack
         if input.attack_pressed && combat.attack_timer <= 0.0 {
+            let now = time.elapsed_secs();
+            
+            // Check Combo
+            if combat.combo_enabled {
+                if now - combat.last_attack_finish_time <= combat.combo_window {
+                    combat.combo_count += 1;
+                } else {
+                    combat.combo_count = 1;
+                }
+            } else {
+                combat.combo_count = 1;
+            }
+
+            // Cap count (e.g., 3 hit combo)
+            if combat.combo_count > 3 {
+                combat.combo_count = 1;
+            }
+
             combat.is_attacking = true;
             combat.attack_timer = combat.attack_speed;
+            
+            // Damage scaling based on combo
+            let combo_multiplier = 1.0 + (combat.combo_count as f32 - 1.0) * 0.2; // 20% increase per combo step
+            let current_damage = combat.damage * combo_multiplier;
             
             // Perform hit detection immediately (simplification for "instant" hit)
             // In a real game, this would be timed with animation events
@@ -141,7 +170,7 @@ fn perform_melee_attacks(
             
             // Visual debug (TODO: move to separate debug system if strictly needed, but handy here)
             // gizmos would need to be passed in. Skipping explicit gizmos for now to keep signature simple.
-            info!("Entity {:?} Attacked!", attacker_entity);
+            info!("Entity {:?} Attacked! Combo: {} (Dmg: {})", attacker_entity, combat.combo_count, current_damage);
 
             // Shape cast or Ray cast?
             // Let's use ShapeCast for a "thick" ray (sphere cast)
@@ -159,7 +188,7 @@ fn perform_melee_attacks(
                 // Note: hit.entity1 or entity2 depends on physics engine specifics, usually hit.entity
                 if targets.get(hit.entity).is_ok() {
                      damage_queue.0.push(DamageEvent {
-                        amount: combat.damage,
+                        amount: current_damage,
                         damage_type: DamageType::Melee,
                         source: Some(attacker_entity),
                         target: hit.entity,
