@@ -48,6 +48,11 @@ pub enum InputAction {
     LockOn,
     Attack,
     Block,
+    SwitchCameraMode,
+    Fire,
+    Reload,
+    NextWeapon,
+    PrevWeapon,
 }
 
 /// Input binding types
@@ -80,6 +85,11 @@ impl Default for InputMap {
         bindings.insert(InputAction::LockOn, vec![InputBinding::Mouse(MouseButton::Middle), InputBinding::Key(KeyCode::KeyR)]);
         bindings.insert(InputAction::Attack, vec![InputBinding::Mouse(MouseButton::Left)]);
         bindings.insert(InputAction::Block, vec![InputBinding::Mouse(MouseButton::Right)]);
+        bindings.insert(InputAction::SwitchCameraMode, vec![InputBinding::Key(KeyCode::KeyC)]);
+        bindings.insert(InputAction::Fire, vec![InputBinding::Mouse(MouseButton::Left)]);
+        bindings.insert(InputAction::Reload, vec![InputBinding::Key(KeyCode::KeyR)]);
+        bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::Digit1)]); // Placeholder
+        bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::Digit2)]); // Placeholder
         Self { bindings }
     }
 }
@@ -128,6 +138,11 @@ pub struct InputState {
     pub lock_on_pressed: bool,
     pub attack_pressed: bool,
     pub block_pressed: bool,
+    pub switch_camera_mode_pressed: bool,
+    pub fire_pressed: bool,
+    pub reload_pressed: bool,
+    pub next_weapon_pressed: bool,
+    pub prev_weapon_pressed: bool,
 }
 
 /// Input configuration
@@ -228,6 +243,12 @@ fn update_input_state(
     input_state.lock_on_pressed = check_action_just_pressed(InputAction::LockOn);
     input_state.attack_pressed = check_action_just_pressed(InputAction::Attack);
     input_state.block_pressed = check_action(InputAction::Block);
+    input_state.switch_camera_mode_pressed = check_action_just_pressed(InputAction::SwitchCameraMode);
+    
+    input_state.fire_pressed = check_action(InputAction::Fire); // Continuous for auto
+    input_state.reload_pressed = check_action_just_pressed(InputAction::Reload);
+    input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
+    input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);
 
     // Look motion
     let mut look = Vec2::ZERO;

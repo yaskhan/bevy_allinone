@@ -65,6 +65,7 @@ impl Plugin for CameraPlugin {
                 update_camera_waypoint_follow, // New system
                 handle_camera_collision,
                 update_camera_fov,
+                handle_camera_mode_switch,
             ).chain());
     }
 }
@@ -253,7 +254,26 @@ fn apply_camera_noise(
         if state.is_aiming {
             state.noise_offset = Vec2::new(noise_x * 0.3, noise_y * 0.3);
         } else {
-            state.noise_offset = Vec2::new(noise_x, noise_y);
+           // Apply
+            let offset = Vec2::new(noise_x, noise_y);
+            state.noise_offset = offset;
+        }
+    }
+}
+
+fn handle_camera_mode_switch(
+    input: Res<InputState>,
+    mut query: Query<&mut GameCamera>,
+) {
+    if input.switch_camera_mode_pressed {
+        for mut camera in query.iter_mut() {
+            camera.mode = match camera.mode {
+                CameraMode::ThirdPerson => CameraMode::FirstPerson,
+                CameraMode::FirstPerson => CameraMode::Locked, // Or SideScroller?
+                CameraMode::Locked => CameraMode::SideScroller,
+                CameraMode::SideScroller => CameraMode::ThirdPerson,
+            };
+            info!("Switched Camera Mode to: {:?}", camera.mode);
         }
     }
 }

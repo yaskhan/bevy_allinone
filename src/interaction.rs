@@ -115,6 +115,7 @@ pub enum InteractionType {
     Examine,
     Toggle,
     Grab,
+    Device,
 }
 
 /// Component for the interaction UI prompt text
@@ -198,6 +199,7 @@ fn update_interaction_ui(
                                 InteractionType::Examine => "examine",
                                 InteractionType::Toggle => "toggle",
                                 InteractionType::Grab => "grab",
+                                InteractionType::Device => "use device",
                             },
                             interactable.interaction_text,
                             suffix
