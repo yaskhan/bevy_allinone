@@ -90,6 +90,8 @@ fn setup_scene(
                 ],
                 current_index: 0,
             },
+            Inventory::default(),
+            InteractionDetector::default(),
         ));
 
     // Interactive Object (Cube)
@@ -137,6 +139,59 @@ fn setup_scene(
         },
     ));
 
+    // Pickup Items
+    // Rusty Sword
+    commands.spawn((
+        Name::new("Rusty Sword"),
+        Mesh3d(meshes.add(Cuboid::new(0.2, 0.8, 0.2))),
+        MeshMaterial3d(materials.add(Color::srgb(0.5, 0.2, 0.2))),
+        RigidBody::Static,
+        Collider::cuboid(0.2, 0.8, 0.2),
+        Transform::from_xyz(3.5, 0.4, -2.0),
+        Interactable {
+            interaction_type: InteractionType::Pickup,
+            interaction_text: "Rusty Sword".to_string(),
+            ..default()
+        },
+        PhysicalItem {
+            item: InventoryItem {
+                item_id: "rusty_sword".to_string(),
+                name: "Rusty Sword".to_string(),
+                quantity: 1,
+                max_stack: 1,
+                weight: 5.0,
+                item_type: ItemType::Weapon,
+                icon_path: "".to_string(),
+            }
+        },
+    ));
+
+    // Ammo
+    commands.spawn((
+        Name::new("Pistol Ammo"),
+        Mesh3d(meshes.add(Cuboid::new(0.3, 0.2, 0.3))),
+        MeshMaterial3d(materials.add(Color::srgb(0.2, 0.5, 0.2))),
+        RigidBody::Static,
+        Collider::cuboid(0.3, 0.2, 0.3),
+        Transform::from_xyz(-1.5, 0.1, 1.5),
+        Interactable {
+            interaction_type: InteractionType::Pickup,
+            interaction_text: "9mm Ammo".to_string(),
+            ..default()
+        },
+        PhysicalItem {
+            item: InventoryItem {
+                item_id: "ammo_9mm".to_string(),
+                name: "9mm Ammo".to_string(),
+                quantity: 12,
+                max_stack: 100,
+                weight: 0.1,
+                item_type: ItemType::Ammo,
+                icon_path: "".to_string(),
+            }
+        },
+    ));
+
     // Camera
     commands.spawn((
         Camera3d::default(),
@@ -158,7 +213,7 @@ fn setup_scene(
 
     // Instructions UI
     commands.spawn((
-        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block/Aim\nR - Reload\n1/2 - Switch Weapon\nE - Interact"),
+        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block/Aim\nR - Reload\n1/2 - Switch Weapon\nE - Interact\nI/Tab - Inventory"),
         TextFont {
             font_size: 20.0,
             ..default()

@@ -3,7 +3,7 @@
 //! Object interaction, pickups, and usable devices.
 
 use bevy::prelude::*;
-use bevy::ecs::event::Event;
+
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction, InputBuffer};
 
@@ -12,7 +12,7 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app
-            // .add_event::<InteractionEvent>()
+            .init_resource::<InteractionEventQueue>()
             .init_resource::<CurrentInteractable>()
             .init_resource::<InteractionDebugSettings>()
             .add_systems(Update, (
@@ -267,12 +267,15 @@ impl Default for UsableDevice {
 }
 
 /// Event triggered when a valid interaction occurs
-#[derive(Event, Debug, Clone)]
 pub struct InteractionEvent {
     pub source: Entity,
     pub target: Entity,
     pub interaction_type: InteractionType,
 }
+
+/// Custom queue for interaction events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct InteractionEventQueue(pub Vec<InteractionEvent>);
 
 /// System to validate interactions (cooldowns, states)
 fn validate_interactions(
@@ -352,7 +355,9 @@ fn process_interactions(
     input: Res<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
     current_interactable: Res<CurrentInteractable>,
+    mut events: ResMut<InteractionEventQueue>,
     mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>, Option<&mut UsableDevice>)>,
+    player_query: Query<Entity, With<InteractionDetector>>, // Assuming player has detector
 ) {
     if !input.interact_pressed && !input_buffer.is_buffered(InputAction::Interact) {
         return;
@@ -391,9 +396,14 @@ fn process_interactions(
                 info!("Device state toggled: {}", device.is_active);
             }
             
-            // In a real implementation, we would send an event here, 
-            // but we are skipping it for now due to API issues.
-            // commands.trigger(InteractionEvent { ... });
+            // Trigger Event
+            if let Some(source_entity) = player_query.iter().next() {
+                 events.0.push(InteractionEvent {
+                    source: source_entity,
+                    target: entity,
+                    interaction_type: interactable.interaction_type,
+                });
+            }
         }
     }
 }

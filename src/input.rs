@@ -53,6 +53,7 @@ pub enum InputAction {
     Reload,
     NextWeapon,
     PrevWeapon,
+    ToggleInventory,
 }
 
 /// Input binding types
@@ -90,6 +91,7 @@ impl Default for InputMap {
         bindings.insert(InputAction::Reload, vec![InputBinding::Key(KeyCode::KeyR)]);
         bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::Digit1)]); // Placeholder
         bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::Digit2)]); // Placeholder
+        bindings.insert(InputAction::ToggleInventory, vec![InputBinding::Key(KeyCode::KeyI), InputBinding::Key(KeyCode::Tab)]);
         Self { bindings }
     }
 }
@@ -143,6 +145,7 @@ pub struct InputState {
     pub reload_pressed: bool,
     pub next_weapon_pressed: bool,
     pub prev_weapon_pressed: bool,
+    pub toggle_inventory_pressed: bool,
 }
 
 /// Input configuration
@@ -249,6 +252,7 @@ fn update_input_state(
     input_state.reload_pressed = check_action_just_pressed(InputAction::Reload);
     input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
     input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);
+    input_state.toggle_inventory_pressed = check_action_just_pressed(InputAction::ToggleInventory);
 
     // Look motion
     let mut look = Vec2::ZERO;
