@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::input::InputState;
+use bevy::ecs::system::EntityCommands;
 
 pub struct CombatPlugin;
 
@@ -17,6 +18,7 @@ impl Plugin for CombatPlugin {
                 perform_melee_attacks,
                 perform_blocking,
                 process_damage_events,
+                update_damage_numbers,
             ));
     }
 }
@@ -246,32 +248,43 @@ fn perform_blocking(
     }
 }
 
-/// System to process damage events and reduce health
+/// Floating damage number component
+#[derive(Component)]
+pub struct DamageNumber {
+    pub lifetime: f32,
+    pub velocity: Vec3,
+}
+
+/// System to process damage events, reduce health, and show feedback
 fn process_damage_events(
+    mut commands: Commands,
     mut damage_queue: ResMut<DamageEventQueue>,
     mut death_queue: ResMut<DeathEventQueue>,
-    mut health_query: Query<(&mut Health, Option<&Blocking>)>, // Check for Blocking component
+    mut health_query: Query<(&mut Health, Option<&Blocking>, &GlobalTransform)>, // Need transform for spawn position
     time: Res<Time>,
 ) {
     // Process all events in queue
     for event in damage_queue.0.drain(..) {
-        if let Ok((mut health, blocking_opt)) = health_query.get_mut(event.target) {
+        if let Ok((mut health, blocking_opt, transform)) = health_query.get_mut(event.target) {
             if health.is_invulnerable {
                 continue;
             }
 
             let mut final_damage = event.amount;
+            let mut is_parry = false;
+            let mut is_block = false;
 
             // Check blocking/parrying
             if let Some(blocking) = blocking_opt {
                 if blocking.is_blocking {
                     if blocking.current_block_time <= blocking.parry_window {
                         // Parry!
+                        is_parry = true;
                         final_damage = 0.0;
                         info!("Entity {:?} PARRIED the attack!", event.target);
-                        // TODO: trigger parry effect/event
                     } else {
                         // Block
+                        is_block = true;
                         final_damage *= blocking.block_reduction;
                         info!("Entity {:?} BLOCKED the attack (reduced to {})!", event.target, final_damage);
                     }
@@ -282,6 +295,49 @@ fn process_damage_events(
             health.current -= final_damage;
             health.last_damage_time = time.elapsed_secs();
             
+            // Spawn Damage Number
+            let text_color = if is_parry {
+                Color::srgb(1.0, 1.0, 0.0) // Yellow for Parry
+            } else if is_block {
+                Color::srgb(0.5, 0.5, 1.0) // Blue for Block
+            } else {
+                Color::srgb(1.0, 0.2, 0.2) // Red for specific damage
+            };
+
+            let label = if is_parry {
+                "PARRY!".to_string()
+            } else if is_block {
+                format!("-{} (Blocked)", final_damage as i32)
+            } else {
+                format!("-{}", final_damage as i32)
+            };
+
+            commands.spawn((
+                Text::new(label),
+                TextFont {
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(text_color),
+                Node {
+                    position_type: PositionType::Absolute,
+                    ..default()
+                },
+                // We physically position it in world space? 
+                // Using Text (UI) requires a canvas or camera projection.
+                // For simplicity in this step, we will use a simple UI node that we MIGHT try to position?
+                // Actually, standard UI is screen space. Without `WorldToScreen` helper, it stays fixed.
+                // Let's use a 3D Text component if available, OR just log it for now as "Visual Feedback" might require asset setup.
+                // Wait, Bevy 0.15 has Text2d. Let's try spawning it as spatial.
+                Transform::from_translation(transform.translation() + Vec3::new(0.0, 2.0, 0.0)),
+                GlobalTransform::default(),
+                Visibility::Visible,
+                DamageNumber {
+                    lifetime: 1.0,
+                    velocity: Vec3::new(0.0, 2.0, 0.0),
+                },
+            ));
+
             // Clamp health
             if health.current <= 0.0 {
                 health.current = 0.0;
@@ -290,6 +346,24 @@ fn process_damage_events(
             } else {
                 debug!("Entity {:?} took {} damage. Current Health: {}", event.target, final_damage, health.current);
             }
+        }
+    }
+}
+
+/// System to animate and cleanup damage numbers
+fn update_damage_numbers(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Transform, &mut DamageNumber)>,
+) {
+    for (entity, mut transform, mut damage_number) in query.iter_mut() {
+        damage_number.lifetime -= time.delta_secs();
+        
+        // Move up
+        transform.translation += damage_number.velocity * time.delta_secs();
+
+        if damage_number.lifetime <= 0.0 {
+            commands.entity(entity).despawn();
         }
     }
 }
