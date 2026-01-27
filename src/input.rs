@@ -19,8 +19,6 @@ impl Plugin for InputPlugin {
 }
 
 /// Global input state resource
-///
-/// TODO: Implement input mapping system
 #[derive(Resource, Debug, Default)]
 pub struct InputState {
     pub movement: Vec2,
@@ -31,32 +29,20 @@ pub struct InputState {
     pub interact_pressed: bool,
     pub aim_pressed: bool,
     
-    // TODO: Add more input actions
-    // TODO: Add input mapping configuration
-    // TODO: Add gamepad support
-    // TODO: Add touch support
-}
-
-/// Input action mapping
-///
-/// TODO: Implement input action mapping
-#[derive(Debug, Clone)]
-pub struct InputAction {
-    pub name: String,
-    pub key_binding: Vec<KeyCode>,
-    pub gamepad_binding: Vec<GamepadButtonType>,
-    pub mouse_binding: Option<MouseButton>,
+    // Leaning
+    pub lean_left: bool,
+    pub lean_right: bool,
+    
+    // Lock on
+    pub lock_on_pressed: bool,
 }
 
 /// Input configuration
-///
-/// TODO: Implement input customization
 #[derive(Resource, Debug)]
 pub struct InputConfig {
     pub mouse_sensitivity: f32,
     pub gamepad_sensitivity: f32,
     pub invert_y_axis: bool,
-    pub actions: Vec<InputAction>,
 }
 
 impl Default for InputConfig {
@@ -65,7 +51,6 @@ impl Default for InputConfig {
             mouse_sensitivity: 1.0,
             gamepad_sensitivity: 1.0,
             invert_y_axis: false,
-            actions: Vec::new(),
         }
     }
 }
@@ -75,8 +60,6 @@ impl Default for InputConfig {
 // ============================================================================
 
 /// Update input state from devices
-///
-/// TODO: Implement input reading
 fn update_input_state(
     keyboard: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
@@ -97,6 +80,13 @@ fn update_input_state(
     input_state.interact_pressed = keyboard.just_pressed(KeyCode::KeyE);
     input_state.aim_pressed = mouse.pressed(MouseButton::Right);
 
+    // Leaning
+    input_state.lean_left = keyboard.pressed(KeyCode::KeyQ);
+    input_state.lean_right = keyboard.pressed(KeyCode::KeyE);
+    
+    // Lock on
+    input_state.lock_on_pressed = mouse.just_pressed(MouseButton::Middle) || keyboard.just_pressed(KeyCode::KeyR);
+
     // Read mouse motion for looking
     let mut look = Vec2::ZERO;
     for event in mouse_motion.read() {
@@ -106,29 +96,15 @@ fn update_input_state(
 }
 
 /// Process movement input
-///
-/// TODO: Integrate with character controller
 fn process_movement_input(
     input_state: Res<InputState>,
 ) {
     let _movement = input_state.movement;
     let _look = input_state.look;
-    
-    // TODO: Send input to character controller
-    // TODO: Handle input smoothing
-    // TODO: Handle input deadzone
 }
 
 /// Process action input
-///
-/// TODO: Implement action handling
 fn process_action_input(
-    input_state: Res<InputState>,
+    _input_state: Res<InputState>,
 ) {
-    // TODO: Handle jump
-    // TODO: Handle crouch
-    // TODO: Handle sprint
-    // TODO: Handle interact
-    // TODO: Handle aim
-    // TODO: Handle fire
 }
