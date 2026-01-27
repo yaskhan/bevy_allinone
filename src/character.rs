@@ -159,6 +159,10 @@ pub struct CharacterMovementState {
     // Root Motion Deltas (to be filled by animation systems)
     pub root_motion_translation: Vec3,
     pub root_motion_rotation: Quat,
+
+    // Vehicle state
+    pub is_in_vehicle: bool,
+    pub vehicle_entity: Option<Entity>,
 }
 
 /// Character animation modes
