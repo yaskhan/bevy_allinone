@@ -59,6 +59,7 @@ pub struct CurrentInteractable {
     pub entity: Option<Entity>,
     pub distance: f32,
     pub interaction_point: Vec3,
+    pub is_in_range: bool,
 }
 
 /// Settings for debug visualization
@@ -164,7 +165,7 @@ fn update_interaction_ui(
     current_interactable: Res<CurrentInteractable>,
     interactables: Query<&Interactable>,
     mut ui_query: Query<(&mut Visibility, &Children), With<InteractionPrompt>>,
-    mut text_query: Query<&mut Text>,
+    mut text_query: Query<(&mut Text, &mut TextColor)>,
 ) {
     for (mut visibility, children) in ui_query.iter_mut() {
         if let Some(entity) = current_interactable.entity {
@@ -173,10 +174,19 @@ fn update_interaction_ui(
                 
                 // Update text
                 for child in children.iter() {
-                    if let Ok(mut text) = text_query.get_mut(child) {
+                    if let Ok((mut text, mut text_color)) = text_query.get_mut(child) {
                         // In real implementation, get keybinding from InputMap
                         let key_text = "E"; 
-                        text.0 = format!("Press {} to {} {}", 
+
+                        let (color, suffix) = if current_interactable.is_in_range {
+                            (Color::WHITE, "")
+                        } else {
+                            (Color::srgb(1.0, 0.2, 0.2), " (Too Far)")
+                        };
+
+                        text_color.0 = color;
+                        
+                        text.0 = format!("Press {} to {} {}{}", 
                             key_text, 
                             match interactable.interaction_type {
                                 InteractionType::Pickup => "pick up",
@@ -188,7 +198,8 @@ fn update_interaction_ui(
                                 InteractionType::Toggle => "toggle",
                                 InteractionType::Grab => "grab",
                             },
-                            interactable.interaction_text
+                            interactable.interaction_text,
+                            suffix
                         );
                     }
                 }
@@ -271,6 +282,7 @@ fn detect_interactables(
     // Clear current interactable at the start
     current_interactable.entity = None;
     current_interactable.distance = 0.0;
+    current_interactable.is_in_range = false;
 
     for (transform, mut detector) in detectors.iter_mut() {
         // Update timer
@@ -298,13 +310,12 @@ fn detect_interactables(
         ) {
             // Check if hit entity has Interactable component
             if let Ok(interactable) = interactables.get(hit.entity) {
-                // Check if within interaction distance
-                if hit.distance <= interactable.interaction_distance && interactable.can_interact {
-                    // Update current interactable
-                    current_interactable.entity = Some(hit.entity);
-                    current_interactable.distance = hit.distance;
-                    current_interactable.interaction_point = ray_origin + *ray_direction * hit.distance;
-                }
+                // Always update detection if we hit an interactable (within max_ray_distance)
+                // But mark if it's within interaction_distance
+                current_interactable.entity = Some(hit.entity);
+                current_interactable.distance = hit.distance;
+                current_interactable.interaction_point = ray_origin + *ray_direction * hit.distance;
+                current_interactable.is_in_range = hit.distance <= interactable.interaction_distance && interactable.can_interact;
             }
         }
     }
