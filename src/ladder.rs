@@ -420,7 +420,6 @@ pub fn handle_ladder_input(
         &CharacterController,
         &Transform,
     ), With<Player>>,
-    camera_query: Query<&PlayerCamera>,
 ) {
     for (
         mut ladder_system,
@@ -474,7 +473,6 @@ pub fn update_ladder_state(
         &CharacterController,
         &Transform,
     ), With<Player>>,
-    camera_query: Query<&PlayerCamera>,
 ) {
     for (
         mut ladder_system,
@@ -536,7 +534,6 @@ pub fn update_ladder_movement(
         &mut Transform,
         &mut CharacterController,
     ), With<Player>>,
-    camera_query: Query<&PlayerCamera>,
 ) {
     for (
         mut ladder_system,
