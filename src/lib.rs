@@ -46,6 +46,7 @@ pub mod quest;
 pub mod save;
 pub mod skills;
 pub mod stats;
+pub mod tutorial;
 pub mod utils;
 pub mod vehicles;
 pub mod weapons;
@@ -70,6 +71,7 @@ pub mod prelude {
     pub use crate::save::*;
     pub use crate::skills::*;
     pub use crate::stats::*;
+    pub use crate::tutorial::*;
     pub use crate::utils::*;
     pub use crate::vehicles::*;
     pub use crate::weapons::*;
@@ -101,6 +103,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(save::SavePlugin)
             .add_plugins(skills::SkillsPlugin)
             .add_plugins(stats::StatsPlugin)
+            .add_plugins(tutorial::TutorialPlugin)
             .add_plugins(vehicles::VehiclesPlugin)
             .add_plugins(weapons::WeaponsPlugin)
             // Add resources
