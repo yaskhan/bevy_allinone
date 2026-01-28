@@ -35,6 +35,7 @@ pub mod camera;
 pub mod character;
 pub mod climb;
 pub mod combat;
+pub mod currency;
 pub mod dialog;
 pub mod input;
 pub mod interaction;
@@ -50,6 +51,7 @@ pub mod stats;
 pub mod tutorial;
 pub mod utils;
 pub mod vehicles;
+pub mod vendor;
 pub mod weapons;
 
 pub mod prelude {
@@ -61,6 +63,7 @@ pub mod prelude {
     pub use crate::character::*;
     pub use crate::climb::*;
     pub use crate::combat::*;
+    pub use crate::currency::*;
     pub use crate::dialog::*;
     pub use crate::input::*;
     pub use crate::interaction::*;
@@ -68,6 +71,7 @@ pub mod prelude {
     pub use crate::ladder::*;
     pub use crate::map::*;
     pub use crate::physics::*;
+    pub use crate::puzzle::*;
     pub use crate::quest::*;
     pub use crate::save::*;
     pub use crate::skills::*;
@@ -75,6 +79,7 @@ pub mod prelude {
     pub use crate::tutorial::*;
     pub use crate::utils::*;
     pub use crate::vehicles::*;
+    pub use crate::vendor::*;
     pub use crate::weapons::*;
     pub use crate::GameControllerPlugin;
     pub use bevy::prelude::*;
@@ -93,6 +98,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(character::CharacterPlugin)
             .add_plugins(climb::ClimbPlugin)
             .add_plugins(combat::CombatPlugin)
+            .add_plugins(currency::CurrencyPlugin)
             .add_plugins(dialog::DialogPlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(interaction::InteractionPlugin)
@@ -107,6 +113,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(stats::StatsPlugin)
             .add_plugins(tutorial::TutorialPlugin)
             .add_plugins(vehicles::VehiclesPlugin)
+            .add_plugins(vendor::VendorPlugin)
             .add_plugins(weapons::WeaponsPlugin)
             // Add resources
             .init_resource::<utils::GameTime>()
