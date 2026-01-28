@@ -29,6 +29,7 @@
 
 use bevy::prelude::*;
 
+pub mod abilities;
 pub mod ai;
 pub mod camera;
 pub mod character;
@@ -46,7 +47,8 @@ pub mod weapons;
 
 pub mod prelude {
     //! Commonly used types and traits
-    
+
+    pub use crate::abilities::*;
     pub use crate::ai::*;
     pub use crate::camera::*;
     pub use crate::character::*;
@@ -73,6 +75,7 @@ impl Plugin for GameControllerPlugin {
         app
             // Add sub-plugins
             .add_plugins((
+                abilities::AbilitiesPlugin,
                 ai::AiPlugin,
                 camera::CameraPlugin,
                 character::CharacterPlugin,
