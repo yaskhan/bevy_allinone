@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
-use bevy_allinone::weapons::{WeaponsPlugin, Weapon, Projectile, Accuracy, BallisticsEnvironment, BulletTracer, VisualEffectPool};
+use bevy_allinone::weapons::{WeaponsPlugin, Weapon, Projectile, Accuracy, BallisticsEnvironment, VisualEffectPool};
 use bevy_allinone::character::{CharacterPlugin, CharacterController, Player};
 use bevy_allinone::camera::{CameraPlugin, CameraController};
 
@@ -13,6 +13,7 @@ fn main() {
             CharacterPlugin,
             CameraPlugin,
         ))
+        .insert_resource(VisualEffectPool::default())
         .insert_resource(BallisticsEnvironment {
             gravity: Vec3::new(0.0, -9.81, 0.0),
             air_density: 1.225,
@@ -33,11 +34,11 @@ fn setup(
 ) {
     // Light
     commands.spawn((
-        Transform::from_xyz(4.0, 8.0, 4.0),
         DirectionalLight {
             shadows_enabled: true,
             ..default()
         },
+        Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
     // Floor (Physical)
@@ -64,7 +65,7 @@ fn setup(
         Transform::from_xyz(0.0, 1.0, 5.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
         // Use the standard character controller from the library
         CharacterController::default(),
     )).id();
@@ -109,29 +110,34 @@ fn setup(
             projectile_penetration: 1000.0,
             zeroing_distance: 10.0, // Zeroed at 10 meters
         },
-        Accuracy {
-            current_bloom: 0.0,
-            base_spread: 0.5,
-            max_spread: 5.0,
-            bloom_per_shot: 0.2,
-            recovery_rate: 2.0, // Spread recovery rate
-            movement_penalty: 1.0,
-            ads_modifier: 0.5,
-            airborne_multiplier: 2.0,
-        },
-        VisualEffectPool::default(),
     ));
+
+    commands.entity(player_id).insert(Accuracy {
+        current_bloom: 0.0,
+        base_spread: 0.5,
+        max_spread: 5.0,
+        bloom_per_shot: 0.2,
+        recovery_rate: 2.0, // Spread recovery rate
+        movement_penalty: 1.0,
+        ads_modifier: 0.5,
+        airborne_multiplier: 2.0,
+    });
 
     // UI (Crosshair)
     commands.spawn((
         Crosshair,
-        Text2d::new("+"),
+        Text::new("+"),
         TextFont {
             font_size: 30.0,
             ..default()
         },
         TextColor(Color::WHITE),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Node {
+            align_self: AlignSelf::Center,
+            justify_self: JustifySelf::Center,
+            position_type: PositionType::Absolute,
+            ..default()
+        },
     ));
 }
 
@@ -139,18 +145,18 @@ fn handle_shooting(
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    player_query: Query<(&Weapon, &mut Accuracy), With<Player>>,
+    mut player_query: Query<(&Weapon, &mut Accuracy), With<Player>>,
     time: Res<Time>,
 ) {
-    let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
-    let Ok((weapon, mut accuracy)) = player_query.get_single() else { return; };
+    let Some((_camera, camera_transform)) = camera_query.iter().next() else { return; };
+    let Some((weapon, mut accuracy)) = player_query.iter_mut().next() else { return; };
 
     if mouse_input.pressed(MouseButton::Left) {
         // Emulate fire_weapon logic for demo
         if weapon.current_fire_timer <= 0.0 {
             // Calculate view direction
             let ray_origin = camera_transform.translation();
-            let ray_direction = camera_transform.forward();
+            let _ray_direction = camera_transform.forward();
 
             // Apply spread (Bloom)
             accuracy.current_bloom += accuracy.bloom_per_shot;
@@ -160,8 +166,8 @@ fn handle_shooting(
             let spread_angle = total_spread_deg.to_radians();
 
             // Simple random for demo
-            let rand_x = (time.elapsed_seconds().sin() * 10.0).fract() * 2.0 - 1.0;
-            let rand_y = (time.elapsed_seconds().cos() * 10.0).fract() * 2.0 - 1.0;
+            let rand_x = (time.elapsed_secs().sin() * 10.0).fract() * 2.0 - 1.0;
+            let rand_y = (time.elapsed_secs().cos() * 10.0).fract() * 2.0 - 1.0;
 
             let s_x = rand_x * rand_x * spread_angle * 0.5 * rand_x.signum();
             let s_y = rand_y * rand_y * spread_angle * 0.5 * rand_y.signum();
@@ -172,22 +178,23 @@ fn handle_shooting(
             let zeroing_angle = if weapon.zeroing_distance > 0.0 && weapon.projectile_speed > 0.0 {
                 let time_to_zero = weapon.zeroing_distance / weapon.projectile_speed;
                 let drop = 0.5 * 9.81 * time_to_zero * time_to_zero;
-                drop.atan2(weapon.zeroing_distance)
+                f32::atan2(drop, weapon.zeroing_distance)
             } else { 0.0 };
             let zeroing_rot = Quat::from_rotation_x(zeroing_angle);
 
             let final_dir = camera_transform.rotation() * zeroing_rot * spread_rot * Vec3::NEG_Z;
 
+            let _owner_id = commands.spawn_empty().id();
             // Spawn projectile
             commands.spawn((
-                Mesh3d(commands.spawn_empty().id()), // Placeholder, will be replaced by the rendering system if needed
+                Mesh3d(Handle::<Mesh>::default()), // Placeholder
                 Transform::from_translation(ray_origin),
                 GlobalTransform::default(),
                 Projectile {
                     velocity: final_dir * weapon.projectile_speed,
                     damage: weapon.damage,
                     lifetime: 5.0,
-                    owner: commands.spawn_empty().id(), // In demo just a new ID
+                    owner: _owner_id, // In demo just a new ID
                     mass: weapon.projectile_mass,
                     drag_coeff: weapon.projectile_drag_coeff,
                     reference_area: weapon.projectile_area,
@@ -195,31 +202,6 @@ fn handle_shooting(
                 },
                 Name::new("DemoProjectile"),
             ));
-
-            // Visual tracer (simple linear interpolator)
-            // In real code this is done by a separate system, here we spawn it immediately for the demo
-            // But for architectural consistency, we can just let the update_projectiles system
-            // update the Transform, and do the visualization later.
-            // For clarity in this demo, we will just move the entity.
-
-            // Reset timer
-            // We cannot mutate Weapon here directly because it is in a Query.
-            // In a real application, this is done inside the fire_weapon system.
-            // For the demo, we just skip frames.
-        }
-    }
-}
-
-// In this demo, we cannot mutate Weapon.current_fire_timer directly in handle_shooting,
-// since the Query is immutable. In real code this is part of the fire_weapon system.
-// For the demo, we will add a timer update system.
-fn update_weapon_timer(
-    time: Res<Time>,
-    mut query: Query<&mut Weapon>,
-) {
-    for mut weapon in query.iter_mut() {
-        if weapon.current_fire_timer > 0.0 {
-            weapon.current_fire_timer -= time.delta_secs();
         }
     }
 }
@@ -228,7 +210,7 @@ fn update_ui(
     query: Query<&Accuracy, With<Player>>,
     mut text_query: Query<&mut TextColor, With<Crosshair>>,
 ) {
-    if let Ok(accuracy) = query.get_single() {
+    if let Some(accuracy) = query.iter().next() {
         for mut color in text_query.iter_mut() {
             // Color changes depending on spread
             let intensity = 1.0 - (accuracy.current_bloom / accuracy.max_spread).clamp(0.0, 1.0);

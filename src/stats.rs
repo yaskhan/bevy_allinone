@@ -608,7 +608,7 @@ impl StatsSystem {
 
     /// Uses a stat by name
     pub fn use_stat_by_name(&mut self, stat_name: &str, amount: f32) {
-        if let Some(stat) = self.get_derived_stat_by_name(stat_name) {
+        if let Some(_stat) = self.get_derived_stat_by_name(stat_name) {
             self.decrease_derived_stat(self.get_derived_stat_enum(stat_name), amount);
         }
     }

@@ -73,7 +73,6 @@ fn setup_scene(
             Blocking::default(),
             Weapon {
                 weapon_name: "Prototype Pistol".to_string(),
-                range: 50.0,
                 damage: 25.0,
                 fire_rate: 2.0, // 2 shots per second
                 ammo_capacity: 12,
@@ -132,6 +131,10 @@ fn setup_scene(
                 weight: 5.0,
                 item_type: bevy_allinone::inventory::ItemType::Weapon,
                 icon_path: "".to_string(),
+                value: 0.0,
+                category: "Weapon".to_string(),
+                min_level: 0,
+                info: "Rusty sword".to_string(),
             }
         },
     ));
@@ -158,6 +161,10 @@ fn setup_scene(
                 weight: 0.1,
                 item_type: bevy_allinone::inventory::ItemType::Ammo,
                 icon_path: "".to_string(),
+                value: 0.0,
+                category: "Ammo".to_string(),
+                min_level: 0,
+                info: "9mm ammo box".to_string(),
             }
         },
     ));

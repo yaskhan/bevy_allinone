@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use avian3d::prelude::*;
 use bevy_allinone::prelude::*;
 
 fn main() {
@@ -46,49 +47,49 @@ fn setup_systems(mut commands: Commands) {
                 required_points: 1,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(10.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(10.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Increased damage".to_string(),
                 required_points: 2,
                 value: 20.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(20.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(20.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Powerful damage".to_string(),
                 required_points: 3,
                 value: 30.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(30.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(30.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Expert damage".to_string(),
                 required_points: 4,
                 value: 40.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(40.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(40.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Master damage".to_string(),
                 required_points: 5,
                 value: 50.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(50.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(50.0),
+                on_activate: SkillEvent::None,
             },
         ],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::None,
-        on_activate_bool: SkillSystemEvent::None,
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::None,
+        on_activate_bool: SkillEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -113,33 +114,33 @@ fn setup_systems(mut commands: Commands) {
                 required_points: 2,
                 value: 5.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(5.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(5.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Improved defense".to_string(),
                 required_points: 3,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(10.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(10.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Maximum defense".to_string(),
                 required_points: 4,
                 value: 15.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(15.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(15.0),
+                on_activate: SkillEvent::None,
             },
         ],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::None,
-        on_activate_bool: SkillSystemEvent::None,
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::None,
+        on_activate_bool: SkillEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -159,13 +160,13 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::WithBool(false),
-        on_activate_bool: SkillSystemEvent::WithBool(true),
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::WithBool(false),
+        on_activate_bool: SkillEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -191,41 +192,41 @@ fn setup_systems(mut commands: Commands) {
                 required_points: 1,
                 value: 50.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(50.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(50.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Increased mana".to_string(),
                 required_points: 2,
                 value: 100.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(100.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(100.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Large mana".to_string(),
                 required_points: 3,
                 value: 150.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(150.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(150.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Maximum mana".to_string(),
                 required_points: 4,
                 value: 200.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(200.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(200.0),
+                on_activate: SkillEvent::None,
             },
         ],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::None,
-        on_activate_bool: SkillSystemEvent::None,
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::None,
+        on_activate_bool: SkillEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -245,13 +246,13 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::WithBool(false),
-        on_activate_bool: SkillSystemEvent::WithBool(true),
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::WithBool(false),
+        on_activate_bool: SkillEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -277,33 +278,33 @@ fn setup_systems(mut commands: Commands) {
                 required_points: 1,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(10.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(10.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Increased speed".to_string(),
                 required_points: 2,
                 value: 20.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(20.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(20.0),
+                on_activate: SkillEvent::None,
             },
             SkillLevel {
                 description: "Maximum speed".to_string(),
                 required_points: 3,
                 value: 30.0,
                 bool_value: false,
-                on_initialize: SkillSystemEvent::WithValue(30.0),
-                on_activate: SkillSystemEvent::None,
+                on_initialize: SkillEvent::WithValue(30.0),
+                on_activate: SkillEvent::None,
             },
         ],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::None,
-        on_activate_bool: SkillSystemEvent::None,
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::None,
+        on_activate_bool: SkillEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -323,13 +324,13 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillSystemEvent::None,
-        on_increase: SkillSystemEvent::None,
-        on_initialize_bool: SkillSystemEvent::WithBool(false),
-        on_activate_bool: SkillSystemEvent::WithBool(true),
+        on_initialize: SkillEvent::None,
+        on_increase: SkillEvent::None,
+        on_initialize_bool: SkillEvent::WithBool(false),
+        on_activate_bool: SkillEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillSystemEvent::None,
-        on_initialize_not_active: SkillSystemEvent::None,
+        on_initialize_active: SkillEvent::None,
+        on_initialize_not_active: SkillEvent::None,
         template_id: None,
     });
 
@@ -394,7 +395,7 @@ fn handle_input(
 
         // Level up 'Damage'
         if keyboard_input.just_pressed(KeyCode::Digit1) {
-            if let Some(points_used) = skills_system.use_skill_points(0, 0, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(0, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Damage leveled up! Points remaining: {}", skill_points.0);
             } else {
@@ -404,7 +405,7 @@ fn handle_input(
 
         // Level up 'Defense'
         if keyboard_input.just_pressed(KeyCode::Digit2) {
-            if let Some(points_used) = skills_system.use_skill_points(0, 1, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(0, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Defense leveled up! Points remaining: {}", skill_points.0);
             } else {
@@ -414,7 +415,7 @@ fn handle_input(
 
         // Activate 'Critical Strike'
         if keyboard_input.just_pressed(KeyCode::Digit3) {
-            if let Some(points_used) = skills_system.use_skill_points(0, 2, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(0, 2, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Critical Strike activated! Points remaining: {}", skill_points.0);
             } else {
@@ -424,7 +425,7 @@ fn handle_input(
 
         // Level up 'Mana'
         if keyboard_input.just_pressed(KeyCode::Digit4) {
-            if let Some(points_used) = skills_system.use_skill_points(1, 0, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(1, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Mana leveled up! Points remaining: {}", skill_points.0);
             } else {
@@ -434,7 +435,7 @@ fn handle_input(
 
         // Activate 'Magic Shield'
         if keyboard_input.just_pressed(KeyCode::Digit5) {
-            if let Some(points_used) = skills_system.use_skill_points(1, 1, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(1, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Magic Shield activated! Points remaining: {}", skill_points.0);
             } else {
@@ -444,7 +445,7 @@ fn handle_input(
 
         // Level up 'Speed'
         if keyboard_input.just_pressed(KeyCode::Digit6) {
-            if let Some(points_used) = skills_system.use_skill_points(2, 0, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(2, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Speed leveled up! Points remaining: {}", skill_points.0);
             } else {
@@ -454,7 +455,7 @@ fn handle_input(
 
         // Activate 'Invisibility'
         if keyboard_input.just_pressed(KeyCode::Digit7) {
-            if let Some(points_used) = skills_system.use_skill_points(2, 1, skill_points.0, false) {
+            if let Some(points_used) = skills_system.skill_tree.use_skill_points(2, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
                 println!("Invisibility activated! Points remaining: {}", skill_points.0);
             } else {
@@ -464,13 +465,13 @@ fn handle_input(
 
         // Save to template
         if keyboard_input.just_pressed(KeyCode::KeyS) {
-            skills_system.save_to_template();
+            skills_system.skill_tree.save_to_template();
             println!("Settings saved to template");
         }
 
         // Load from template
         if keyboard_input.just_pressed(KeyCode::KeyL) {
-            skills_system.load_from_template();
+            skills_system.skill_tree.load_from_template();
             println!("Settings loaded from template");
         }
 

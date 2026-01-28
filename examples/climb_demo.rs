@@ -26,6 +26,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use bevy_allinone::prelude::*;
+// use avian3d::external_force::ExternalForce; 
 
 fn main() {
     App::new()
@@ -41,6 +42,9 @@ fn main() {
         .run();
 }
 
+#[derive(Component)]
+pub struct PlayerCamera;
+
 /// Setup the demo scene
 fn setup(
     mut commands: Commands,
@@ -49,11 +53,10 @@ fn setup(
 ) {
     // Spawn camera
     commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 5.0, 10.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        },
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        GlobalTransform::default(),
+        Projection::default(),
         PlayerCamera,
     ));
 
@@ -84,6 +87,10 @@ fn setup(
             use_root_motion: false,
             zero_gravity_mode: false,
             free_floating_mode: false,
+            turn_speed: 10.0,
+            stationary_turn_speed: 180.0,
+            moving_turn_speed: 200.0,
+            use_tank_controls: false,
         },
         ClimbLedgeSystem {
             climb_ledge_active: true,
@@ -155,6 +162,8 @@ fn setup(
             grabbing_surface: false,
             climb_ledge_action_paused: false,
         },
+    ))
+    .insert((
         ClimbStateTracker {
             current_state: ClimbState::None,
             previous_state: ClimbState::None,
@@ -233,8 +242,9 @@ fn setup(
         },
         RigidBody::Dynamic,
         Collider::capsule(0.5, 1.8),
-        Velocity::default(),
-        ExternalForce::default(),
+        LinearVelocity::default(),
+        AngularVelocity::default(),
+        // ExternalForce::default(),
         GroundDetection::default(),
         CustomGravity::default(),
         Transform::from_xyz(0.0, 2.0, 0.0),
@@ -247,7 +257,7 @@ fn setup(
         Transform::from_xyz(0.0, -0.25, 0.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Spawn walls for climbing
@@ -258,7 +268,7 @@ fn setup(
         Transform::from_xyz(0.0, 2.5, -5.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Left wall
@@ -268,7 +278,7 @@ fn setup(
         Transform::from_xyz(-5.0, 2.5, 0.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Right wall
@@ -278,7 +288,7 @@ fn setup(
         Transform::from_xyz(5.0, 2.5, 0.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Back wall
@@ -288,7 +298,7 @@ fn setup(
         Transform::from_xyz(0.0, 2.5, 5.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Spawn a ledge for climbing
@@ -298,7 +308,7 @@ fn setup(
         Transform::from_xyz(0.0, 3.0, -4.5),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
         LedgeZone {
             tag_to_check: "Player".to_string(),
             ledge_zone_active: true,
@@ -320,7 +330,7 @@ fn setup(
         Transform::from_xyz(0.0, 5.5, -4.5),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
         LedgeZone {
             tag_to_check: "Player".to_string(),
             ledge_zone_active: true,
@@ -342,132 +352,37 @@ fn setup(
         Transform::from_xyz(0.0, 7.0, -2.0),
         GlobalTransform::default(),
         Visibility::default(),
-        ComputedVisibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Spawn lights
-    commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_xyz(5.0, 10.0, 5.0)
-            .looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        DirectionalLight::default(),
+        Transform::from_xyz(5.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(0.0, 8.0, 0.0),
-        point_light: PointLight {
+    commands.spawn((
+        PointLight {
             intensity: 1500.0,
             shadows_enabled: true,
             ..default()
         },
-        ..default()
-    });
+        Transform::from_xyz(0.0, 8.0, 0.0),
+    ));
 
     // Spawn UI for demo info
     commands.spawn((
-        TextBundle::from_sections([
-            TextSection::new(
-                "Climb System Demo\n\n",
-                TextStyle {
-                    font_size: 24.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "Controls:\n",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::YELLOW,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "W/A/S/D - Move\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "Space - Jump\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "Shift - Sprint\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "C - Crouch\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "E - Grab Ledge (when near ledge)\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "Mouse - Look around\n\n",
-                TextStyle {
-                    font_size: 16.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "Stamina: ",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::YELLOW,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "100%\n",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::GREEN,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "\nState: ",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::YELLOW,
-                    ..default()
-                },
-            ),
-            TextSection::new(
-                "None\n",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
-            ),
-        ])
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
+        Text::new("Climb System Demo\n\nControls:\nW/A/S/D - Move\nSpace - Jump\nShift - Sprint\nC - Crouch\nE - Grab Ledge (when near ledge)\nMouse - Look around\n\nStamina: 100%\n\nState: None\n"),
+        TextFont {
+            font_size: 16.0,
             ..default()
-        }),
+        },
+        Node {
+             position_type: PositionType::Absolute,
+             top: Val::Px(10.0),
+             left: Val::Px(10.0),
+             ..default()
+        },
         DemoUI,
     ));
 }
@@ -489,25 +404,29 @@ fn spawn_climbable_surfaces(
     }
 
     // Spawn decorative climbable surfaces
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(StandardMaterial {
-            base_color: Color::rgb(0.8, 0.4, 0.2),
+    commands.spawn((
+        Mesh3d(meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5) }))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.8, 0.4, 0.2),
             ..default()
-        }),
-        transform: Transform::from_xyz(-3.0, 1.5, -4.0),
-        ..default()
-    });
+        })),
+        Transform::from_xyz(-3.0, 1.5, -4.0),
+        GlobalTransform::default(),
+        Visibility::default(),
+        InheritedVisibility::default(),
+    ));
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(StandardMaterial {
-            base_color: Color::rgb(0.2, 0.8, 0.4),
+    commands.spawn((
+        Mesh3d(meshes.add(Mesh::from(Cuboid { half_size: Vec3::splat(0.5) }))),
+        MeshMaterial3d(materials.add(StandardMaterial {
+            base_color: Color::srgb(0.2, 0.8, 0.4),
             ..default()
-        }),
-        transform: Transform::from_xyz(3.0, 1.5, -4.0),
-        ..default()
-    });
+        })),
+        Transform::from_xyz(3.0, 1.5, -4.0),
+        GlobalTransform::default(),
+        Visibility::default(),
+        InheritedVisibility::default(),
+    ));
 }
 
 /// Update demo UI with climb state and stamina
@@ -515,20 +434,11 @@ fn update_climb_demo_ui(
     query: Query<(&ClimbStateTracker, &ClimbLedgeSystem), With<Player>>,
     mut ui_query: Query<&mut Text, With<DemoUI>>,
 ) {
-    for (state_tracker, climb_system) in query.iter() {
+    for (state_tracker, _climb_system) in query.iter() {
         for mut text in ui_query.iter_mut() {
             // Update stamina display
             let stamina_percent = (state_tracker.stamina / state_tracker.max_stamina * 100.0) as i32;
-            let stamina_color = if state_tracker.is_stamina_depleted {
-                Color::RED
-            } else if stamina_percent > 50 {
-                Color::GREEN
-            } else if stamina_percent > 25 {
-                Color::YELLOW
-            } else {
-                Color::RED
-            };
-
+            
             // Update state display
             let state_str = match state_tracker.current_state {
                 ClimbState::None => "None",
@@ -542,12 +452,8 @@ fn update_climb_demo_ui(
                 ClimbState::Falling => "Falling",
             };
 
-            // Update text sections
-            if text.sections.len() >= 12 {
-                text.sections[9].value = format!("{}\n", stamina_percent);
-                text.sections[9].style.color = stamina_color;
-                text.sections[11].value = format!("{}\n", state_str);
-            }
+            // Update text
+            text.0 = format!("Climb System Demo\n\nControls:\nW/A/S/D - Move\nSpace - Jump\nShift - Sprint\nC - Crouch\nE - Grab Ledge (when near ledge)\nMouse - Look around\n\nStamina: {}%\n\nState: {}\n", stamina_percent, state_str);
         }
     }
 }
@@ -566,9 +472,9 @@ fn handle_climb_demo_input(
     for (
         mut climb_system,
         mut grab_surface,
-        mut auto_hang,
+        _auto_hang,
         character,
-        transform,
+        _transform,
     ) in query.iter_mut() {
         // Handle grab ledge input (E key)
         if input_state.is_action_just_pressed(InputAction::Interact) {

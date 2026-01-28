@@ -93,12 +93,22 @@ pub struct CurrencyRemovalFailedEvent {
     pub current_amount: f32,
 }
 
+/// Custom queues for currency events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct AddCurrencyEventQueue(pub Vec<AddCurrencyEvent>);
+
+#[derive(Resource, Default)]
+pub struct RemoveCurrencyEventQueue(pub Vec<RemoveCurrencyEvent>);
+
+#[derive(Resource, Default)]
+pub struct CurrencyRemovalFailedEventQueue(pub Vec<CurrencyRemovalFailedEvent>);
+
 /// System to handle adding currency
 pub fn handle_add_currency(
-    mut add_events: EventReader<AddCurrencyEvent>,
+    mut events: ResMut<AddCurrencyEventQueue>,
     mut currency_query: Query<&mut Currency>,
 ) {
-    for event in add_events.iter() {
+    for event in events.0.drain(..) {
         if let Ok(mut currency) = currency_query.get_mut(event.entity) {
             if currency.currency_type == event.currency_type {
                 currency.amount += event.amount;
@@ -113,11 +123,11 @@ pub fn handle_add_currency(
 
 /// System to handle removing currency
 pub fn handle_remove_currency(
-    mut remove_events: EventReader<RemoveCurrencyEvent>,
+    mut events: ResMut<RemoveCurrencyEventQueue>,
     mut currency_query: Query<&mut Currency>,
-    mut failed_events: EventWriter<CurrencyRemovalFailedEvent>,
+    mut failed_events: ResMut<CurrencyRemovalFailedEventQueue>,
 ) {
-    for event in remove_events.iter() {
+    for event in events.0.drain(..) {
         if let Ok(mut currency) = currency_query.get_mut(event.entity) {
             if currency.currency_type == event.currency_type {
                 if currency.amount >= event.amount {
@@ -127,7 +137,7 @@ pub fn handle_remove_currency(
                         event.amount, event.currency_type, event.entity, currency.amount
                     );
                 } else {
-                    failed_events.send(CurrencyRemovalFailedEvent {
+                    failed_events.0.push(CurrencyRemovalFailedEvent {
                         entity: event.entity,
                         requested_amount: event.amount,
                         current_amount: currency.amount,
@@ -158,10 +168,10 @@ pub struct CurrencyPlugin;
 impl Plugin for CurrencyPlugin {
     fn build(&self, app: &mut App) {
         app
-            // Add events
-            .add_event::<AddCurrencyEvent>()
-            .add_event::<RemoveCurrencyEvent>()
-            .add_event::<CurrencyRemovalFailedEvent>()
+            // Add custom event queues
+            .init_resource::<AddCurrencyEventQueue>()
+            .init_resource::<RemoveCurrencyEventQueue>()
+            .init_resource::<CurrencyRemovalFailedEventQueue>()
             // Add systems
             .add_systems(Update, (
                 handle_add_currency,

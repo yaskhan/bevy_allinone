@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use bevy::prelude::*;
 use bevy_allinone::prelude::*;
+use bevy_allinone::tutorial::TutorialEventQueue;
 
 fn main() {
     App::new()
@@ -16,7 +18,7 @@ fn setup_tutorial_demo(
 ) {
     // Spawn player with TutorialLog
     commands.spawn((
-        NodeBundle::default(), // Dummy component for player-like entity
+        Node::default(), // Dummy component for player-like entity
         TutorialLog::default(),
     ));
 
@@ -52,9 +54,9 @@ fn setup_tutorial_demo(
 
 fn trigger_tutorial(
     keys: Res<ButtonInput<KeyCode>>,
-    mut events: EventWriter<TutorialEvent>,
+    mut events: ResMut<TutorialEventQueue>,
 ) {
     if keys.just_pressed(KeyCode::KeyT) {
-        events.send(TutorialEvent::Open(1));
+        events.0.push(TutorialEvent::Open(1));
     }
 }

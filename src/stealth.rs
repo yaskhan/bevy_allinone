@@ -649,7 +649,7 @@ fn detect_cover_objects(
         // Perform raycast
         let raycast_result = spatial_query.cast_ray(
             ray_origin,
-            ray_direction,
+            Dir3::new(ray_direction.into()).unwrap_or(Dir3::X),
             max_distance,
             false,
             &Default::default(),
@@ -664,7 +664,7 @@ fn detect_cover_objects(
             let cover_direction = (cover_position - ray_origin).normalize();
 
             // Check if the cover is within the detection angle
-            let angle = cover_direction.dot(ray_direction).acos().to_degrees();
+            let angle = cover_direction.dot(*ray_direction).acos().to_degrees();
 
             if angle <= stealth.cover_detection_angle {
                 cover.is_in_cover = true;
@@ -724,7 +724,7 @@ fn check_line_of_sight(
                 // Raycast to check for obstacles
                 let raycast_result = spatial_query.cast_ray(
                     ray_origin,
-                    direction_to_ai,
+                    Dir3::new(direction_to_ai).unwrap_or(Dir3::X),
                     distance_to_ai,
                     false,
                     &Default::default(),
@@ -766,7 +766,7 @@ fn update_hide_states(
     time: Res<Time>,
     mut query: Query<(&StealthController, &mut StealthState, &mut CharacterMovementState, &Transform)>,
 ) {
-    for (stealth, mut state, mut movement, transform) in query.iter_mut() {
+    for (stealth, mut state, mut movement, _transform) in query.iter_mut() {
         if !state.is_hidden {
             continue;
         }

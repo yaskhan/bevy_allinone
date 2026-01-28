@@ -20,7 +20,7 @@ pub mod math {
     pub fn smooth_damp(
         current: Vec3,
         target: Vec3,
-        velocity: &mut Vec3,
+        _velocity: &mut Vec3,
         smooth_time: f32,
         delta_time: f32,
     ) -> Vec3 {

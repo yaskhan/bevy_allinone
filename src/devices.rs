@@ -1,11 +1,22 @@
 //! Devices System Module
 //!
-//! This module implements the device interaction system 
+//! This module implements the device interaction system
 //!
 //! Key Components:
 //! - usingDevicesSystem: Manages device detection, interaction, and UI
 //! - deviceStringAction: Defines device-specific interaction properties
 //! - electronicDevice: Base class for electronic devices (doors, switches, etc.)
+//!
+//! Submodules:
+//! - door_system: Door system (port of doorSystem.cs)
+//! - electronic_device: Electronic device base (port of electronicDevice.cs)
+//! - move_device_to_camera: Move device to camera (port of moveDeviceToCamera.cs)
+//! - move_camera_to_device: Move camera to device (port of moveCameraToDevice.cs)
+//! - hologram_door: Hologram door (port of hologramDoor.cs)
+//! - simple_switch: Simple switch (port of simpleSwitch.cs)
+//! - pressure_plate: Pressure plate (port of pressurePlate.cs)
+//! - recharger_station: Recharger station (port of rechargerStation.cs)
+//! - examine_object: Examine object (port of examineObjectSystem.cs)
 
 
 use bevy::prelude::*;
@@ -15,6 +26,17 @@ use avian3d::prelude::*;
 use crate::input::{InputState, InputAction, InputBuffer};
 use crate::character::CharacterController;
 use crate::camera::{CameraController, CameraMode};
+
+// Import submodules
+pub mod door_system;
+pub mod electronic_device;
+pub mod move_device_to_camera;
+pub mod move_camera_to_device;
+pub mod hologram_door;
+pub mod simple_switch;
+pub mod pressure_plate;
+pub mod recharger_station;
+pub mod examine_object;
 
 pub struct DevicesPlugin;
 
@@ -31,7 +53,17 @@ impl Plugin for DevicesPlugin {
                 update_device_icons,
                 debug_draw_device_info,
             ).chain())
-            .add_systems(Startup, setup_device_ui);
+            .add_systems(Startup, setup_device_ui)
+            // Add subplugins
+            .add_plugins(door_system::DoorSystemPlugin)
+            .add_plugins(electronic_device::ElectronicDevicePlugin)
+            .add_plugins(move_device_to_camera::MoveDeviceToCameraPlugin)
+            .add_plugins(move_camera_to_device::MoveCameraToDevicePlugin)
+            .add_plugins(hologram_door::HologramDoorPlugin)
+            .add_plugins(simple_switch::SimpleSwitchPlugin)
+            .add_plugins(pressure_plate::PressurePlatePlugin)
+            .add_plugins(recharger_station::RechargerStationPlugin)
+            .add_plugins(examine_object::ExamineObjectPlugin);
     }
 }
 
@@ -448,6 +480,17 @@ impl Default for DeviceStringAction {
             check_if_obstacle_between_device_and_player: true,
             showing_secondary_action: false,
             current_device_action: String::new(),
+        }
+    }
+}
+
+impl DeviceStringAction {
+    /// Change the action name
+    pub fn change_action_name(&mut self, state: bool) {
+        if state {
+            self.current_device_action = self.device_action.clone();
+        } else {
+            self.current_device_action = self.secondary_device_action.clone();
         }
     }
 }

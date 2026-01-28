@@ -495,7 +495,7 @@ fn character_vehicle_sync_system(
     seat_query: Query<&VehicleSeat>,
     mut occupant_query: Query<(&mut Transform, &mut LinearVelocity, &mut CharacterMovementState)>,
 ) {
-    for (v_gt, children, vehicle) in vehicle_query.iter() {
+    for (v_gt, children, _vehicle) in vehicle_query.iter() {
         for child in children.iter() {
             if let Ok(seat) = seat_query.get(child) {
                 if let Some(occupant_entity) = seat.occupied_by {

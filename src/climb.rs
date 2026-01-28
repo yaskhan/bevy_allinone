@@ -35,7 +35,7 @@
 
 use bevy::prelude::*;
 use avian3d::prelude::*;
-use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
+use crate::physics::{GroundDetection, GroundDetectionSettings};
 use crate::character::{CharacterController, Player};
 use crate::input::{InputState, InputAction};
 use crate::interaction::InteractionEventQueue;

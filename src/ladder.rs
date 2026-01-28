@@ -88,7 +88,7 @@ impl Default for LadderSystem {
             use_local_movement_direction: false,
             use_events_enter_exit_ladder: false,
             show_gizmo: true,
-            gizmo_color: Color::rgb(1.0, 0.0, 0.0),
+            gizmo_color: Color::srgb(1.0, 0.0, 0.0),
             gizmo_length: 4.0,
             current_player: None,
         }
@@ -426,7 +426,7 @@ pub fn handle_ladder_input(
         mut ladder_movement,
         mut ladder_tracker,
         character,
-        transform,
+        _transform,
     ) in query.iter_mut() {
         if !ladder_system.ladder_found {
             continue;
@@ -664,6 +664,7 @@ pub fn handle_ladder_mount(
         &mut LadderAnimation,
         &mut Transform,
         &mut CharacterController,
+        Entity,
     ), With<Player>>,
 ) {
     for (
@@ -673,6 +674,7 @@ pub fn handle_ladder_mount(
         mut ladder_animation,
         mut transform,
         mut character,
+        player_entity,
     ) in query.iter_mut() {
         if !ladder_system.ladder_found {
             continue;
@@ -699,7 +701,7 @@ pub fn handle_ladder_mount(
             // Trigger mount event
             if let Some(ladder_entity) = ladder_system.current_ladder_system {
                 commands.trigger(LadderClimbStartEvent {
-                    player_entity: transform.id(),
+                    player_entity,
                     ladder_entity,
                 });
             }
@@ -717,6 +719,7 @@ pub fn handle_ladder_dismount(
         &mut LadderAnimation,
         &mut Transform,
         &mut CharacterController,
+        Entity,
     ), With<Player>>,
 ) {
     for (
@@ -726,6 +729,7 @@ pub fn handle_ladder_dismount(
         mut ladder_animation,
         mut transform,
         mut character,
+        player_entity,
     ) in query.iter_mut() {
         if !ladder_system.ladder_found {
             continue;
@@ -751,7 +755,7 @@ pub fn handle_ladder_dismount(
             // Trigger dismount event
             if let Some(ladder_entity) = ladder_system.current_ladder_system {
                 commands.trigger(LadderClimbStopEvent {
-                    player_entity: transform.id(),
+                    player_entity,
                     ladder_entity,
                 });
             }

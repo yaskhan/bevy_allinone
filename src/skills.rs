@@ -784,7 +784,7 @@ impl SkillsSystem {
                     if !skill.levels.is_empty() && skill.active {
                         let current_level = skill.current_level as usize;
                         if current_level < skill.levels.len() {
-                            let level = &skill.levels[current_level];
+                            let _level = &skill.levels[current_level];
                             // Initialization event for level
                         }
                     }

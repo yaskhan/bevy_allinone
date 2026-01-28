@@ -491,7 +491,7 @@ pub struct DialogCompletedEvent {
 /// 3. Or trigger dialogs via direct function calls
 pub fn handle_start_dialog(
     mut dialog_systems: Query<&mut DialogSystem>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     // Placeholder: In a real implementation, this would read from events
     // For now, dialogs are started via direct function calls or other systems
@@ -505,7 +505,7 @@ pub fn handle_start_dialog(
 /// 3. Or trigger dialogs via direct function calls
 pub fn handle_next_dialog(
     mut dialog_systems: Query<&mut DialogSystem>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     // Placeholder: In a real implementation, this would read from events
     // For now, dialogs are advanced via direct function calls or other systems

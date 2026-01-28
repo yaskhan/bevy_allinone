@@ -55,28 +55,23 @@ struct AbilityActivation {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn camera
     commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 5.0, 10.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            ..Default::default()
-        },
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
     // Spawn light
-    commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_xyz(3.0, 5.0, 2.0)
-            .looking_at(Vec3::ZERO, Vec3::Y),
-        ..Default::default()
-    });
+    commands.spawn((
+        DirectionalLight::default(),
+        Transform::from_xyz(3.0, 5.0, 2.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
     // Spawn ground
     commands.spawn((
-        PbrBundle {
-            mesh: asset_server.add(Mesh::from(Cuboid::new(20.0, 0.5, 20.0))),
-            material: asset_server.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            transform: Transform::from_xyz(0.0, -0.25, 0.0),
-            ..Default::default()
-        },
+        Mesh3d(asset_server.add(Mesh::from(Cuboid::new(20.0, 0.5, 20.0)))),
+        MeshMaterial3d(asset_server.add(StandardMaterial::from(Color::srgb(0.3, 0.5, 0.3)))),
+        Transform::from_xyz(0.0, -0.25, 0.0),
+        Visibility::default(),
+        InheritedVisibility::default(),
     ));
 
     // Spawn player entity with abilities system
@@ -90,54 +85,19 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Spawn UI text
     commands.spawn((
-        TextBundle::from_sections([
-            TextSection::new(
-                "Abilities Demo\n\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 32.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "Current Ability: None\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 24.0,
-                    color: Color::YELLOW,
-                },
-            ),
-            TextSection::new(
-                "Energy: 100/100\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 20.0,
-                    color: Color::CYAN,
-                },
-            ),
-            TextSection::new(
-                "\nControls:\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 20.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "1-9: Select ability\nSpace: Activate (Press Down)\nShift: Hold (Press Hold)\nEnter: Release (Press Up)\nE: Enable/Disable\nR: Deactivate\nT: Toggle Mode\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 16.0,
-                    color: Color::rgba(1.0, 1.0, 1.0, 0.8),
-                },
-            ),
-        ])
-        .with_style(Style {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            ..Default::default()
-        }),
+        Text::new("Abilities Demo\n\nCurrent Ability: None\nEnergy: 100/100\n\nControls:\n1-9: Select ability\nSpace: Activate (Press Down)\nShift: Hold (Press Hold)\nEnter: Release (Press Up)\nE: Enable/Disable\nR: Deactivate\nT: Toggle Mode\n"),
+        TextFont {
+            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+            font_size: 20.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Node {
+             position_type: PositionType::Absolute,
+             top: Val::Px(10.0),
+             left: Val::Px(10.0),
+             ..default()
+        },
         Name::new("UI Text"),
     ));
 }
@@ -236,8 +196,6 @@ fn spawn_abilities(commands: &mut Commands, asset_server: &Res<AssetServer>) {
                 time_limit: 15.0,
                 use_energy: true,
                 energy_amount: 20.0,
-                use_energy_on_press_hold: true,
-                use_energy_with_rate: true,
                 ..Default::default()
             },
         ),
@@ -292,27 +250,45 @@ fn handle_ability_input(
     mut abilities_system: Query<&mut PlayerAbilitiesSystem>,
     mut abilities: Query<&mut AbilityInfo, With<DemoAbility>>,
     mut ability_activation: Query<&mut AbilityActivation, With<DemoAbility>>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
-    let Ok(mut system) = abilities_system.get_single_mut() else {
+    let Some(mut system) = abilities_system.iter_mut().next() else {
         return;
     };
 
     // Get current ability
     let current_ability = abilities.iter().find(|a| a.is_current);
-    let current_ability_name = current_ability.map(|a| a.name.clone()).unwrap_or_default();
 
     // Select ability by number
-    for key in 1..=9 {
-        if keyboard_input.just_pressed(KeyCode::from(key as u32)) {
-            let ability_index = (key - 1) as usize;
-            let mut ability_names: Vec<String> = abilities.iter().map(|a| a.name.clone()).collect();
-            ability_names.sort();
-            
-            if ability_index < ability_names.len() {
-                system.set_current_ability_by_name(&ability_names[ability_index], &mut abilities);
-                info!("Selected ability: {}", ability_names[ability_index]);
-            }
+    // Fixed: KeyCode is an enum, we can't iterate via integer cast easily with new KeyCode
+    // We'll just check specific keys for the demo
+    let keys = [
+        (KeyCode::Digit1, 0),
+        (KeyCode::Digit2, 1),
+        (KeyCode::Digit3, 2),
+        (KeyCode::Digit4, 3),
+        (KeyCode::Digit5, 4),
+        (KeyCode::Digit6, 5),
+        (KeyCode::Digit7, 6),
+        (KeyCode::Digit8, 7),
+        (KeyCode::Digit9, 8),
+    ];
+
+    for (key, index) in keys {
+        if keyboard_input.just_pressed(key) {
+             let mut ability_names: Vec<String> = abilities.iter().map(|a| a.name.clone()).collect();
+             // Sort to ensure consistent order
+             // Note: in a real system we'd use IDs/Indices better
+             // Here we rely on spawn order which might vary unless we sort
+             // But we didn't sort ability_names in previous code... oops.
+             // Let's just use the order we find them for now or sort them.
+             // The original code sorted names.
+             ability_names.sort();
+             
+             if index < ability_names.len() {
+                 system.set_current_ability_by_name(&ability_names[index], &mut abilities);
+                 info!("Selected ability: {}", ability_names[index]);
+             }
         }
     }
 
@@ -353,18 +329,37 @@ fn handle_ability_input(
 
     // Enable/Disable ability
     if keyboard_input.just_pressed(KeyCode::KeyE) {
-        if let Some(ability) = abilities.iter().find(|a| a.is_current) {
-            let new_state = !ability.enabled;
+        let toggle_data = {
+            let mut data = None;
+            for ability in abilities.iter() {
+                if ability.is_current {
+                    data = Some((ability.name.clone(), !ability.enabled));
+                    break;
+                }
+            }
+            data
+        };
+        if let Some((name, new_state)) = toggle_data {
             system.enable_or_disable_all_abilities(new_state, &mut abilities);
-            info!("{} ability: {}", if new_state { "Enabled" } else { "Disabled" }, ability.name);
+            info!("{} ability: {}", if new_state { "Enabled" } else { "Disabled" }, name);
         }
     }
 
     // Deactivate ability
     if keyboard_input.just_pressed(KeyCode::KeyR) {
-        if let Some(ability) = abilities.iter().find(|a| a.is_current) {
-            system.deactivate_ability_by_name(&ability.name, &mut abilities);
-            info!("Deactivated ability: {}", ability.name);
+        let deactivate_name = {
+            let mut name = None;
+            for ability in abilities.iter() {
+                if ability.is_current {
+                    name = Some(ability.name.clone());
+                    break;
+                }
+            }
+            name
+        };
+        if let Some(name) = deactivate_name {
+            system.deactivate_ability_by_name(&name, &mut abilities);
+            info!("Deactivated ability: {}", name);
         }
     }
 
@@ -382,7 +377,7 @@ fn update_ability_display(
     abilities: Query<&AbilityInfo, With<DemoAbility>>,
     mut text_query: Query<&mut Text, Without<DemoAbility>>,
 ) {
-    let Ok(system) = abilities_system.get_single() else {
+    let Some(system) = abilities_system.iter().next() else {
         return;
     };
 
@@ -414,9 +409,9 @@ fn update_ability_display(
         "Inactive"
     };
 
-    let mut text = text_query.single_mut();
-    text.sections[1].value = format!("Current Ability: {}{}\n", current_ability_name, status);
-    text.sections[2].value = format!("Energy: {:.0}/{:.0} | Mode: {}\n", energy, max_energy, mode);
+    if let Some(mut text) = text_query.iter_mut().next() {
+    text.0 = format!("Abilities Demo\n\nCurrent Ability: {}{}\nEnergy: {:.0}/{:.0} | Mode: {}\n\nControls:\n1-9: Select ability\nSpace: Activate (Press Down)\nShift: Hold (Press Hold)\nEnter: Release (Press Up)\nE: Enable/Disable\nR: Deactivate\nT: Toggle Mode\n", current_ability_name, status, energy, max_energy, mode);
+    }
 }
 
 /// Update ability demo effects
@@ -428,22 +423,11 @@ fn update_abilities_demo(
     // Update activation timers
     for mut activation in ability_activation.iter_mut() {
         if activation.active {
-            activation.timer -= time.delta_seconds();
+            activation.timer -= time.delta_secs();
             if activation.timer <= 0.0 {
                 activation.active = false;
                 activation.timer = 0.0;
             }
-        }
-    }
-
-    // Log ability state changes
-    for ability in abilities.iter() {
-        if ability.cooldown_in_process && ability.cooldown_timer > 0.0 {
-            // Cooldown active
-        }
-        
-        if ability.time_limit_in_process && ability.time_limit_timer > 0.0 {
-            // Time limit active
         }
     }
 }

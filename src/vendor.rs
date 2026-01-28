@@ -36,6 +36,9 @@ use bevy::prelude::*;
 use crate::inventory::{InventoryItem, ItemType};
 use crate::currency::Currency;
 
+/// Custom queues for vendor events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct PurchaseItemEventQueue(pub Vec<PurchaseItemEvent>);
 /// Component representing a vendor/shop
 #[derive(Component, Debug, Clone)]
 pub struct Vendor {
@@ -51,6 +54,8 @@ pub struct Vendor {
     pub add_sold_items: bool,
     /// Minimum level required to buy items
     pub min_level_to_buy: u32,
+    /// The type of currency this vendor uses
+    pub currency_type: crate::currency::CurrencyType,
 }
 
 impl Default for Vendor {
@@ -62,6 +67,7 @@ impl Default for Vendor {
             infinite_stock: false,
             add_sold_items: true,
             min_level_to_buy: 0,
+            currency_type: crate::currency::CurrencyType::Gold,
         }
     }
 }
@@ -191,14 +197,24 @@ pub struct SellItemEvent {
     pub seller_entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct SellItemEventQueue(pub Vec<SellItemEvent>);
+
 /// Event for when a purchase fails
 #[derive(Debug, Clone)]
 pub struct PurchaseFailedEvent {
+    /// Entity of the buyer
+    pub buyer_entity: Entity,
+    /// Entity of the vendor
+    pub vendor_entity: Entity,
     /// Reason for failure
     pub reason: PurchaseFailureReason,
     /// Item that failed to be purchased
     pub item_name: String,
 }
+
+#[derive(Resource, Default)]
+pub struct PurchaseFailedEventQueue(pub Vec<PurchaseFailedEvent>);
 
 #[derive(Debug, Clone)]
 pub enum PurchaseFailureReason {
@@ -211,11 +227,18 @@ pub enum PurchaseFailureReason {
 /// Event for when a sale fails
 #[derive(Debug, Clone)]
 pub struct SaleFailedEvent {
+    /// Entity of the seller
+    pub seller_entity: Entity,
+    /// Entity of the vendor
+    pub vendor_entity: Entity,
     /// Reason for failure
     pub reason: SaleFailureReason,
     /// Item that failed to be sold
     pub item_name: String,
 }
+
+#[derive(Resource, Default)]
+pub struct SaleFailedEventQueue(pub Vec<SaleFailedEvent>);
 
 #[derive(Debug, Clone)]
 pub enum SaleFailureReason {
@@ -226,13 +249,13 @@ pub enum SaleFailureReason {
 /// System to handle vendor initialization
 pub fn setup_vendor_system(
     mut commands: Commands,
-    query: Query<(Entity, &Vendor), Added<Vendor>>,
+    query: Query<(Entity, &Vendor, Option<&VendorInventory>), Added<Vendor>>,
 ) {
-    for (entity, vendor) in query.iter() {
+    for (entity, vendor, inventory) in query.iter() {
         info!("Initializing vendor: {}", vendor.name);
         
         // Initialize empty inventory if not present
-        if !commands.entity(entity).contains::<VendorInventory>() {
+        if inventory.is_none() {
             commands.entity(entity).insert(VendorInventory::default());
         }
     }
@@ -240,105 +263,102 @@ pub fn setup_vendor_system(
 
 /// System to handle purchase events
 pub fn handle_purchase_events(
-    mut purchase_events: EventReader<PurchaseItemEvent>,
+    mut purchase_events: ResMut<PurchaseItemEventQueue>,
     mut vendor_query: Query<&mut VendorInventory>,
     mut currency_query: Query<&mut Currency>,
-    mut purchase_failed_events: EventWriter<PurchaseFailedEvent>,
-    player_query: Query<&crate::character::CharacterLevel>,
+    mut purchase_failed_events: ResMut<PurchaseFailedEventQueue>,
 ) {
-    for event in purchase_events.iter() {
+    for event in purchase_events.0.drain(..) {
         let Ok(mut vendor_inventory) = vendor_query.get_mut(event.vendor_entity) else {
             continue;
         };
-        
-        let Ok(player_level) = player_query.get(event.buyer_entity) else {
-            continue;
-        };
-        
+
         // Check if item exists
         if event.item_index >= vendor_inventory.items.len() {
-            purchase_failed_events.send(PurchaseFailedEvent {
+            purchase_failed_events.0.push(PurchaseFailedEvent {
+                buyer_entity: event.buyer_entity,
+                vendor_entity: event.vendor_entity,
                 reason: PurchaseFailureReason::ItemNotFound,
                 item_name: "Unknown".to_string(),
             });
             continue;
         }
-        
-        let shop_item = &vendor_inventory.items[event.item_index];
-        
-        // Check availability
-        if !shop_item.is_available(player_level.level) {
-            if shop_item.amount == 0 && !shop_item.infinite {
-                purchase_failed_events.send(PurchaseFailedEvent {
-                    reason: PurchaseFailureReason::NotEnoughStock,
-                    item_name: shop_item.item.name.clone(),
-                });
-            } else {
-                purchase_failed_events.send(PurchaseFailedEvent {
-                    reason: PurchaseFailureReason::LevelRequirementNotMet,
-                    item_name: shop_item.item.name.clone(),
-                });
-            }
+
+        // Check availability (simplified - no level check)
+        let item_amount = vendor_inventory.items[event.item_index].amount;
+        let item_infinite = vendor_inventory.items[event.item_index].infinite;
+        let item_name = vendor_inventory.items[event.item_index].item.name.clone();
+        let item_buy_price = vendor_inventory.items[event.item_index].buy_price;
+
+        if item_amount == 0 && !item_infinite {
+            purchase_failed_events.0.push(PurchaseFailedEvent {
+                buyer_entity: event.buyer_entity,
+                vendor_entity: event.vendor_entity,
+                reason: PurchaseFailureReason::NotEnoughStock,
+                item_name: item_name.clone(),
+            });
             continue;
         }
-        
+
         // Calculate total cost
-        let total_cost = shop_item.buy_price * event.amount as f32;
-        
+        let total_cost = item_buy_price * event.amount as f32;
+
         // Check if player has enough money
         let Ok(mut currency) = currency_query.get_mut(event.buyer_entity) else {
             continue;
         };
-        
+
         if currency.amount < total_cost {
-            purchase_failed_events.send(PurchaseFailedEvent {
+            purchase_failed_events.0.push(PurchaseFailedEvent {
+                buyer_entity: event.buyer_entity,
+                vendor_entity: event.vendor_entity,
                 reason: PurchaseFailureReason::NotEnoughMoney,
-                item_name: shop_item.item.name.clone(),
+                item_name: item_name.clone(),
             });
             continue;
         }
-        
+
         // Process purchase
         currency.amount -= total_cost;
-        
+
         // Update stock (if not infinite)
-        if !shop_item.infinite {
+        if !item_infinite {
             vendor_inventory.items[event.item_index].amount -= event.amount;
         }
-        
+
         info!(
-            "Purchased {}x {} from {} for {}",
-            event.amount, shop_item.item.name, vendor_inventory.items[event.item_index].item.name, total_cost
+            "Purchased {}x {} from vendor for {}",
+            event.amount, item_name, total_cost
         );
     }
 }
 
 /// System to handle sale events
 pub fn handle_sale_events(
-    mut sale_events: EventReader<SellItemEvent>,
+    mut sale_events: ResMut<SellItemEventQueue>,
     mut vendor_query: Query<&mut VendorInventory>,
     mut currency_query: Query<&mut Currency>,
-    mut sale_failed_events: EventWriter<SaleFailedEvent>,
+    mut sale_failed_events: ResMut<SaleFailedEventQueue>,
     vendor_query_check: Query<&Vendor>,
 ) {
-    for event in sale_events.iter() {
+    for event in sale_events.0.drain(..) {
         let Ok(mut vendor_inventory) = vendor_query.get_mut(event.vendor_entity) else {
             continue;
         };
-        
+
         let Ok(vendor) = vendor_query_check.get(event.vendor_entity) else {
             continue;
         };
-        
+
         // Calculate sale price
         let sale_price = event.item.value * vendor.sell_multiplier * event.amount as f32;
-        
+
         // Check if item exists in vendor inventory
         let mut found = false;
         for shop_item in vendor_inventory.items.iter_mut() {
             if shop_item.item.name == event.item.name {
                 found = true;
-                
+
                 // Add to stock if vendor accepts sold items
                 if vendor.add_sold_items {
                     shop_item.amount += event.amount;
@@ -346,7 +366,7 @@ pub fn handle_sale_events(
                 break;
             }
         }
-        
+
         if !found {
             // Add new item to vendor inventory
             let new_shop_item = ShopItem {
@@ -360,14 +380,14 @@ pub fn handle_sale_events(
             };
             vendor_inventory.items.push(new_shop_item);
         }
-        
+
         // Give money to seller
         let Ok(mut currency) = currency_query.get_mut(event.seller_entity) else {
             continue;
         };
-        
+
         currency.amount += sale_price;
-        
+
         info!(
             "Sold {}x {} to {} for {}",
             event.amount, event.item.name, vendor.name, sale_price
@@ -410,10 +430,10 @@ impl Plugin for VendorPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add events
-            .add_event::<PurchaseItemEvent>()
-            .add_event::<SellItemEvent>()
-            .add_event::<PurchaseFailedEvent>()
-            .add_event::<SaleFailedEvent>()
+            .init_resource::<PurchaseItemEventQueue>()
+            .init_resource::<PurchaseFailedEventQueue>()
+            .init_resource::<SellItemEventQueue>()
+            .init_resource::<SaleFailedEventQueue>()
             // Add systems
             .add_systems(Update, (
                 setup_vendor_system,

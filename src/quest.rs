@@ -87,13 +87,13 @@ fn handle_quest_interactions(
                 // Check if quest is already in log
                 let already_has = log.active_quests.iter().any(|q| q.id == station.quest.id) ||
                                   log.completed_quests.iter().any(|q| q.id == station.quest.id);
-                
+
                 if !already_has {
                     let mut quest = station.quest.clone();
                     quest.status = QuestStatus::InProgress;
                     log.active_quests.push(quest);
                     info!("Quest '{}' accepted!", station.quest.name);
-                    
+
                     // Trigger quest started event
                     quest_events.0.push(QuestEvent::Started(station.quest.id));
                 } else {

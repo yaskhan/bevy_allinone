@@ -1,33 +1,6 @@
 //! # Stats System Demo
 //!
 //! This example demonstrates the stats system functionality.
-//!
-//! ## Features Demonstrated
-//!
-//! - Core attributes (Strength, Agility, Intelligence, Constitution, Charisma)
-//! - Derived stats (Health, Stamina, Mana, Attack Power, Defense, etc.)
-//! - Stat modifiers (Buffs and Debuffs)
-//! - Stat templates (Save/Load)
-//! - Real-time stat updates
-//!
-//! ## Controls
-//!
-//! - **1-5**: Increase core attributes (Strength, Agility, Intelligence, Constitution, Charisma)
-//! - **Q**: Apply Strength buff (+10 Attack Power, 10s)
-//! - **W**: Apply Agility buff (+20% Movement Speed, 10s)
-//! - **E**: Apply Intelligence buff (+10 Mana, 10s)
-//! - **R**: Apply Constitution buff (+20 Health, 10s)
-//! - **T**: Apply Charisma buff (+10 Persuasion, 10s)
-//! - **A**: Apply Strength debuff (-5 Attack Power, 10s)
-//! - **S**: Apply Agility debuff (-20% Movement Speed, 10s)
-//! - **D**: Apply Constitution debuff (-20 Health, 10s)
-//! - **F**: Heal (restore 25 Health)
-//! - **G**: Use Stamina (consume 25 Stamina)
-//! - **H**: Use Mana (consume 25 Mana)
-//! - **Z**: Save stats to template
-//! - **X**: Load stats from template
-//! - **C**: Reset all stats to default
-//! - **V**: Toggle stats system active/inactive
 
 use bevy::prelude::*;
 use bevy_allinone::prelude::*;
@@ -50,31 +23,28 @@ fn main() {
 struct DemoStats;
 
 /// Setup the demo scene
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     // Spawn camera
     commands.spawn((
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 5.0, 10.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            ..Default::default()
-        },
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 
     // Spawn light
-    commands.spawn(DirectionalLightBundle {
-        transform: Transform::from_xyz(3.0, 5.0, 2.0)
-            .looking_at(Vec3::ZERO, Vec3::Y),
-        ..Default::default()
-    });
+    commands.spawn((
+        DirectionalLight::default(),
+        Transform::from_xyz(3.0, 5.0, 2.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
     // Spawn ground
     commands.spawn((
-        PbrBundle {
-            mesh: asset_server.add(Mesh::from(Cuboid::new(20.0, 0.5, 20.0))),
-            material: asset_server.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            transform: Transform::from_xyz(0.0, -0.25, 0.0),
-            ..Default::default()
-        },
+        Mesh3d(meshes.add(Cuboid::new(20.0, 0.5, 20.0))),
+        MeshMaterial3d(materials.add(StandardMaterial::from(Color::srgb(0.3, 0.5, 0.3)))),
+        Transform::from_xyz(0.0, -0.25, 0.0),
     ));
 
     // Spawn player entity with stats system
@@ -86,125 +56,126 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Spawn UI text
     commands.spawn((
-        TextBundle::from_sections([
-            TextSection::new(
-                "Stats System Demo\n\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 32.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "Core Attributes:\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 20.0,
-                    color: Color::YELLOW,
-                },
-            ),
-            TextSection::new(
-                "Strength: 10 | Agility: 10 | Intelligence: 10\nConstitution: 10 | Charisma: 10\n\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "Derived Stats:\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 20.0,
-                    color: Color::YELLOW,
-                },
-            ),
-            TextSection::new(
-                "Health: 100/100 | Stamina: 100/100 | Mana: 100/100\nAttack: 15 | Defense: 8 | Crit: 5%\nSpeed: 1.0x | Attack Speed: 1.0x\nMagic Res: 0.2 | Stealth: 0.1 | Persuasion: 0.2\n\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "Active Modifiers:\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 20.0,
-                    color: Color::YELLOW,
-                },
-            ),
-            TextSection::new(
-                "None\n\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 16.0,
-                    color: Color::rgba(1.0, 1.0, 1.0, 0.8),
-                },
-            ),
-            TextSection::new(
-                "Controls:\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Bold.ttf")),
-                    font_size: 20.0,
-                    color: Color::WHITE,
-                },
-            ),
-            TextSection::new(
-                "1-5: +1 to attributes\nQ-W-E-R-T: Buffs\nA-S-D: Debuffs\nF: Heal | G: Stamina | H: Mana\nZ: Save | X: Load | C: Reset | V: Toggle\n",
-                TextStyle {
-                    font: asset_server.add(asset_server.load("fonts/FiraSans-Regular.ttf")),
-                    font_size: 16.0,
-                    color: Color::rgba(1.0, 1.0, 1.0, 0.8),
-                },
-            ),
-        ])
-        .with_style(Style {
+        Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
-            ..Default::default()
-        }),
-        Name::new("UI Text"),
-    ));
+            flex_direction: FlexDirection::Column,
+            ..default()
+        },
+    )).with_children(|parent| {
+        parent.spawn((
+            Text::new("Stats System Demo\n\n"),
+            TextFont {
+                font_size: 32.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+        ));
+
+        parent.spawn((
+            Text::new("Core Attributes:\n"),
+            TextFont {
+                font_size: 20.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 1.0, 0.0)),
+        ));
+
+        parent.spawn((
+            Text::new("Strength: 10 | Agility: 10 | Intelligence: 10\nConstitution: 10 | Charisma: 10\n\n"),
+            TextFont {
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            DemoStatsTextCore,
+        ));
+
+        parent.spawn((
+            Text::new("Derived Stats:\n"),
+            TextFont {
+                font_size: 20.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 1.0, 0.0)),
+        ));
+
+        parent.spawn((
+            Text::new("Health: 100/100 | Stamina: 100/100 | Mana: 100/100\nAttack: 15 | Defense: 8 | Crit: 5%\nSpeed: 1.0x | Attack Speed: 1.0x\nMagic Res: 0.2 | Stealth: 0.1 | Persuasion: 0.2\n\n"),
+            TextFont {
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+            DemoStatsTextDerived,
+        ));
+
+        parent.spawn((
+            Text::new("Active Modifiers:\n"),
+            TextFont {
+                font_size: 20.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 1.0, 0.0)),
+        ));
+
+        parent.spawn((
+            Text::new("None\n\n"),
+            TextFont {
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgba(1.0, 1.0, 1.0, 0.8)),
+            DemoStatsTextModifiers,
+        ));
+
+        parent.spawn((
+            Text::new("Controls:\n1-5: +1 to attributes\nQ-W-E-R-T: Buffs\nA-S-D: Debuffs\nF: Heal | G: Stamina | H: Mana\nZ: Save | X: Load | C: Reset | V: Toggle\n"),
+            TextFont {
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgba(1.0, 1.0, 1.0, 0.8)),
+        ));
+    });
 }
+
+#[derive(Component)]
+struct DemoStatsTextCore;
+
+#[derive(Component)]
+struct DemoStatsTextDerived;
+
+#[derive(Component)]
+struct DemoStatsTextModifiers;
 
 /// Handle keyboard input for stats
 fn handle_stats_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut stats_query: Query<&mut StatsSystem, With<DemoStats>>,
-    mut commands: Commands,
-    time: Res<Time>,
 ) {
-    let Ok(mut stats) = stats_query.get_single_mut() else {
-        return;
-    };
+    let mut stats = if let Some(s) = stats_query.iter_mut().next() { s } else { return; };
 
     // Increase core attributes
     if keyboard_input.just_pressed(KeyCode::Digit1) {
         stats.increase_core_attribute(CoreAttribute::Strength, 1.0);
-        info!("Strength increased to: {}", stats.get_core_attribute(CoreAttribute::Strength).unwrap());
     }
 
     if keyboard_input.just_pressed(KeyCode::Digit2) {
         stats.increase_core_attribute(CoreAttribute::Agility, 1.0);
-        info!("Agility increased to: {}", stats.get_core_attribute(CoreAttribute::Agility).unwrap());
     }
 
     if keyboard_input.just_pressed(KeyCode::Digit3) {
         stats.increase_core_attribute(CoreAttribute::Intelligence, 1.0);
-        info!("Intelligence increased to: {}", stats.get_core_attribute(CoreAttribute::Intelligence).unwrap());
     }
 
     if keyboard_input.just_pressed(KeyCode::Digit4) {
         stats.increase_core_attribute(CoreAttribute::Constitution, 1.0);
-        info!("Constitution increased to: {}", stats.get_core_attribute(CoreAttribute::Constitution).unwrap());
     }
 
     if keyboard_input.just_pressed(KeyCode::Digit5) {
         stats.increase_core_attribute(CoreAttribute::Charisma, 1.0);
-        info!("Charisma increased to: {}", stats.get_core_attribute(CoreAttribute::Charisma).unwrap());
     }
 
     // Apply buffs
@@ -216,7 +187,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Strength Buff (+10 Attack Power, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyW) {
@@ -227,7 +197,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Agility Buff (+20% Movement Speed, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyE) {
@@ -238,7 +207,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Intelligence Buff (+10 Max Mana, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyR) {
@@ -249,7 +217,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Constitution Buff (+20 Max Health, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyT) {
@@ -260,7 +227,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Charisma Buff (+10 Persuasion, 10s)");
     }
 
     // Apply debuffs
@@ -272,7 +238,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Strength Debuff (-5 Attack Power, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyS) {
@@ -283,7 +248,6 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Agility Debuff (-20% Movement Speed, 10s)");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyD) {
@@ -294,26 +258,19 @@ fn handle_stats_input(
             10.0,
         );
         stats.add_modifier(modifier);
-        info!("Applied Constitution Debuff (-20 Max Health, 10s)");
     }
 
     // Use stats
     if keyboard_input.just_pressed(KeyCode::KeyF) {
-        let heal_amount = 25.0;
-        stats.increase_derived_stat(DerivedStat::CurrentHealth, heal_amount);
-        info!("Healed {} HP", heal_amount);
+        stats.increase_derived_stat(DerivedStat::CurrentHealth, 25.0);
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyG) {
-        let stamina_cost = 25.0;
-        stats.use_stat(DerivedStat::CurrentStamina, stamina_cost);
-        info!("Used {} Stamina", stamina_cost);
+        stats.use_stat(DerivedStat::CurrentStamina, 25.0);
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyH) {
-        let mana_cost = 25.0;
-        stats.use_stat(DerivedStat::CurrentMana, mana_cost);
-        info!("Used {} Mana", mana_cost);
+        stats.use_stat(DerivedStat::CurrentMana, 25.0);
     }
 
     // Save/Load template
@@ -324,7 +281,7 @@ fn handle_stats_input(
             stat_entries: Vec::new(),
         };
         stats.save_to_template(&mut template);
-        info!("Saved stats to template: {}", template.name);
+        info!("Saved stats to template");
     }
 
     if keyboard_input.just_pressed(KeyCode::KeyX) {
@@ -332,35 +289,15 @@ fn handle_stats_input(
             id: 1,
             name: String::from("Demo Template"),
             stat_entries: vec![
-                StatTemplateEntry {
-                    name: String::from("Strength"),
-                    value: 15.0,
-                    bool_state: false,
-                },
-                StatTemplateEntry {
-                    name: String::from("Agility"),
-                    value: 12.0,
-                    bool_state: false,
-                },
-                StatTemplateEntry {
-                    name: String::from("Intelligence"),
-                    value: 14.0,
-                    bool_state: false,
-                },
-                StatTemplateEntry {
-                    name: String::from("Constitution"),
-                    value: 16.0,
-                    bool_state: false,
-                },
-                StatTemplateEntry {
-                    name: String::from("Charisma"),
-                    value: 11.0,
-                    bool_state: false,
-                },
+                StatTemplateEntry { name: String::from("Strength"), value: 15.0, bool_state: false },
+                StatTemplateEntry { name: String::from("Agility"), value: 12.0, bool_state: false },
+                StatTemplateEntry { name: String::from("Intelligence"), value: 14.0, bool_state: false },
+                StatTemplateEntry { name: String::from("Constitution"), value: 16.0, bool_state: false },
+                StatTemplateEntry { name: String::from("Charisma"), value: 11.0, bool_state: false },
             ],
         };
         stats.load_from_template(&template);
-        info!("Loaded stats from template: {}", template.name);
+        info!("Loaded stats from template");
     }
 
     // Reset stats
@@ -373,103 +310,96 @@ fn handle_stats_input(
     if keyboard_input.just_pressed(KeyCode::KeyV) {
         let new_state = !stats.active;
         stats.set_active(new_state);
-        info!("Stats system: {}", if new_state { "Active" } else { "Inactive" });
     }
 }
 
 /// Update the stats display
 fn update_stats_display(
     stats_query: Query<&StatsSystem, With<DemoStats>>,
-    mut text_query: Query<&mut Text, Without<DemoStats>>,
+    mut core_text_query: Query<&mut Text, (With<DemoStatsTextCore>, Without<DemoStatsTextDerived>, Without<DemoStatsTextModifiers>)>,
+    mut derived_text_query: Query<&mut Text, (With<DemoStatsTextDerived>, Without<DemoStatsTextCore>, Without<DemoStatsTextModifiers>)>,
+    mut modifiers_text_query: Query<&mut Text, (With<DemoStatsTextModifiers>, Without<DemoStatsTextCore>, Without<DemoStatsTextDerived>)>,
 ) {
-    let Ok(stats) = stats_query.get_single() else {
-        return;
-    };
+    let stats = if let Some(s) = stats_query.iter().next() { s } else { return; };
 
-    let mut text = text_query.single_mut();
+    if let Some(mut text) = core_text_query.iter_mut().next() {
+        let strength = stats.get_core_attribute(CoreAttribute::Strength).copied().unwrap_or(0.0);
+        let agility = stats.get_core_attribute(CoreAttribute::Agility).copied().unwrap_or(0.0);
+        let intelligence = stats.get_core_attribute(CoreAttribute::Intelligence).copied().unwrap_or(0.0);
+        let constitution = stats.get_core_attribute(CoreAttribute::Constitution).copied().unwrap_or(0.0);
+        let charisma = stats.get_core_attribute(CoreAttribute::Charisma).copied().unwrap_or(0.0);
 
-    // Core attributes
-    let strength = stats.get_core_attribute(CoreAttribute::Strength).copied().unwrap_or(0.0);
-    let agility = stats.get_core_attribute(CoreAttribute::Agility).copied().unwrap_or(0.0);
-    let intelligence = stats.get_core_attribute(CoreAttribute::Intelligence).copied().unwrap_or(0.0);
-    let constitution = stats.get_core_attribute(CoreAttribute::Constitution).copied().unwrap_or(0.0);
-    let charisma = stats.get_core_attribute(CoreAttribute::Charisma).copied().unwrap_or(0.0);
+        text.0 = format!(
+            "Strength: {:.0} | Agility: {:.0} | Intelligence: {:.0}\nConstitution: {:.0} | Charisma: {:.0}\n\n",
+            strength, agility, intelligence, constitution, charisma
+        );
+    }
 
-    text.sections[2].value = format!(
-        "Strength: {:.0} | Agility: {:.0} | Intelligence: {:.0}\nConstitution: {:.0} | Charisma: {:.0}\n\n",
-        strength, agility, intelligence, constitution, charisma
-    );
+    if let Some(mut text) = derived_text_query.iter_mut().next() {
+        let max_health = stats.get_derived_stat(DerivedStat::MaxHealth).copied().unwrap_or(0.0);
+        let current_health = stats.get_derived_stat(DerivedStat::CurrentHealth).copied().unwrap_or(0.0);
+        let max_stamina = stats.get_derived_stat(DerivedStat::MaxStamina).copied().unwrap_or(0.0);
+        let current_stamina = stats.get_derived_stat(DerivedStat::CurrentStamina).copied().unwrap_or(0.0);
+        let max_mana = stats.get_derived_stat(DerivedStat::MaxMana).copied().unwrap_or(0.0);
+        let current_mana = stats.get_derived_stat(DerivedStat::CurrentMana).copied().unwrap_or(0.0);
+        let attack_power = stats.get_derived_stat(DerivedStat::AttackPower).copied().unwrap_or(0.0);
+        let defense = stats.get_derived_stat(DerivedStat::Defense).copied().unwrap_or(0.0);
+        let critical_chance = stats.get_derived_stat(DerivedStat::CriticalChance).copied().unwrap_or(0.0);
+        let movement_speed = stats.get_derived_stat(DerivedStat::MovementSpeed).copied().unwrap_or(0.0);
+        let attack_speed = stats.get_derived_stat(DerivedStat::AttackSpeed).copied().unwrap_or(0.0);
+        let magic_resistance = stats.get_derived_stat(DerivedStat::MagicResistance).copied().unwrap_or(0.0);
+        let stealth = stats.get_derived_stat(DerivedStat::Stealth).copied().unwrap_or(0.0);
+        let persuasion = stats.get_derived_stat(DerivedStat::Persuasion).copied().unwrap_or(0.0);
 
-    // Derived stats
-    let max_health = stats.get_derived_stat(DerivedStat::MaxHealth).copied().unwrap_or(0.0);
-    let current_health = stats.get_derived_stat(DerivedStat::CurrentHealth).copied().unwrap_or(0.0);
-    let max_stamina = stats.get_derived_stat(DerivedStat::MaxStamina).copied().unwrap_or(0.0);
-    let current_stamina = stats.get_derived_stat(DerivedStat::CurrentStamina).copied().unwrap_or(0.0);
-    let max_mana = stats.get_derived_stat(DerivedStat::MaxMana).copied().unwrap_or(0.0);
-    let current_mana = stats.get_derived_stat(DerivedStat::CurrentMana).copied().unwrap_or(0.0);
-    let attack_power = stats.get_derived_stat(DerivedStat::AttackPower).copied().unwrap_or(0.0);
-    let defense = stats.get_derived_stat(DerivedStat::Defense).copied().unwrap_or(0.0);
-    let critical_chance = stats.get_derived_stat(DerivedStat::CriticalChance).copied().unwrap_or(0.0);
-    let movement_speed = stats.get_derived_stat(DerivedStat::MovementSpeed).copied().unwrap_or(0.0);
-    let attack_speed = stats.get_derived_stat(DerivedStat::AttackSpeed).copied().unwrap_or(0.0);
-    let magic_resistance = stats.get_derived_stat(DerivedStat::MagicResistance).copied().unwrap_or(0.0);
-    let stealth = stats.get_derived_stat(DerivedStat::Stealth).copied().unwrap_or(0.0);
-    let persuasion = stats.get_derived_stat(DerivedStat::Persuasion).copied().unwrap_or(0.0);
+        text.0 = format!(
+            "Health: {:.0}/{:.0} | Stamina: {:.0}/{:.0} | Mana: {:.0}/{:.0}\nAttack: {:.1} | Defense: {:.1} | Crit: {:.1}%\nSpeed: {:.2}x | Attack Speed: {:.2}x\nMagic Res: {:.2} | Stealth: {:.2} | Persuasion: {:.2}\n\n",
+            current_health, max_health,
+            current_stamina, max_stamina,
+            current_mana, max_mana,
+            attack_power, defense, critical_chance * 100.0,
+            movement_speed, attack_speed,
+            magic_resistance, stealth, persuasion
+        );
+    }
 
-    text.sections[4].value = format!(
-        "Health: {:.0}/{:.0} | Stamina: {:.0}/{:.0} | Mana: {:.0}/{:.0}\nAttack: {:.1} | Defense: {:.1} | Crit: {:.1}%\nSpeed: {:.2}x | Attack Speed: {:.2}x\nMagic Res: {:.2} | Stealth: {:.2} | Persuasion: {:.2}\n\n",
-        current_health, max_health,
-        current_stamina, max_stamina,
-        current_mana, max_mana,
-        attack_power, defense, critical_chance * 100.0,
-        movement_speed, attack_speed,
-        magic_resistance, stealth, persuasion
-    );
-
-    // Modifiers
-    let modifiers = stats.get_modifiers();
-    if modifiers.is_empty() {
-        text.sections[6].value = String::from("None\n\n");
-    } else {
-        let mut modifier_text = String::new();
-        for modifier in modifiers {
-            let type_str = match modifier.modifier_type {
-                ModifierType::Buff => "Buff",
-                ModifierType::Debuff => "Debuff",
-            };
-            let amount_str = if modifier.is_percentage {
-                format!("{:+.0}%", modifier.amount)
-            } else {
-                format!("{:+.1}", modifier.amount)
-            };
-            let duration_str = if modifier.duration > 0.0 {
-                format!(" ({:.1}s)", modifier.time_remaining)
-            } else {
-                String::from(" (Permanent)")
-            };
-            modifier_text.push_str(&format!(
-                "- {} ({}): {}{}{}\n",
-                modifier.name,
-                type_str,
-                amount_str,
-                duration_str,
-                if modifier.is_percentage { " of " } else { "" }
-            ));
+    if let Some(mut text) = modifiers_text_query.iter_mut().next() {
+        let modifiers = stats.get_modifiers();
+        if modifiers.is_empty() {
+            text.0 = String::from("None\n\n");
+        } else {
+            let mut modifier_text = String::new();
+            for modifier in modifiers {
+                let type_str = match modifier.modifier_type {
+                    ModifierType::Buff => "Buff",
+                    ModifierType::Debuff => "Debuff",
+                };
+                let amount_str = if modifier.is_percentage {
+                    format!("{:+.0}%", modifier.amount)
+                } else {
+                    format!("{:+.1}", modifier.amount)
+                };
+                let duration_str = if modifier.duration > 0.0 {
+                    format!(" ({:.1}s)", modifier.time_remaining)
+                } else {
+                    String::from(" (Permanent)")
+                };
+                modifier_text.push_str(&format!(
+                    "- {} ({}): {}{}\n",
+                    modifier.name, type_str, amount_str, duration_str
+                ));
+            }
+            text.0 = modifier_text + "\n";
         }
-        text.sections[6].value = modifier_text + "\n";
     }
 }
 
-/// Update modifier timers (visual feedback)
+/// Update modifier timers
 fn update_modifier_timers(
     time: Res<Time>,
     mut stats_query: Query<&mut StatsSystem, With<DemoStats>>,
 ) {
-    let Ok(mut stats) = stats_query.get_single_mut() else {
-        return;
-    };
-
-    // Update and apply modifiers
-    stats.update_modifiers(time.delta_seconds());
-    stats.apply_modifiers();
+    if let Some(mut stats) = stats_query.iter_mut().next() {
+        stats.update_modifiers(time.delta().as_secs_f32());
+        stats.apply_modifiers();
+    }
 }

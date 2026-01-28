@@ -11,14 +11,10 @@
 //! - **Input Handling**: Press down, hold, and release input patterns
 //! - **UI Integration**: Ability wheel selection and display
 //!
-//! ## Reference
-//!
-//! Based on GKC's Abilities System:
-//! - `gkit/Scripts/Abilities System/playerAbilitiesSystem.cs`
-//! - `gkit/Scripts/Abilities System/abilityInfo.cs`
-//! - `gkit/Scripts/Abilities System/playerAbilitiesUISystem.cs`
+
 
 use bevy::prelude::*;
+use bevy::ecs::query::QueryFilter;
 use serde::{Deserialize, Serialize};
 
 /// The status of an ability.
@@ -62,8 +58,6 @@ pub enum EnergyConsumptionType {
 ///
 /// This component represents an individual ability with its properties,
 /// cooldowns, energy requirements, and input handling.
-///
-/// Reference: `gkit/Scripts/Abilities System/abilityInfo.cs`
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
 pub struct AbilityInfo {
@@ -414,8 +408,6 @@ impl AbilityInfo {
 ///
 /// This component tracks all abilities, the current ability, and handles
 /// ability activation and management.
-///
-/// Reference: `gkit/Scripts/Abilities System/playerAbilitiesSystem.cs`
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerAbilitiesSystem {
@@ -482,7 +474,8 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Sets the current ability by name
-    pub fn set_current_ability_by_name(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Sets the current ability by name
+    pub fn set_current_ability_by_name<F: QueryFilter>(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo, F>) {
         if !self.enabled {
             return;
         }
@@ -522,7 +515,7 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Gets the current ability
-    pub fn get_current_ability<'a>(&self, abilities: &'a Query<'a, 'a, &'a AbilityInfo>) -> Option<&'a AbilityInfo> {
+    pub fn get_current_ability<'a, F: QueryFilter>(&self, abilities: &'a Query<'a, 'a, &AbilityInfo, F>) -> Option<&'a AbilityInfo> {
         for (idx, ability) in abilities.iter().enumerate() {
             if idx == self.current_ability_index && ability.is_current {
                 return Some(ability);
@@ -532,12 +525,12 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Gets the number of available abilities
-    pub fn get_number_of_available_abilities(&self, abilities: &Query<&AbilityInfo>) -> usize {
+    pub fn get_number_of_available_abilities<F: QueryFilter>(&self, abilities: &Query<&AbilityInfo, F>) -> usize {
         abilities.iter().filter(|a| a.enabled).count()
     }
 
     /// Checks if any abilities are available
-    pub fn check_if_abilities_available(&self, abilities: &Query<&AbilityInfo>) -> bool {
+    pub fn check_if_abilities_available<F: QueryFilter>(&self, abilities: &Query<&AbilityInfo, F>) -> bool {
         self.get_number_of_available_abilities(abilities) > 0
     }
 
@@ -719,7 +712,8 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Enables an ability by name
-    pub fn enable_ability_by_name(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Enables an ability by name
+    pub fn enable_ability_by_name<F: QueryFilter>(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             if ability.name == ability_name {
                 ability.enable();
@@ -729,7 +723,8 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Disables an ability by name
-    pub fn disable_ability_by_name(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Disables an ability by name
+    pub fn disable_ability_by_name<F: QueryFilter>(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             if ability.name == ability_name {
                 ability.disable();
@@ -739,7 +734,8 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Deactivates an ability by name
-    pub fn deactivate_ability_by_name(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Deactivates an ability by name
+    pub fn deactivate_ability_by_name<F: QueryFilter>(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             if ability.name == ability_name {
                 ability.deactivate();
@@ -749,7 +745,8 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Disables all abilities
-    pub fn disable_all_abilities(&mut self, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Disables all abilities
+    pub fn disable_all_abilities<F: QueryFilter>(&mut self, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             ability.disable();
         }
@@ -757,14 +754,16 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Deactivates all abilities
-    pub fn deactivate_all_abilities(&mut self, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Deactivates all abilities
+    pub fn deactivate_all_abilities<F: QueryFilter>(&mut self, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             ability.deactivate();
         }
     }
 
     /// Enables or disables all abilities
-    pub fn enable_or_disable_all_abilities(&mut self, state: bool, abilities: &mut Query<&mut AbilityInfo>) {
+    /// Enables or disables all abilities
+    pub fn enable_or_disable_all_abilities<F: QueryFilter>(&mut self, state: bool, abilities: &mut Query<&mut AbilityInfo, F>) {
         for mut ability in abilities.iter_mut() {
             if state {
                 ability.enable();

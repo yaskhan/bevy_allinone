@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use avian3d::prelude::*;
 use bevy_allinone::prelude::*;
 
 fn main() {

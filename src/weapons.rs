@@ -373,10 +373,10 @@ fn update_weapon_aim(
 
 fn update_accuracy(
     time: Res<Time>,
-    input_state: Res<InputState>,
+    _input_state: Res<InputState>,
     mut query: Query<(&mut Accuracy, &GlobalTransform)>,
 ) {
-    for (mut accuracy, transform) in query.iter_mut() {
+    for (mut accuracy, _transform) in query.iter_mut() {
         // 1. Update Bloom (Recovery)
         accuracy.current_bloom -= accuracy.recovery_rate * time.delta_secs();
         if accuracy.current_bloom < 0.0 {

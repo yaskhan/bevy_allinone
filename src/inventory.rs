@@ -181,7 +181,7 @@ fn handle_pickup_events(
 }
 
 fn update_inventory(
-    mut query: Query<&mut Inventory>,
+    _query: Query<&mut Inventory>,
 ) {
     // Periodic weight check not strictly needed if we update on modify.
     // Maybe verify constraints?
