@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use bevy_allinone::weapons::{WeaponsPlugin, Weapon, Projectile, Accuracy, BallisticsEnvironment, BulletTracer, VisualEffectPool};
+use bevy_allinone::character::{CharacterPlugin, CharacterController, Player};
+use bevy_allinone::camera::{CameraPlugin, CameraController};
 
 fn main() {
     App::new()
@@ -8,6 +10,8 @@ fn main() {
             DefaultPlugins,
             PhysicsPlugins::default(),
             WeaponsPlugin,
+            CharacterPlugin,
+            CameraPlugin,
         ))
         .insert_resource(BallisticsEnvironment {
             gravity: Vec3::new(0.0, -9.81, 0.0),
@@ -15,12 +19,9 @@ fn main() {
             wind: Vec3::new(2.0, 0.0, 0.0), // Ветер дует вправо
         })
         .add_systems(Startup, setup)
-        .add_systems(Update, (handle_movement, handle_shooting, update_ui))
+        .add_systems(Update, (handle_shooting, update_ui))
         .run();
 }
-
-#[derive(Component)]
-struct Player;
 
 #[derive(Component)]
 struct Crosshair;
@@ -57,31 +58,44 @@ fn setup(
         Collider::cuboid(2.0, 2.0, 0.1),
     ));
 
-    // Игрок (Камера + Оружие)
-    commands.spawn((
+    // Игрок (Сущность персонажа)
+    let player_id = commands.spawn((
         Player,
         Transform::from_xyz(0.0, 1.0, 5.0),
         GlobalTransform::default(),
         Visibility::default(),
         ComputedVisibility::default(),
-    )).with_children(|parent| {
-        // Камера
-        parent.spawn((
-            Camera3d::default(),
-            Transform::from_xyz(0.0, 0.6, 0.0),
-        ));
+        // Используем стандартный контроллер персонажа из библиотеки
+        CharacterController::default(),
+    )).id();
 
-        // Визуализация оружия (простой куб)
-        parent.spawn((
-            Mesh3d(meshes.add(Cuboid::new(0.1, 0.1, 0.5))),
-            MeshMaterial3d(materials.add(Color::srgb(0.5, 0.5, 0.5))),
-            Transform::from_xyz(0.2, -0.2, -0.3),
-        ));
-    });
+    // Камера, следующая за игроком
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 0.6, 0.0),
+        CameraController {
+            follow_target: Some(player_id),
+            mode: bevy_allinone::camera::CameraMode::FirstPerson,
+            rot_sensitivity_3p: 0.001,
+            rot_sensitivity_1p: 0.001,
+            ..default()
+        },
+    ));
+
+    // Визуализация оружия (простой куб, дочерний к камере или игроку)
+    // Для простоты в демо добавим как отдельную сущность или дочернюю
+    // В данном случае, для корректного позиционирования в FPS камере,
+    // лучше добавить дочернюю сущность к камере, но так как камера отдельная сущность,
+    // мы просто добавим визуал к игроку или камере.
+    // Для интеграции с CharacterController, оружие обычно визуализируется на камере.
+    // Добавим визуал оружия как дочернюю сущность к камере (найдем камеру и добавим ребенка).
+    // Но так как мы только что создали камеру, мы можем сделать это сразу.
+
+    // Примечание: В текущей архитектуре `CharacterController` управляет движением игрока,
+    // а `CameraController` управляет камерой. Оружие привязано к сущности игрока (Player).
 
     // Компоненты оружия и точности для игрока
-    commands.spawn((
-        Player,
+    commands.entity(player_id).insert((
         Weapon {
             weapon_name: "Ballistic Rifle".to_string(),
             damage: 25.0,
@@ -133,36 +147,15 @@ fn setup(
     ));
 }
 
-fn handle_movement(
-    time: Res<Time>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<&mut Transform, With<Player>>,
-) {
-    let mut direction = Vec3::ZERO;
-    if keyboard_input.pressed(KeyCode::KeyW) { direction.z -= 1.0; }
-    if keyboard_input.pressed(KeyCode::KeyS) { direction.z += 1.0; }
-    if keyboard_input.pressed(KeyCode::KeyA) { direction.x -= 1.0; }
-    if keyboard_input.pressed(KeyCode::KeyD) { direction.x += 1.0; }
-
-    if direction.length() > 0.0 {
-        direction = direction.normalize();
-    }
-
-    let speed = 5.0;
-    for mut transform in query.iter_mut() {
-        transform.translation += direction * speed * time.delta_secs();
-    }
-}
-
 fn handle_shooting(
     mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
     camera_query: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
-    player_query: Query<(&GlobalTransform, &Weapon, &mut Accuracy), With<Player>>,
+    player_query: Query<(&Weapon, &mut Accuracy), With<Player>>,
     time: Res<Time>,
 ) {
     let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
-    let Ok((player_transform, weapon, mut accuracy)) = player_query.get_single() else { return; };
+    let Ok((weapon, mut accuracy)) = player_query.get_single() else { return; };
 
     if mouse_input.pressed(MouseButton::Left) {
         // Эмуляция логики fire_weapon для демо
