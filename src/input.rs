@@ -45,7 +45,7 @@ pub enum InputAction {
     Aim,
     LeanLeft,
     LeanRight,
-    Result, // 'R' key for LockOn or Reload? 
+    Result, // 'R' key for LockOn or Reload?
     // LockOn was defined below. Let's add Attack.
     LockOn,
     Attack,
@@ -56,6 +56,13 @@ pub enum InputAction {
     NextWeapon,
     PrevWeapon,
     ToggleInventory,
+    // Stealth actions
+    Hide,
+    Peek,
+    CornerLean,
+    ResetCamera,
+    ZoomIn,
+    ZoomOut,
 }
 
 /// Input binding types
@@ -94,6 +101,13 @@ impl Default for InputMap {
         bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::Digit1)]); // Placeholder
         bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::Digit2)]); // Placeholder
         bindings.insert(InputAction::ToggleInventory, vec![InputBinding::Key(KeyCode::KeyI), InputBinding::Key(KeyCode::Tab)]);
+        // Stealth actions
+        bindings.insert(InputAction::Hide, vec![InputBinding::Key(KeyCode::KeyH)]);
+        bindings.insert(InputAction::Peek, vec![InputBinding::Key(KeyCode::KeyP)]);
+        bindings.insert(InputAction::CornerLean, vec![InputBinding::Key(KeyCode::KeyC)]);
+        bindings.insert(InputAction::ResetCamera, vec![InputBinding::Key(KeyCode::KeyR)]);
+        bindings.insert(InputAction::ZoomIn, vec![InputBinding::Key(KeyCode::NumpadAdd)]);
+        bindings.insert(InputAction::ZoomOut, vec![InputBinding::Key(KeyCode::NumpadSubtract)]);
         Self { bindings }
     }
 }
@@ -128,7 +142,7 @@ impl InputBuffer {
 }
 
 /// Global input state resource and per-entity input component
-#[derive(Component, Resource, Debug, Default, Reflect, Clone)]
+#[derive(Component, Resource, Debug, Reflect, Clone)]
 #[reflect(Component, Resource)]
 pub struct InputState {
     pub movement: Vec2,
@@ -149,6 +163,101 @@ pub struct InputState {
     pub next_weapon_pressed: bool,
     pub prev_weapon_pressed: bool,
     pub toggle_inventory_pressed: bool,
+    // Stealth input states
+    pub hide_pressed: bool,
+    pub peek_pressed: bool,
+    pub corner_lean_pressed: bool,
+    pub reset_camera_pressed: bool,
+    pub zoom_in_pressed: bool,
+    pub zoom_out_pressed: bool,
+    pub enabled: bool,
+}
+
+impl Default for InputState {
+    fn default() -> Self {
+        Self {
+            movement: Vec2::ZERO,
+            look: Vec2::ZERO,
+            jump_pressed: false,
+            crouch_pressed: false,
+            sprint_pressed: false,
+            interact_pressed: false,
+            aim_pressed: false,
+            lean_left: false,
+            lean_right: false,
+            lock_on_pressed: false,
+            attack_pressed: false,
+            block_pressed: false,
+            switch_camera_mode_pressed: false,
+            fire_pressed: false,
+            reload_pressed: false,
+            next_weapon_pressed: false,
+            prev_weapon_pressed: false,
+            toggle_inventory_pressed: false,
+            hide_pressed: false,
+            peek_pressed: false,
+            corner_lean_pressed: false,
+            reset_camera_pressed: false,
+            zoom_in_pressed: false,
+            zoom_out_pressed: false,
+            enabled: true,
+        }
+    }
+}
+
+impl InputState {
+    pub fn set_input_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+        if !enabled {
+            self.movement = Vec2::ZERO;
+            self.look = Vec2::ZERO;
+            self.jump_pressed = false;
+            self.crouch_pressed = false;
+            self.sprint_pressed = false;
+            self.interact_pressed = false;
+            self.aim_pressed = false;
+            self.lean_left = false;
+            self.lean_right = false;
+            self.lock_on_pressed = false;
+            self.attack_pressed = false;
+            self.block_pressed = false;
+            self.switch_camera_mode_pressed = false;
+            self.fire_pressed = false;
+            self.reload_pressed = false;
+            self.next_weapon_pressed = false;
+            self.prev_weapon_pressed = false;
+            self.toggle_inventory_pressed = false;
+            self.hide_pressed = false;
+            self.peek_pressed = false;
+            self.corner_lean_pressed = false;
+            self.reset_camera_pressed = false;
+            self.zoom_in_pressed = false;
+            self.zoom_out_pressed = false;
+        }
+    }
+
+    /// Check if an action was just pressed (not held)
+    pub fn is_action_just_pressed(&self, action: InputAction) -> bool {
+        match action {
+            InputAction::Hide => self.hide_pressed,
+            InputAction::Peek => self.peek_pressed,
+            InputAction::CornerLean => self.corner_lean_pressed,
+            InputAction::ResetCamera => self.reset_camera_pressed,
+            InputAction::ZoomIn => self.zoom_in_pressed,
+            InputAction::ZoomOut => self.zoom_out_pressed,
+            _ => false,
+        }
+    }
+
+    /// Get mouse axis for camera control
+    pub fn get_mouse_axis(&self) -> Vec2 {
+        self.look
+    }
+
+    /// Get movement axis for camera movement
+    pub fn get_movement_axis(&self) -> Vec2 {
+        self.movement
+    }
 }
 
 /// Input configuration
@@ -191,6 +300,10 @@ fn update_input_state(
     mut input_state: ResMut<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
 ) {
+    if !input_state.enabled {
+        return;
+    }
+
     let check_action = |action: InputAction| -> bool {
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
