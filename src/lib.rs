@@ -34,6 +34,7 @@ pub mod ai;
 pub mod camera;
 pub mod character;
 pub mod combat;
+pub mod dialog;
 pub mod input;
 pub mod interaction;
 pub mod inventory;
@@ -55,6 +56,7 @@ pub mod prelude {
     pub use crate::camera::*;
     pub use crate::character::*;
     pub use crate::combat::*;
+    pub use crate::dialog::*;
     pub use crate::input::*;
     pub use crate::interaction::*;
     pub use crate::inventory::*;
@@ -83,6 +85,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(camera::CameraPlugin)
             .add_plugins(character::CharacterPlugin)
             .add_plugins(combat::CombatPlugin)
+            .add_plugins(dialog::DialogPlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(interaction::InteractionPlugin)
             .add_plugins(inventory::InventoryPlugin)
