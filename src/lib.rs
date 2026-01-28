@@ -41,6 +41,7 @@ pub mod map;
 pub mod physics;
 pub mod quest;
 pub mod save;
+pub mod stats;
 pub mod utils;
 pub mod vehicles;
 pub mod weapons;
@@ -60,6 +61,7 @@ pub mod prelude {
     pub use crate::physics::*;
     pub use crate::quest::*;
     pub use crate::save::*;
+    pub use crate::stats::*;
     pub use crate::utils::*;
     pub use crate::vehicles::*;
     pub use crate::weapons::*;
@@ -87,6 +89,7 @@ impl Plugin for GameControllerPlugin {
                 physics::PhysicsPlugin,
                 quest::QuestPlugin,
                 save::SavePlugin,
+                stats::StatsPlugin,
                 vehicles::VehiclesPlugin,
                 weapons::WeaponsPlugin,
             ))
