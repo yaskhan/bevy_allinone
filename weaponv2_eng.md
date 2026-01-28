@@ -1,6 +1,3 @@
-Below is a Technical Specification for refactoring and expanding the current weapon system (based on Bevy) in order to integrate advanced ballistics.
-
----
 
 # Terms of reference: Integration of the deterministic ballistics system in Bevy
 
