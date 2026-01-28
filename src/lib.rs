@@ -27,6 +27,8 @@
 //! }
 //! ```
 
+use bevy::prelude::*;
+
 pub mod ai;
 pub mod camera;
 pub mod character;
@@ -56,43 +58,28 @@ pub mod prelude {
     pub use crate::vehicles::*;
     pub use crate::weapons::*;
     pub use crate::GameControllerPlugin;
+    pub use bevy::prelude::*;
 }
 
-use bevy::prelude::*;
-
-/// Main plugin for the Bevy game controller system
-///
-/// This plugin initializes all subsystems and manages their lifecycle.
-///
-/// # Example
-///
-/// ```rust,no_run
-/// use bevy::prelude::*;
-/// use bevy_allinone::GameControllerPlugin;
-///
-/// App::new()
-///     .add_plugins(DefaultPlugins)
-///     .add_plugins(GameControllerPlugin)
-///     .run();
-/// ```
+/// The main plugin for the game controller systems
 pub struct GameControllerPlugin;
 
 impl Plugin for GameControllerPlugin {
     fn build(&self, app: &mut App) {
         app
-            // Add core systems
+            // Add sub-plugins
             .add_plugins((
-                character::CharacterPlugin,
-                camera::CameraPlugin,
-                input::InputPlugin,
-                physics::PhysicsPlugin,
-                combat::CombatPlugin,
-                weapons::WeaponsPlugin,
-                inventory::InventoryPlugin,
-                interaction::InteractionPlugin,
                 ai::AiPlugin,
-                vehicles::VehiclesPlugin,
+                camera::CameraPlugin,
+                character::CharacterPlugin,
+                combat::CombatPlugin,
+                input::InputPlugin,
+                interaction::InteractionPlugin,
+                inventory::InventoryPlugin,
+                physics::PhysicsPlugin,
                 save::SavePlugin,
+                vehicles::VehiclesPlugin,
+                weapons::WeaponsPlugin,
             ))
             // Add resources
             .init_resource::<utils::GameTime>()
@@ -101,17 +88,13 @@ impl Plugin for GameControllerPlugin {
     }
 }
 
-/// Setup system for game controller initialization
+/// Initialize the game controller system
 ///
 /// TODO: Implement initialization logic
 fn setup_allinone(
-    mut commands: Commands,
+    _commands: Commands,
 ) {
     info!("Bevy All in one Controller Plugin initialized");
-    
-    // TODO: Initialize core systems
-    // TODO: Load default configurations
-    // TODO: Setup event handlers
 }
 
 #[cfg(test)]

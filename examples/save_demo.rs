@@ -14,15 +14,13 @@
 
 use bevy::prelude::*;
 use bevy_allinone::save::*;
-use std::time::Duration;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SavePlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, handle_input)
-        .add_systems(Update, update_play_time)
+        .add_systems(Update, (handle_input, update_play_time))
         .run();
 }
 
@@ -41,27 +39,31 @@ impl Default for DemoState {
     }
 }
 
-fn setup(mut commands: Commands, mut save_manager: ResMut<SaveManager>) {
+fn setup(
+    mut commands: Commands, 
+    mut save_manager: ResMut<SaveManager>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     // Initialize save system
     if let Err(e) = save_manager.init() {
         eprintln!("Failed to initialize save system: {}", e);
     }
 
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 5.0, 10.0)
-            .looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Camera3d::default(),
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+    ));
 
     // Spawn a simple cube to represent the player
-    commands.spawn(PbrBundle {
-        mesh: commands.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: commands.add(Color::rgb(0.8, 0.2, 0.2).into()),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
-    });
+    commands.spawn((
+        Name::new("Player"),
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
+        Transform::from_xyz(0.0, 0.5, 0.0),
+    ));
 
-    commands.spawn(DemoState::default());
+    commands.insert_resource(DemoState::default());
 
     println!("=== Save System Demo ===");
     println!("Controls:");
@@ -77,13 +79,13 @@ fn setup(mut commands: Commands, mut save_manager: ResMut<SaveManager>) {
 }
 
 fn handle_input(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut save_manager: ResMut<SaveManager>,
     mut demo_state: ResMut<DemoState>,
     mut query: Query<&mut Transform>,
 ) {
     // Save game
-    if keyboard_input.just_pressed(KeyCode::S) {
+    if keyboard_input.just_pressed(KeyCode::KeyS) {
         let data = create_save_data(&demo_state, &query);
         match save_manager.save_game(demo_state.current_slot, data) {
             Ok(_) => println!("✓ Game saved to slot {}", demo_state.current_slot),
@@ -92,7 +94,7 @@ fn handle_input(
     }
 
     // Load game
-    if keyboard_input.just_pressed(KeyCode::L) {
+    if keyboard_input.just_pressed(KeyCode::KeyL) {
         match save_manager.load_game(demo_state.current_slot) {
             Ok(data) => {
                 apply_save_data(&data, &mut query);
@@ -104,7 +106,7 @@ fn handle_input(
     }
 
     // Continue from most recent save
-    if keyboard_input.just_pressed(KeyCode::C) {
+    if keyboard_input.just_pressed(KeyCode::KeyC) {
         match save_manager.continue_game() {
             Ok(data) => {
                 apply_save_data(&data, &mut query);
@@ -116,7 +118,7 @@ fn handle_input(
     }
 
     // New game
-    if keyboard_input.just_pressed(KeyCode::N) {
+    if keyboard_input.just_pressed(KeyCode::KeyN) {
         let data = save_manager.new_game();
         apply_save_data(&data, &mut query);
         println!("✓ New game started");
@@ -124,7 +126,7 @@ fn handle_input(
     }
 
     // Toggle auto-save
-    if keyboard_input.just_pressed(KeyCode::A) {
+    if keyboard_input.just_pressed(KeyCode::KeyA) {
         demo_state.is_auto_save_enabled = !demo_state.is_auto_save_enabled;
         save_manager.auto_save_enabled = demo_state.is_auto_save_enabled;
         println!(
@@ -138,18 +140,24 @@ fn handle_input(
     }
 
     // Select save slot (1-9)
-    for key in KeyCode::NUM1 as u32..=KeyCode::NUM9 as u32 {
-        if keyboard_input.just_pressed(KeyCode::from_u32(key).unwrap()) {
-            demo_state.current_slot = (key - KeyCode::NUM1 as u32) as usize;
+    let slots = [
+        KeyCode::Digit1, KeyCode::Digit2, KeyCode::Digit3,
+        KeyCode::Digit4, KeyCode::Digit5, KeyCode::Digit6,
+        KeyCode::Digit7, KeyCode::Digit8, KeyCode::Digit9,
+    ];
+
+    for (i, &key) in slots.iter().enumerate() {
+        if keyboard_input.just_pressed(key) {
+            demo_state.current_slot = i;
             println!("✓ Selected save slot {}", demo_state.current_slot);
         }
     }
 
     // Print save slots info
-    if keyboard_input.just_pressed(KeyCode::P) {
+    if keyboard_input.just_pressed(KeyCode::KeyP) {
         println!("\n=== Save Slots Info ===");
-        let slots = save_manager.get_save_slots_info();
-        for slot in slots {
+        let slots_info = save_manager.get_save_slots_info();
+        for slot in slots_info {
             if slot.is_valid {
                 println!(
                     "Slot {}: {} - Play time: {:.1}s - Scene: {}",
@@ -172,29 +180,33 @@ fn update_play_time(
     time: Res<Time>,
     mut save_manager: ResMut<SaveManager>,
 ) {
-    save_manager.update_play_time(time.delta_seconds());
+    save_manager.update_play_time(time.delta_secs());
 }
 
 fn create_save_data(
     demo_state: &DemoState,
     query: &Query<&mut Transform>,
 ) -> SaveData {
-    let player_transform = query.get_single().unwrap_or(&Transform::default());
+    let (pos, rot) = if let Some(transform) = query.iter().next() {
+        (transform.translation, transform.rotation)
+    } else {
+        (Vec3::ZERO, Quat::IDENTITY)
+    };
 
     SaveData {
-        player_position: player_transform.translation,
-        player_rotation: player_transform.rotation,
+        player_position: pos,
+        player_rotation: rot,
         player_health: 100.0,
         player_stamina: 100.0,
         inventory_items: vec![
-            InventoryItem {
+            SavedInventoryItem {
                 id: "sword".to_string(),
                 name: "Iron Sword".to_string(),
                 quantity: 1,
                 durability: Some(100.0),
                 custom_data: std::collections::HashMap::new(),
             },
-            InventoryItem {
+            SavedInventoryItem {
                 id: "potion".to_string(),
                 name: "Health Potion".to_string(),
                 quantity: 3,
@@ -236,7 +248,7 @@ fn create_save_data(
 }
 
 fn apply_save_data(data: &SaveData, query: &mut Query<&mut Transform>) {
-    if let Ok(mut transform) = query.get_single_mut() {
+    if let Some(mut transform) = query.iter_mut().next() {
         transform.translation = data.player_position;
         transform.rotation = data.player_rotation;
     }

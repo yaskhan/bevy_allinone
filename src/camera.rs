@@ -82,7 +82,7 @@ pub enum CameraMode {
 /// Camera controller component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
-pub struct GameCamera {
+pub struct CameraController {
     pub follow_target: Option<Entity>,
     pub mode: CameraMode,
     
@@ -125,7 +125,7 @@ pub struct GameCamera {
     pub collision_radius: f32,
 }
 
-impl Default for GameCamera {
+impl Default for CameraController {
     fn default() -> Self {
         Self {
             follow_target: None,
@@ -185,7 +185,7 @@ pub struct CameraState {
 
 fn update_camera_state(
     input: Res<InputState>,
-    mut query: Query<(&GameCamera, &mut CameraState)>,
+    mut query: Query<(&CameraController, &mut CameraState)>,
     target_query: Query<(&CharacterController, &crate::character::CharacterMovementState)>,
 ) {
     for (camera, mut state) in query.iter_mut() {
@@ -201,7 +201,7 @@ fn update_camera_state(
 fn update_camera_rotation(
     input: Res<InputState>,
     time: Res<Time>,
-    mut query: Query<(&GameCamera, &mut CameraState)>,
+    mut query: Query<(&CameraController, &mut CameraState)>,
     target_query: Query<&GlobalTransform>,
 ) {
     for (camera, mut state) in query.iter_mut() {
@@ -243,7 +243,7 @@ fn update_camera_rotation(
 
 fn apply_camera_noise(
     time: Res<Time>,
-    mut query: Query<(&GameCamera, &mut CameraState)>,
+    mut query: Query<(&CameraController, &mut CameraState)>,
 ) {
     for (_camera, mut state) in query.iter_mut() {
         let t = time.elapsed_secs() * 2.0;
@@ -263,7 +263,7 @@ fn apply_camera_noise(
 
 fn handle_camera_mode_switch(
     input: Res<InputState>,
-    mut query: Query<&mut GameCamera>,
+    mut query: Query<&mut CameraController>,
 ) {
     if input.switch_camera_mode_pressed {
         for mut camera in query.iter_mut() {
@@ -280,8 +280,8 @@ fn handle_camera_mode_switch(
 
 fn update_camera_follow(
     time: Res<Time>,
-    mut camera_query: Query<(&GameCamera, &mut CameraState, &mut Transform)>,
-    target_query: Query<&Transform, Without<GameCamera>>,
+    mut camera_query: Query<(&CameraController, &mut CameraState, &mut Transform)>,
+    target_query: Query<&Transform, Without<CameraController>>,
 ) {
     for (camera, mut state, mut transform) in camera_query.iter_mut() {
         let Some(target_entity) = camera.follow_target else { continue };
@@ -320,9 +320,9 @@ fn update_camera_follow(
 
 fn update_camera_waypoint_follow(
     time: Res<Time>,
-    mut follower_query: Query<(&GameCamera, &mut CameraWaypointFollower, &mut CameraState, &mut Transform)>,
+    mut follower_query: Query<(&CameraController, &mut CameraWaypointFollower, &mut CameraState, &mut Transform)>,
     track_query: Query<&CameraWaypointTrack>,
-    waypoint_query: Query<(&CameraWaypoint, &Transform, &GlobalTransform), Without<GameCamera>>,
+    waypoint_query: Query<(&CameraWaypoint, &Transform, &GlobalTransform), Without<CameraController>>,
     target_gt_query: Query<&GlobalTransform>,
 ) {
     for (camera, mut follower, mut state, mut transform) in follower_query.iter_mut() {
@@ -398,7 +398,7 @@ fn update_camera_waypoint_follow(
 
 fn handle_camera_collision(
     spatial_query: SpatialQuery,
-    mut query: Query<(&GameCamera, &CameraState, &mut Transform)>,
+    mut query: Query<(&CameraController, &CameraState, &mut Transform)>,
 ) {
     for (camera, state, mut transform) in query.iter_mut() {
         if !camera.use_collision { continue; }
@@ -416,7 +416,7 @@ fn handle_camera_collision(
 
 fn update_camera_fov(
     time: Res<Time>,
-    mut query: Query<(&GameCamera, &CameraState, &mut Projection)>,
+    mut query: Query<(&CameraController, &CameraState, &mut Projection)>,
 ) {
     for (camera, state, mut projection) in query.iter_mut() {
         if let Projection::Perspective(ref mut p) = *projection {
@@ -437,7 +437,7 @@ pub fn spawn_camera(
 ) -> Entity {
     commands.spawn((
         Camera3d::default(),
-        GameCamera {
+        CameraController {
             follow_target: Some(target),
             ..default()
         },

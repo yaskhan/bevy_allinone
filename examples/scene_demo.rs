@@ -80,7 +80,7 @@ fn setup_scene(
                 current_ammo: 12,
                 reload_time: 1.5,
                 weapon_type: WeaponType::Pistol,
-                attachments: vec![], // Add default attachments
+                attachments: vec![],
                  ..default() 
             },
             WeaponManager {
@@ -91,8 +91,6 @@ fn setup_scene(
                 ],
                 current_index: 0,
             },
-            Inventory::default(),
-            InteractionDetector::default(),
         ));
 
     // Interactive Object (Cube)
@@ -100,48 +98,16 @@ fn setup_scene(
         Name::new("Interactable Cube"),
         Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.2, 0.2, 0.8))),
-        RigidBody::Static,
-        Collider::cuboid(1.0, 1.0, 1.0),
-        Transform::from_xyz(2.0, 0.5, -3.0),
-        // Add interaction components
+        Transform::from_xyz(0.0, 0.5, -5.0),
         Interactable {
-            interaction_type: InteractionType::Device,
-            can_interact: true,
-            interaction_text: "Toggle Cube".to_string(),
-            ..default()
-        },
-        UsableDevice {
-            active_text: "Deactivate Cube".to_string(),
-            inactive_text: "Activate Cube".to_string(),
-            ..default()
-        },
-        InteractionData::default(), // For cooldowns
-    ));
-
-    // Enemy / Dummy
-    commands.spawn((
-        Name::new("Dummy"),
-        Mesh3d(meshes.add(Capsule3d::new(0.4, 1.0))),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
-        RigidBody::Dynamic,
-        Collider::capsule(0.4, 1.0),
-        Transform::from_xyz(-2.0, 1.0, -3.0),
-        LockedAxes::ROTATION_LOCKED, // Don't tip over
-        Health {
-            current: 50.0,
-            maximum: 50.0,
-            ..default()
-        },
-        Interactable {
-            interaction_type: InteractionType::Talk,
-            can_interact: true,
-            interaction_text: "Examine Dummy".to_string(),
+            interaction_type: InteractionType::Examine,
+            interaction_text: "Examine Cube".to_string(),
             ..default()
         },
     ));
 
     // Vehicle
-    bevy_allinone::vehicles::spawn_vehicle(&mut commands, &mut meshes, &mut materials, Vec3::new(-5.0, 0.5, -5.0));
+    bevy_allinone::vehicles::spawn_vehicle(&mut commands, &mut meshes, &mut materials, Vec3::new(-5.0, 0.5, -5.0), VehicleType::Car);
 
     // Pickup Items
     // Rusty Sword
@@ -158,13 +124,13 @@ fn setup_scene(
             ..default()
         },
         PhysicalItem {
-            item: InventoryItem {
+            item: bevy_allinone::inventory::InventoryItem {
                 item_id: "rusty_sword".to_string(),
                 name: "Rusty Sword".to_string(),
                 quantity: 1,
                 max_stack: 1,
                 weight: 5.0,
-                item_type: ItemType::Weapon,
+                item_type: bevy_allinone::inventory::ItemType::Weapon,
                 icon_path: "".to_string(),
             }
         },
@@ -172,7 +138,7 @@ fn setup_scene(
 
     // Ammo
     commands.spawn((
-        Name::new("Pistol Ammo"),
+        Name::new("9mm Ammo"),
         Mesh3d(meshes.add(Cuboid::new(0.3, 0.2, 0.3))),
         MeshMaterial3d(materials.add(Color::srgb(0.2, 0.5, 0.2))),
         RigidBody::Static,
@@ -180,17 +146,17 @@ fn setup_scene(
         Transform::from_xyz(-1.5, 0.1, 1.5),
         Interactable {
             interaction_type: InteractionType::Pickup,
-            interaction_text: "9mm Ammo".to_string(),
+            interaction_text: "Pickup 9mm Ammo".to_string(),
             ..default()
         },
         PhysicalItem {
-            item: InventoryItem {
+            item: bevy_allinone::inventory::InventoryItem {
                 item_id: "ammo_9mm".to_string(),
                 name: "9mm Ammo".to_string(),
                 quantity: 12,
                 max_stack: 100,
                 weight: 0.1,
-                item_type: ItemType::Ammo,
+                item_type: bevy_allinone::inventory::ItemType::Ammo,
                 icon_path: "".to_string(),
             }
         },
@@ -198,36 +164,9 @@ fn setup_scene(
 
     // Camera
     commands.spawn((
+        Name::new("Main Camera"),
         Camera3d::default(),
-        GameCamera {
-            follow_target: Some(player),
-            mode: CameraMode::ThirdPerson,
-            distance: 5.0,
-            min_distance: 1.0,
-            max_distance: 10.0,
-            max_vertical_angle: 60.0,
-            min_vertical_angle: -60.0,
-            rot_sensitivity_3p: 10.0,
-            rot_sensitivity_1p: 8.0,
-            aim_zoom_sensitivity_mult: 0.5,
-            ..default()
-        },
-        CameraState::default(),
-    ));
-
-    // Instructions UI
-    commands.spawn((
-        Text::new("Controls:\nWASD - Move\nSpace - Jump\nShift - Sprint\nC - Switch Camera\nLeft Click - Attack / Fire\nRight Click - Block/Aim\nR - Reload\n1/2 - Switch Weapon\nE - Interact\nI/Tab - Inventory"),
-        TextFont {
-            font_size: 20.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            ..default()
-        },
+        Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
+        CameraController::default(),
     ));
 }

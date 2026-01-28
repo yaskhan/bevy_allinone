@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
+use crate::interaction::InteractionEventQueue;
 use crate::input::{InputState, InputAction, InputBuffer};
-use crate::combat::{DamageEvent, DamageType};
 
 
 pub struct CharacterPlugin;
@@ -518,7 +518,7 @@ fn handle_falling_damage(
     // mut damage_events: EventWriter<DamageEvent>,
     mut query: Query<(Entity, &CharacterController, &mut CharacterMovementState, &LinearVelocity, &GroundDetection)>,
 ) {
-    for (entity, controller, mut state, velocity, ground) in query.iter_mut() {
+    for (_entity, controller, mut state, velocity, ground) in query.iter_mut() {
         if !controller.fall_damage_enabled { continue; }
 
         if !ground.is_grounded {
@@ -527,7 +527,7 @@ fn handle_falling_damage(
         } else if state.last_vertical_velocity < -controller.min_velocity_for_damage {
             let impact_speed = state.last_vertical_velocity.abs();
             // Damage formula: (impact + duration) * multiplier
-            let damage = (impact_speed - controller.min_velocity_for_damage + state.air_time * 2.0) * controller.falling_damage_multiplier;
+            let _damage = (impact_speed - controller.min_velocity_for_damage + state.air_time * 2.0) * controller.falling_damage_multiplier;
             
             // Commented out as per instruction:
             // damage_events.send(DamageEvent {

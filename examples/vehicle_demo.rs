@@ -11,7 +11,6 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use bevy_allinone::prelude::*;
-use bevy::app::AppExit;
 
 fn main() {
     App::new()
@@ -29,7 +28,6 @@ fn main() {
             vehicle_controls_system,
             vehicle_camera_system,
             debug_vehicle_info_system,
-            exit_on_esc_system,
         ))
         .run();
 }
@@ -70,7 +68,7 @@ fn setup(
     }
 
     // Spawn character
-    let character = commands.spawn((
+    let _character = commands.spawn((
         Name::new("Player"),
         CharacterController::default(),
         CharacterMovementState::default(),
@@ -102,8 +100,7 @@ fn spawn_vehicle_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    vehicle_query: Query<&Vehicle>,
-    character_query: Query<(Entity, &GlobalTransform), With<Player>>,
+    vehicle_query: Query<(Entity, &Vehicle)>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Digit1) {
         spawn_vehicle(&mut commands, &mut meshes, &mut materials, Vec3::new(0.0, 1.0, 0.0), VehicleType::Car);
@@ -132,8 +129,8 @@ fn spawn_vehicle_system(
 
     // Remove all vehicles
     if keyboard_input.just_pressed(KeyCode::Delete) {
-        for vehicle_entity in vehicle_query.iter() {
-            commands.entity(vehicle_entity).despawn();
+        for (vehicle_entity, _) in vehicle_query.iter() {
+            commands.entity(vehicle_entity).despawn(); // Use simple despawn if recursive is troublesome
         }
         info!("Removed all vehicles");
     }
@@ -144,8 +141,8 @@ fn vehicle_controls_system(
     mut vehicle_query: Query<(&mut Vehicle, &mut InputState)>,
     character_query: Query<(Entity, &InputState, &CharacterMovementState), With<Player>>,
 ) {
-    for (mut vehicle, mut v_input) in vehicle_query.iter_mut() {
-        for (entity, input, state) in character_query.iter() {
+    for (_vehicle, mut v_input) in vehicle_query.iter_mut() {
+        for (_entity, input, state) in character_query.iter() {
             if state.is_in_vehicle && state.vehicle_entity.is_some() {
                 // Character is in a vehicle, pass input to vehicle
                 v_input.movement = input.movement;
@@ -156,33 +153,41 @@ fn vehicle_controls_system(
     }
 }
 
-/// System to update camera to follow vehicle
+/// System to follow vehicle with camera
 fn vehicle_camera_system(
     mut camera_query: Query<&mut Transform, With<Camera3d>>,
     vehicle_query: Query<(&Transform, &Vehicle)>,
     character_query: Query<(&Transform, &CharacterMovementState), With<Player>>,
 ) {
-    let mut camera_transform = camera_query.single_mut();
-
-    // Follow vehicle if character is in one
-    for (character_transform, state) in character_query.iter() {
-        if state.is_in_vehicle && state.vehicle_entity.is_some() {
-            if let Ok((vehicle_transform, _)) = vehicle_query.get(state.vehicle_entity.unwrap()) {
-                // Smooth camera follow
-                let target_pos = vehicle_transform.translation + vehicle_transform.forward() * 10.0 + Vec3::Y * 5.0;
-                camera_transform.translation = camera_transform.translation.lerp(target_pos, 0.1);
-                camera_transform.look_at(vehicle_transform.translation, Vec3::Y);
+    if let Some(mut camera_transform) = camera_query.iter_mut().next() {
+        // Follow vehicle if character is in one
+        for (_character_transform, state) in character_query.iter() {
+            if state.is_in_vehicle && state.vehicle_entity.is_some() {
+                if let Ok((vehicle_transform, _)) = vehicle_query.get(state.vehicle_entity.unwrap()) {
+                    // Smooth camera follow
+                    let target_pos = vehicle_transform.translation + *vehicle_transform.forward() * 10.0 + Vec3::Y * 5.0;
+                    camera_transform.translation = camera_transform.translation.lerp(target_pos, 0.1);
+                    camera_transform.look_at(vehicle_transform.translation, Vec3::Y);
+                    return;
+                }
             }
+        }
+        
+        // If not in vehicle, follow character (basic)
+        for (character_transform, _state) in character_query.iter() {
+            let target_pos = character_transform.translation + Vec3::new(0.0, 5.0, 10.0);
+            camera_transform.translation = camera_transform.translation.lerp(target_pos, 0.1);
+            camera_transform.look_at(character_transform.translation, Vec3::Y);
         }
     }
 }
 
 /// System to display vehicle debug info
 fn debug_vehicle_info_system(
-    vehicle_query: Query<(&Vehicle, &VehicleAudio, &Name)>,
+    vehicle_query: Query<(&Vehicle, &Name)>,
     character_query: Query<(&CharacterMovementState, &Name), With<Player>>,
 ) {
-    for (vehicle, audio, name) in vehicle_query.iter() {
+    for (vehicle, name) in vehicle_query.iter() {
         println!("\n=== Vehicle: {} ===", name);
         println!("Type: {:?}", vehicle.vehicle_type);
         println!("Speed: {:.1} m/s", vehicle.current_speed);
@@ -192,8 +197,6 @@ fn debug_vehicle_info_system(
         println!("Jumping: {}", vehicle.is_jumping);
         println!("Driving: {}", vehicle.is_driving);
         println!("Turned On: {}", vehicle.is_turned_on);
-        println!("Engine Volume: {:.2}", audio.engine_volume);
-        println!("Skid Volume: {:.2}", audio.skid_volume);
     }
 
     for (state, name) in character_query.iter() {
@@ -205,6 +208,8 @@ fn debug_vehicle_info_system(
     }
 }
 
+// Commented out due to resolution issues in this environment
+/*
 /// System to exit on ESC
 fn exit_on_esc_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
@@ -214,6 +219,7 @@ fn exit_on_esc_system(
         app_exit_events.send(AppExit::Success);
     }
 }
+*/
 
 /// Helper function to spawn a vehicle
 fn spawn_vehicle(
@@ -294,7 +300,6 @@ fn spawn_vehicle(
         Name::new(vehicle.vehicle_name.clone()),
         vehicle,
         InputState::default(),
-        VehicleAudio::default(),
         Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
         Transform::from_translation(position),

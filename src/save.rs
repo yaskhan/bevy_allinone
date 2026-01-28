@@ -86,7 +86,7 @@ pub struct SaveData {
     /// Player stamina
     pub player_stamina: f32,
     /// Player inventory items
-    pub inventory_items: Vec<InventoryItem>,
+    pub inventory_items: Vec<SavedInventoryItem>,
     /// Player equipment
     pub equipment: EquipmentData,
     /// Game progress (chapter, quest progress, etc.)
@@ -113,9 +113,9 @@ pub struct SaveData {
     pub custom_data: HashMap<String, serde_json::Value>,
 }
 
-/// Inventory item data
+/// Inventory item data for saving
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InventoryItem {
+pub struct SavedInventoryItem {
     pub id: String,
     pub name: String,
     pub quantity: u32,
@@ -444,7 +444,7 @@ impl SaveManager {
 pub fn auto_save_system(
     time: Res<Time>,
     mut save_manager: ResMut<SaveManager>,
-    query: Query<(&Transform, &Health, &Inventory)>,
+    query: Query<(&Transform, &SavePlaceholderHealth, &SavePlaceholderInventory)>,
 ) {
     if !save_manager.auto_save_enabled {
         return;
@@ -456,13 +456,13 @@ pub fn auto_save_system(
         save_manager.time_since_last_save = 0.0;
 
         // Collect current game state
-        if let Ok((transform, health, inventory)) = query.single() {
+        if let Some((transform, health, inventory)) = query.iter().next() {
             let data = SaveData {
                 player_position: transform.translation,
                 player_rotation: transform.rotation,
                 player_health: health.current,
                 player_stamina: health.stamina,
-                inventory_items: inventory.items.iter().map(|item| InventoryItem {
+                inventory_items: inventory.items.iter().map(|item| SavedInventoryItem {
                     id: item.id.clone(),
                     name: item.name.clone(),
                     quantity: item.quantity,
@@ -504,13 +504,13 @@ pub fn auto_save_system(
 // Placeholder components for auto-save system
 // These should be integrated with actual game components
 #[derive(Component, Debug)]
-pub struct Health {
+pub struct SavePlaceholderHealth {
     pub current: f32,
     pub stamina: f32,
 }
 
 #[derive(Component, Debug)]
-pub struct Inventory {
+pub struct SavePlaceholderInventory {
     pub items: Vec<InventoryItemData>,
 }
 
