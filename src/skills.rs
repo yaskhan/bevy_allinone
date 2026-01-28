@@ -1,111 +1,109 @@
 use bevy::prelude::*;
-use std::collections::HashMap;
-use std::time::Duration;
 
-/// Система скиллов для Bevy
-/// 
-/// Основные компоненты:
-/// - Skill: Навык с описанием, уровнем, требованиями
-/// - SkillCategory: Категория скиллов (например, "Боевые", "Магические")
-/// - SkillTree: Дерево скиллов с категориями
-/// - SkillPoints: Количество доступных очков скиллов
-/// 
-/// Система поддерживает:
-/// - Уровни скиллов с разными требованиями
-/// - Разблокировку скиллов по достижению уровня
-/// - Деревья скиллов с зависимостями
-/// - События для отслеживания изменений
-/// - Сохранение/загрузку через шаблоны
+/// Skills system for Bevy
+///
+/// Core components:
+/// - Skill: Skill with description, level, requirements
+/// - SkillCategory: Skill category (e.g., "Combat", "Magic")
+/// - SkillTree: Skill tree with categories
+/// - SkillPoints: Available skill points
+///
+/// System supports:
+/// - Skill levels with different requirements
+/// - Unlocking skills by reaching level
+/// - Skill trees with dependencies
+/// - Events for tracking changes
+/// - Save/load via templates
 
-/// Тип скилла - определяет как скилл влияет на персонажа
+/// Skill type - determines how skill affects character
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SkillType {
-    /// Скилл с числовым значением (например, бонус к урону)
+    /// Skill with numeric value (e.g., damage bonus)
     Numeric,
-    /// Скилл с булевым значением (например, активация способности)
+    /// Skill with boolean value (e.g., ability activation)
     Boolean,
-    /// Скилл с несколькими уровнями
+    /// Skill with multiple levels
     Leveled,
 }
 
-/// Уровень скилла
+/// Skill level
 #[derive(Debug, Clone, Component)]
 pub struct SkillLevel {
-    /// Описание уровня скилла
+    /// Description of skill level
     pub description: String,
-    /// Количество очков скиллов, необходимых для этого уровня
+    /// Skill points required for this level
     pub required_points: u32,
-    /// Значение для числовых скиллов
+    /// Value for numeric skills
     pub value: f32,
-    /// Значение для булевых скиллов
+    /// Value for boolean skills
     pub bool_value: bool,
-    /// Событие инициализации (вызывается при получении уровня)
+    /// Initialization event (called when level is obtained)
     pub on_initialize: SkillEvent,
-    /// Событие активации (вызывается при применении скилла)
+    /// Activation event (called when skill is applied)
     pub on_activate: SkillEvent,
 }
 
-/// Событие скилла
+/// Skill event
 #[derive(Debug, Clone, Component)]
 pub enum SkillEvent {
-    /// Нет события
+    /// No event
     None,
-    /// Событие с числовым значением
+    /// Event with numeric value
     WithValue(f32),
-    /// Событие с булевым значением
+    /// Event with boolean value
     WithBool(bool),
-    /// Событие без параметров
+    /// Event without parameters
     Simple,
 }
 
-/// Навык
+/// Skill
 #[derive(Debug, Clone, Component)]
 pub struct Skill {
-    /// Название скилла
+    /// Skill name
     pub name: String,
-    /// Описание скилла
+    /// Skill description
     pub description: String,
-    /// Тип скилла
+    /// Skill type
     pub skill_type: SkillType,
-    /// Активен ли скилл
+    /// Is skill enabled
     pub enabled: bool,
-    /// Разблокирован ли скилл
+    /// Is skill unlocked
     pub unlocked: bool,
-    /// Активен ли скилл (применен)
+    /// Is skill active (applied)
     pub active: bool,
-    /// Завершен ли скилл (все уровни пройдены)
+    /// Is skill complete (all levels passed)
     pub complete: bool,
-    /// Текущий уровень скилла
+    /// Current skill level
     pub current_level: u32,
-    /// Максимальный уровень скилла
+    /// Maximum skill level
     pub max_level: u32,
-    /// Очки скиллов, необходимые для следующего уровня
+    /// Skill points required for next level
     pub required_points: u32,
-    /// Текущее числовое значение
+    /// Current numeric value
     pub current_value: f32,
-    /// Значение для настройки (при активации)
+    /// Value to configure (on activation)
     pub value_to_configure: f32,
-    /// Текущее булевое значение
+    /// Current boolean value
     pub current_bool_state: bool,
-    /// Булевое значение для настройки (при активации)
+    /// Boolean value to configure (on activation)
     pub bool_state_to_configure: bool,
-    /// Уровни скилла (для скиллов с несколькими уровнями)
+    /// Skill levels (for multi-level skills)
     pub levels: Vec<SkillLevel>,
-    /// Событие инициализации (для числовых скиллов)
+    /// Initialization event (for numeric skills)
     pub on_initialize: SkillEvent,
-    /// Событие увеличения (для числовых скиллов)
+    /// Increase event (for numeric skills)
     pub on_increase: SkillEvent,
-    /// Событие инициализации (для булевых скиллов)
+    /// Initialization event (for boolean skills)
     pub on_initialize_bool: SkillEvent,
-    /// Событие активации (для булевых скиллов)
+    /// Activation event (for boolean skills)
     pub on_activate_bool: SkillEvent,
-    /// Использовать два события для активного/неактивного состояния
+    /// Use two events for active/inactive state
     pub use_two_events: bool,
-    /// Событие инициализации активного состояния
+    /// Initialization event for active state
     pub on_initialize_active: SkillEvent,
-    /// Событие инициализации неактивного состояния
+    /// Initialization event for inactive state
     pub on_initialize_not_active: SkillEvent,
-    /// Шаблон для сохранения/загрузки
+    /// Template for save/load
     pub template_id: Option<u32>,
 }
 
@@ -140,7 +138,7 @@ impl Default for Skill {
 }
 
 impl Skill {
-    /// Создает новый скилл
+    /// Create new skill
     pub fn new(name: &str, description: &str, skill_type: SkillType) -> Self {
         Self {
             name: name.to_string(),
@@ -150,12 +148,12 @@ impl Skill {
         }
     }
 
-    /// Увеличивает текущее значение скилла
+    /// Increase current skill value
     pub fn increase(&mut self, amount: f32) {
         self.current_value += amount;
     }
 
-    /// Использует значение скилла (уменьшает)
+    /// Use skill value (decrease)
     pub fn use_value(&mut self, amount: f32) {
         self.current_value -= amount;
         if self.current_value < 0.0 {
@@ -163,57 +161,57 @@ impl Skill {
         }
     }
 
-    /// Обновляет значение скилла
+    /// Update skill value
     pub fn update_value(&mut self, new_value: f32) {
         self.current_value = new_value;
     }
 
-    /// Активирует или деактивирует булевый скилл
+    /// Activate or deactivate boolean skill
     pub fn set_bool_state(&mut self, state: bool) {
         self.current_bool_state = state;
     }
 
-    /// Получает текущее значение скилла
+    /// Get current skill value
     pub fn get_value(&self) -> f32 {
         self.current_value
     }
 
-    /// Получает текущее булевое значение скилла
+    /// Get current boolean skill value
     pub fn get_bool_value(&self) -> bool {
         self.current_bool_state
     }
 
-    /// Проверяет, разблокирован ли скилл
+    /// Check if skill is unlocked
     pub fn is_unlocked(&self) -> bool {
         self.unlocked
     }
 
-    /// Проверяет, активен ли скилл
+    /// Check if skill is active
     pub fn is_active(&self) -> bool {
         self.active
     }
 
-    /// Проверяет, завершен ли скилл
+    /// Check if skill is complete
     pub fn is_complete(&self) -> bool {
         self.complete
     }
 
-    /// Получает текущий уровень скилла
+    /// Get current skill level
     pub fn get_level(&self) -> u32 {
         self.current_level
     }
 
-    /// Получает максимальный уровень скилла
+    /// Get maximum skill level
     pub fn get_max_level(&self) -> u32 {
         self.max_level
     }
 
-    /// Проверяет, можно ли повысить уровень скилла
+    /// Check if skill can be leveled up
     pub fn can_level_up(&self) -> bool {
         self.current_level < self.max_level && !self.complete
     }
 
-    /// Повышает уровень скилла (если возможно)
+    /// Level up skill (if possible)
     pub fn level_up(&mut self, skill_points: u32) -> bool {
         if !self.can_level_up() {
             return false;
@@ -233,22 +231,22 @@ impl Skill {
         }
     }
 
-    /// Разблокирует скилл
+    /// Unlock skill
     pub fn unlock(&mut self) {
         self.unlocked = true;
     }
 
-    /// Активирует скилл
+    /// Activate skill
     pub fn activate(&mut self) {
         self.active = true;
     }
 
-    /// Деактивирует скилл
+    /// Deactivate skill
     pub fn deactivate(&mut self) {
         self.active = false;
     }
 
-    /// Получает значение для текущего уровня
+    /// Get value for current level
     pub fn get_level_value(&self) -> f32 {
         if self.current_level < self.levels.len() as u32 {
             self.levels[self.current_level as usize].value
@@ -257,7 +255,7 @@ impl Skill {
         }
     }
 
-    /// Получает булевое значение для текущего уровня
+    /// Get boolean value for current level
     pub fn get_level_bool_value(&self) -> bool {
         if self.current_level < self.levels.len() as u32 {
             self.levels[self.current_level as usize].bool_value
@@ -267,17 +265,17 @@ impl Skill {
     }
 }
 
-/// Категория скиллов
+/// Skill category
 #[derive(Debug, Clone, Component)]
 pub struct SkillCategory {
-    /// Название категории
+    /// Category name
     pub name: String,
-    /// Список скиллов в категории
+    /// List of skills in category
     pub skills: Vec<Skill>,
 }
 
 impl SkillCategory {
-    /// Создает новую категорию
+    /// Create new category
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
@@ -285,44 +283,44 @@ impl SkillCategory {
         }
     }
 
-    /// Добавляет скилл в категорию
+    /// Add skill to category
     pub fn add_skill(&mut self, skill: Skill) {
         self.skills.push(skill);
     }
 
-    /// Получает скилл по имени
+    /// Get skill by name
     pub fn get_skill(&self, name: &str) -> Option<&Skill> {
         self.skills.iter().find(|s| s.name == name)
     }
 
-    /// Получает скилл по имени (изменяемый)
+    /// Get skill by name (mutable)
     pub fn get_skill_mut(&mut self, name: &str) -> Option<&mut Skill> {
         self.skills.iter_mut().find(|s| s.name == name)
     }
 
-    /// Получает скилл по индексу
+    /// Get skill by index
     pub fn get_skill_by_index(&self, index: usize) -> Option<&Skill> {
         self.skills.get(index)
     }
 
-    /// Получает скилл по индексу (изменяемый)
+    /// Get skill by index (mutable)
     pub fn get_skill_by_index_mut(&mut self, index: usize) -> Option<&mut Skill> {
         self.skills.get_mut(index)
     }
 
-    /// Получает индекс скилла по имени
+    /// Get skill index by name
     pub fn get_skill_index(&self, name: &str) -> Option<usize> {
         self.skills.iter().position(|s| s.name == name)
     }
 
-    /// Включает или отключает все скиллы в категории
+    /// Enable or disable all skills in category
     pub fn set_all_enabled(&mut self, enabled: bool) {
         for skill in &mut self.skills {
             skill.enabled = enabled;
         }
     }
 
-    /// Активирует или деактивирует все скиллы в категории
+    /// Activate or deactivate all skills in category
     pub fn set_all_active(&mut self, active: bool) {
         for skill in &mut self.skills {
             if skill.enabled {
@@ -331,7 +329,7 @@ impl SkillCategory {
         }
     }
 
-    /// Разблокирует все скиллы в категории
+    /// Unlock all skills in category
     pub fn unlock_all(&mut self) {
         for skill in &mut self.skills {
             skill.unlocked = true;
@@ -339,17 +337,17 @@ impl SkillCategory {
     }
 }
 
-/// Дерево скиллов
+/// Skill tree
 #[derive(Debug, Clone, Component)]
 pub struct SkillTree {
-    /// Категории скиллов
+    /// Skill categories
     pub categories: Vec<SkillCategory>,
-    /// Шаблон для сохранения/загрузки
+    /// Template for save/load
     pub template: Option<SkillTemplate>,
 }
 
 impl SkillTree {
-    /// Создает новое дерево скиллов
+    /// Create new skill tree
     pub fn new() -> Self {
         Self {
             categories: Vec::new(),
@@ -357,37 +355,37 @@ impl SkillTree {
         }
     }
 
-    /// Добавляет категорию в дерево
+    /// Add category to tree
     pub fn add_category(&mut self, category: SkillCategory) {
         self.categories.push(category);
     }
 
-    /// Получает категорию по имени
+    /// Get category by name
     pub fn get_category(&self, name: &str) -> Option<&SkillCategory> {
         self.categories.iter().find(|c| c.name == name)
     }
 
-    /// Получает категорию по имени (изменяемый)
+    /// Get category by name (mutable)
     pub fn get_category_mut(&mut self, name: &str) -> Option<&mut SkillCategory> {
         self.categories.iter_mut().find(|c| c.name == name)
     }
 
-    /// Получает категорию по индексу
+    /// Get category by index
     pub fn get_category_by_index(&self, index: usize) -> Option<&SkillCategory> {
         self.categories.get(index)
     }
 
-    /// Получает категорию по индексу (изменяемый)
+    /// Get category by index (mutable)
     pub fn get_category_by_index_mut(&mut self, index: usize) -> Option<&mut SkillCategory> {
         self.categories.get_mut(index)
     }
 
-    /// Получает индекс категории по имени
+    /// Get category index by name
     pub fn get_category_index(&self, name: &str) -> Option<usize> {
         self.categories.iter().position(|c| c.name == name)
     }
 
-    /// Получает скилл по имени
+    /// Get skill by name
     pub fn get_skill(&self, skill_name: &str) -> Option<&Skill> {
         for category in &self.categories {
             if let Some(skill) = category.get_skill(skill_name) {
@@ -397,7 +395,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает скилл по имени (изменяемый)
+    /// Get skill by name (mutable)
     pub fn get_skill_mut(&mut self, skill_name: &str) -> Option<&mut Skill> {
         for category in &mut self.categories {
             if let Some(skill) = category.get_skill_mut(skill_name) {
@@ -407,7 +405,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает скилл по категории и имени
+    /// Get skill by category and name
     pub fn get_skill_by_category(&self, category_name: &str, skill_name: &str) -> Option<&Skill> {
         if let Some(category) = self.get_category(category_name) {
             return category.get_skill(skill_name);
@@ -415,7 +413,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает скилл по категории и имени (изменяемый)
+    /// Get skill by category and name (mutable)
     pub fn get_skill_by_category_mut(
         &mut self,
         category_name: &str,
@@ -427,7 +425,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает скилл по индексам
+    /// Get skill by indices
     pub fn get_skill_by_index(&self, category_index: usize, skill_index: usize) -> Option<&Skill> {
         if let Some(category) = self.get_category_by_index(category_index) {
             return category.get_skill_by_index(skill_index);
@@ -435,7 +433,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает скилл по индексам (изменяемый)
+    /// Get skill by indices (mutable)
     pub fn get_skill_by_index_mut(
         &mut self,
         category_index: usize,
@@ -447,7 +445,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает индекс скилла по имени
+    /// Get skill index by name
     pub fn get_skill_index(&self, skill_name: &str) -> Option<usize> {
         for category in &self.categories {
             if let Some(index) = category.get_skill_index(skill_name) {
@@ -457,7 +455,7 @@ impl SkillTree {
         None
     }
 
-    /// Получает индекс скилла по категории и имени
+    /// Get skill index by category and name
     pub fn get_skill_index_by_category(
         &self,
         category_name: &str,
@@ -469,52 +467,52 @@ impl SkillTree {
         None
     }
 
-    /// Увеличивает значение скилла
+    /// Increase skill value
     pub fn increase_skill(&mut self, skill_name: &str, amount: f32) {
         if let Some(skill) = self.get_skill_mut(skill_name) {
             skill.increase(amount);
         }
     }
 
-    /// Получает значение скилла
+    /// Get skill value
     pub fn get_skill_value(&self, skill_name: &str) -> Option<f32> {
         self.get_skill(skill_name).map(|s| s.get_value())
     }
 
-    /// Обновляет значение скилла
+    /// Update skill value
     pub fn update_skill_value(&mut self, skill_name: &str, new_value: f32) {
         if let Some(skill) = self.get_skill_mut(skill_name) {
             skill.update_value(new_value);
         }
     }
 
-    /// Активирует или деактивирует булевый скилл
+    /// Activate or deactivate boolean skill
     pub fn set_skill_bool_state(&mut self, skill_name: &str, state: bool) {
         if let Some(skill) = self.get_skill_mut(skill_name) {
             skill.set_bool_state(state);
         }
     }
 
-    /// Получает булевое значение скилла
+    /// Get boolean skill value
     pub fn get_skill_bool_value(&self, skill_name: &str) -> Option<bool> {
         self.get_skill(skill_name).map(|s| s.get_bool_value())
     }
 
-    /// Обновляет булевое значение скилла
+    /// Update boolean skill value
     pub fn update_skill_bool_value(&mut self, skill_name: &str, state: bool) {
         if let Some(skill) = self.get_skill_mut(skill_name) {
             skill.current_bool_state = state;
         }
     }
 
-    /// Разблокирует скилл по имени
+    /// Unlock skill by name
     pub fn unlock_skill(&mut self, skill_name: &str) {
         if let Some(skill) = self.get_skill_mut(skill_name) {
             skill.unlock();
         }
     }
 
-    /// Использует очки скиллов для повышения уровня
+    /// Use skill points to level up
     pub fn use_skill_points(
         &mut self,
         category_index: usize,
@@ -553,17 +551,17 @@ impl SkillTree {
         }
     }
 
-    /// Получает скилл по имени (обертка)
+    /// Get skill by name (wrapper)
     pub fn get_skill_by_name(&self, skill_name: &str) -> Option<&Skill> {
         self.get_skill(skill_name)
     }
 
-    /// Разблокирует слот скилла по имени
+    /// Unlock skill slot by name
     pub fn unlock_skill_slot(&mut self, skill_name: &str) {
         self.unlock_skill(skill_name);
     }
 
-    /// Сохраняет настройки в шаблон
+    /// Save settings to template
     pub fn save_to_template(&mut self) {
         if self.template.is_none() {
             self.template = Some(SkillTemplate::new());
@@ -591,7 +589,7 @@ impl SkillTree {
         }
     }
 
-    /// Загружает настройки из шаблона
+    /// Load settings from template
     pub fn load_from_template(&mut self) {
         if let Some(template) = &self.template {
             for category in &mut self.categories {
@@ -615,7 +613,7 @@ impl SkillTree {
         }
     }
 
-    /// Устанавливает состояние завершенности всех скиллов в шаблоне
+    /// Set completion state for all skills in template
     pub fn set_all_complete_in_template(&mut self, complete: bool) {
         if let Some(template) = &mut self.template {
             for category in &mut template.categories {
@@ -626,14 +624,14 @@ impl SkillTree {
         }
     }
 
-    /// Включает все скиллы в категории
+    /// Enable all skills in category
     pub fn enable_skills_in_category(&mut self, category_index: usize, enabled: bool) {
         if let Some(category) = self.get_category_by_index_mut(category_index) {
             category.set_all_enabled(enabled);
         }
     }
 
-    /// Активирует все скиллы в категории
+    /// Activate all skills in category
     pub fn activate_skills_in_category(&mut self, category_index: usize, active: bool) {
         if let Some(category) = self.get_category_by_index_mut(category_index) {
             category.set_all_active(active);
@@ -647,15 +645,15 @@ impl Default for SkillTree {
     }
 }
 
-/// Шаблон скилла для сохранения/загрузки
+/// Skill template for save/load
 #[derive(Debug, Clone, Component)]
 pub struct SkillTemplate {
-    /// Категории скиллов в шаблоне
+    /// Categories in template
     pub categories: Vec<SkillTemplateCategory>,
 }
 
 impl SkillTemplate {
-    /// Создает новый шаблон
+    /// Create new template
     pub fn new() -> Self {
         Self { categories: Vec::new() }
     }
@@ -667,46 +665,46 @@ impl Default for SkillTemplate {
     }
 }
 
-/// Категория скиллов в шаблоне
+/// Category in template
 #[derive(Debug, Clone)]
 pub struct SkillTemplateCategory {
-    /// Название категории
+    /// Category name
     pub name: String,
-    /// Скиллы в категории
+    /// Skills in category
     pub skills: Vec<SkillTemplateInfo>,
 }
 
-/// Информация о скилле в шаблоне
+/// Skill info in template
 #[derive(Debug, Clone)]
 pub struct SkillTemplateInfo {
-    /// Название скилла
+    /// Skill name
     pub name: String,
-    /// Включен ли скилл
+    /// Is skill enabled
     pub enabled: bool,
-    /// Завершен ли скилл
+    /// Is skill complete
     pub complete: bool,
 }
 
-/// Компонент системы скиллов
+/// Skills system component
 #[derive(Debug, Component)]
 pub struct SkillsSystem {
-    /// Активна ли система скиллов
+    /// Is skills system active
     pub active: bool,
-    /// Инициализировать значения при старте
+    /// Initialize values at startup
     pub initialize_at_start: bool,
-    /// Инициализировать только при загрузке игры
+    /// Initialize only when loading game
     pub initialize_only_when_loading: bool,
-    /// Сохранять скиллы в файл сохранения
+    /// Save skills to save file
     pub save_to_file: bool,
-    /// Загружается ли игра
+    /// Is game loading
     pub is_loading_game: bool,
-    /// Инициализировать значения при не загрузке из шаблона
+    /// Initialize values when not loading from template
     pub initialize_when_not_loading_from_template: bool,
-    /// Дерево скиллов
+    /// Skill tree
     pub skill_tree: SkillTree,
-    /// Текущий скилл (для отслеживания)
+    /// Current skill (for tracking)
     pub current_skill: Option<String>,
-    /// Текущий уровень скилла (для отслеживания)
+    /// Current skill level (for tracking)
     pub current_level: Option<u32>,
 }
 
@@ -727,12 +725,12 @@ impl Default for SkillsSystem {
 }
 
 impl SkillsSystem {
-    /// Создает новую систему скиллов
+    /// Create new skills system
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Инициализирует значения скиллов
+    /// Initialize skill values
     pub fn initialize_values(&mut self) {
         if !self.active {
             return;
@@ -766,28 +764,28 @@ impl SkillsSystem {
                         skill.current_level = skill.levels.len() as u32;
                     }
 
-                    // Инициализация числовых скиллов
+                    // Initialize numeric skills
                     if skill.current_value != 0.0 {
-                        // Событие инициализации
+                        // Initialization event
                     }
 
-                    // Инициализация булевых скиллов
+                    // Initialize boolean skills
                     if skill.use_two_events {
                         if skill.current_bool_state {
-                            // Событие инициализации активного состояния
+                            // Initialization event for active state
                         } else {
-                            // Событие инициализации неактивного состояния
+                            // Initialization event for inactive state
                         }
                     } else {
-                        // Событие инициализации булевого скилла
+                        // Initialization event for boolean skill
                     }
 
-                    // Инициализация скиллов с уровнями
+                    // Initialize skills with levels
                     if !skill.levels.is_empty() && skill.active {
                         let current_level = skill.current_level as usize;
                         if current_level < skill.levels.len() {
                             let level = &skill.levels[current_level];
-                            // Событие инициализации уровня
+                            // Initialization event for level
                         }
                     }
                 }
@@ -795,7 +793,7 @@ impl SkillsSystem {
         }
     }
 
-    /// Увеличивает значение скилла
+    /// Increase skill value
     pub fn increase_skill(&mut self, skill_name: &str, amount: f32) {
         if !self.active {
             return;
@@ -804,12 +802,12 @@ impl SkillsSystem {
         self.skill_tree.increase_skill(skill_name, amount);
     }
 
-    /// Получает значение скилла
+    /// Get skill value
     pub fn get_skill_value(&self, skill_name: &str) -> Option<f32> {
         self.skill_tree.get_skill_value(skill_name)
     }
 
-    /// Обновляет значение скилла
+    /// Update skill value
     pub fn update_skill_value(&mut self, skill_name: &str, new_value: f32) {
         if !self.active {
             return;
@@ -818,7 +816,7 @@ impl SkillsSystem {
         self.skill_tree.update_skill_value(skill_name, new_value);
     }
 
-    /// Активирует или деактивирует булевый скилл
+    /// Activate or deactivate boolean skill
     pub fn set_skill_bool_state(&mut self, skill_name: &str, state: bool) {
         if !self.active {
             return;
@@ -827,12 +825,12 @@ impl SkillsSystem {
         self.skill_tree.set_skill_bool_state(skill_name, state);
     }
 
-    /// Получает булевое значение скилла
+    /// Get boolean skill value
     pub fn get_skill_bool_value(&self, skill_name: &str) -> Option<bool> {
         self.skill_tree.get_skill_bool_value(skill_name)
     }
 
-    /// Обновляет булевое значение скилла
+    /// Update boolean skill value
     pub fn update_skill_bool_value(&mut self, skill_name: &str, state: bool) {
         if !self.active {
             return;
@@ -841,22 +839,22 @@ impl SkillsSystem {
         self.skill_tree.update_skill_bool_value(skill_name, state);
     }
 
-    /// Получает скилл по индексам
+    /// Get skill by indices
     pub fn get_skill_by_index(&self, category_index: usize, skill_index: usize) -> Option<&Skill> {
         self.skill_tree.get_skill_by_index(category_index, skill_index)
     }
 
-    /// Получает индекс скилла по имени
+    /// Get skill index by name
     pub fn get_skill_index(&self, skill_name: &str) -> Option<usize> {
         self.skill_tree.get_skill_index(skill_name)
     }
 
-    /// Получает индекс категории по имени
+    /// Get category index by name
     pub fn get_category_index(&self, category_name: &str) -> Option<usize> {
         self.skill_tree.get_category_index(category_name)
     }
 
-    /// Получает индекс скилла по категории и имени
+    /// Get skill index by category and name
     pub fn get_skill_index_by_category(
         &self,
         category_name: &str,
@@ -866,7 +864,7 @@ impl SkillsSystem {
             .get_skill_index_by_category(category_name, skill_name)
     }
 
-    /// Использует очки скиллов
+    /// Use skill points
     pub fn use_skill_points(
         &mut self,
         category_index: usize,
@@ -882,12 +880,12 @@ impl SkillsSystem {
             .use_skill_points(category_index, skill_index, available_points, ignore_points)
     }
 
-    /// Получает скилл по имени
+    /// Get skill by name
     pub fn get_skill_by_name(&self, skill_name: &str) -> Option<&Skill> {
         self.skill_tree.get_skill_by_name(skill_name)
     }
 
-    /// Разблокирует слот скилла по имени
+    /// Unlock skill slot by name
     pub fn unlock_skill_slot(&mut self, skill_name: &str) {
         if !self.active {
             return;
@@ -896,7 +894,7 @@ impl SkillsSystem {
         self.skill_tree.unlock_skill_slot(skill_name);
     }
 
-    /// Сохраняет настройки в шаблон
+    /// Save settings to template
     pub fn save_to_template(&mut self) {
         if !self.active {
             return;
@@ -905,7 +903,7 @@ impl SkillsSystem {
         self.skill_tree.save_to_template();
     }
 
-    /// Загружает настройки из шаблона
+    /// Load settings from template
     pub fn load_from_template(&mut self) {
         if !self.active {
             return;
@@ -914,12 +912,12 @@ impl SkillsSystem {
         self.skill_tree.load_from_template();
     }
 
-    /// Устанавливает состояние завершенности всех скиллов в шаблоне
+    /// Set completion state for all skills in template
     pub fn set_all_complete_in_template(&mut self, complete: bool) {
         self.skill_tree.set_all_complete_in_template(complete);
     }
 
-    /// Включает все скиллы в категории
+    /// Enable all skills in category
     pub fn enable_skills_in_category(&mut self, category_index: usize, enabled: bool) {
         if !self.active {
             return;
@@ -929,7 +927,7 @@ impl SkillsSystem {
             .enable_skills_in_category(category_index, enabled);
     }
 
-    /// Активирует все скиллы в категории
+    /// Activate all skills in category
     pub fn activate_skills_in_category(&mut self, category_index: usize, active: bool) {
         if !self.active {
             return;
@@ -939,45 +937,45 @@ impl SkillsSystem {
             .activate_skills_in_category(category_index, active);
     }
 
-    /// Устанавливает активность системы скиллов
+    /// Set skills system active state
     pub fn set_active(&mut self, state: bool) {
         self.active = state;
     }
 
-    /// Проверяет, активна ли система скиллов
+    /// Check if skills system is active
     pub fn is_active(&self) -> bool {
         self.active
     }
 }
 
-/// События системы скиллов
+/// Skills system events
 #[derive(Debug, Event)]
-pub enum SkillEvent {
-    /// Скилл инициализирован
+pub enum SkillSystemEvent {
+    /// Skill initialized
     SkillInitialized { skill_name: String, value: f32 },
-    /// Скилл увеличен
+    /// Skill increased
     SkillIncreased { skill_name: String, amount: f32 },
-    /// Скилл использован
+    /// Skill used
     SkillUsed { skill_name: String, value: f32 },
-    /// Скилл добавлен
+    /// Skill added
     SkillAdded { skill_name: String, amount: f32 },
-    /// Булевый скилл инициализирован
+    /// Boolean skill initialized
     BoolSkillInitialized { skill_name: String, state: bool },
-    /// Булевый скилл активирован
+    /// Boolean skill activated
     BoolSkillActivated { skill_name: String, state: bool },
-    /// Скилл разблокирован
+    /// Skill unlocked
     SkillUnlocked { skill_name: String },
-    /// Скилл завершен
+    /// Skill completed
     SkillCompleted { skill_name: String },
-    /// Очки скиллов использованы
+    /// Skill points used
     SkillPointsUsed { skill_name: String, points: u32 },
-    /// Не хватает очков скиллов
+    /// Not enough skill points
     NotEnoughSkillPoints { skill_name: String },
 }
 
-/// Система обновления скиллов
+/// Skills system update
 pub fn skills_system_update(
-    mut skill_events: EventWriter<SkillEvent>,
+    mut skill_events: EventWriter<SkillSystemEvent>,
     mut query: Query<&mut SkillsSystem>,
 ) {
     for mut skills_system in query.iter_mut() {
@@ -985,25 +983,25 @@ pub fn skills_system_update(
             continue;
         }
 
-        // Здесь можно добавить логику обновления скиллов
-        // Например, обработка событий или автоматическое обновление значений
+        // Add skill update logic here
+        // For example, event processing or automatic value updates
     }
 }
 
-/// Плагин системы скиллов
+/// Skills plugin
 pub struct SkillsPlugin;
 
 impl Plugin for SkillsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SkillEvent>()
+        app.add_event::<SkillSystemEvent>()
             .add_systems(Update, skills_system_update);
     }
 }
 
-/// Предварительный импорт для системы скиллов
+/// Prelude for skills system
 pub mod prelude {
     pub use super::{
-        Skill, SkillCategory, SkillEvent, SkillLevel, SkillTemplate, SkillTree, SkillsPlugin,
+        Skill, SkillCategory, SkillLevel, SkillSystemEvent, SkillTemplate, SkillTree, SkillsPlugin,
         SkillsSystem, SkillType,
     };
 }
