@@ -36,6 +36,7 @@ pub mod combat;
 pub mod input;
 pub mod interaction;
 pub mod inventory;
+pub mod map;
 pub mod physics;
 pub mod quest;
 pub mod save;
@@ -53,6 +54,7 @@ pub mod prelude {
     pub use crate::input::*;
     pub use crate::interaction::*;
     pub use crate::inventory::*;
+    pub use crate::map::*;
     pub use crate::physics::*;
     pub use crate::quest::*;
     pub use crate::save::*;
@@ -78,6 +80,7 @@ impl Plugin for GameControllerPlugin {
                 input::InputPlugin,
                 interaction::InteractionPlugin,
                 inventory::InventoryPlugin,
+                map::MapPlugin,
                 physics::PhysicsPlugin,
                 quest::QuestPlugin,
                 save::SavePlugin,

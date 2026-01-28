@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::app::App;
+use bevy::ecs::event::EventReader;
 use serde::{Deserialize, Serialize};
 
 /// The status of a quest or an objective.
