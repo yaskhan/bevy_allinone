@@ -36,6 +36,7 @@ pub mod character;
 pub mod climb;
 pub mod combat;
 pub mod currency;
+pub mod devices;
 pub mod dialog;
 pub mod input;
 pub mod interaction;
@@ -65,6 +66,7 @@ pub mod prelude {
     pub use crate::climb::*;
     pub use crate::combat::*;
     pub use crate::currency::*;
+    pub use crate::devices::*;
     pub use crate::dialog::*;
     pub use crate::input::*;
     pub use crate::interaction::*;
@@ -101,6 +103,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(climb::ClimbPlugin)
             .add_plugins(combat::CombatPlugin)
             .add_plugins(currency::CurrencyPlugin)
+            .add_plugins(devices::DevicesPlugin)
             .add_plugins(dialog::DialogPlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(interaction::InteractionPlugin)
