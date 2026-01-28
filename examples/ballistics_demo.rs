@@ -16,7 +16,7 @@ fn main() {
         .insert_resource(BallisticsEnvironment {
             gravity: Vec3::new(0.0, -9.81, 0.0),
             air_density: 1.225,
-            wind: Vec3::new(2.0, 0.0, 0.0), // Ветер дует вправо
+            wind: Vec3::new(2.0, 0.0, 0.0), // Wind blows to the right
         })
         .add_systems(Startup, setup)
         .add_systems(Update, (handle_shooting, update_ui))
@@ -31,7 +31,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Свет
+    // Light
     commands.spawn((
         Transform::from_xyz(4.0, 8.0, 4.0),
         DirectionalLight {
@@ -40,7 +40,7 @@ fn setup(
         },
     ));
 
-    // Пол (Физический)
+    // Floor (Physical)
     commands.spawn((
         Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0))),
         MeshMaterial3d(materials.add(Color::srgb(0.3, 0.5, 0.3))),
@@ -49,7 +49,7 @@ fn setup(
         Collider::cuboid(50.0, 0.1, 50.0),
     ));
 
-    // Стена-мишень (Физическая)
+    // Target wall (Physical)
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::new(4.0, 4.0, 0.2))),
         MeshMaterial3d(materials.add(Color::srgb(0.8, 0.2, 0.2))),
@@ -58,18 +58,18 @@ fn setup(
         Collider::cuboid(2.0, 2.0, 0.1),
     ));
 
-    // Игрок (Сущность персонажа)
+    // Player (Character entity)
     let player_id = commands.spawn((
         Player,
         Transform::from_xyz(0.0, 1.0, 5.0),
         GlobalTransform::default(),
         Visibility::default(),
         ComputedVisibility::default(),
-        // Используем стандартный контроллер персонажа из библиотеки
+        // Use the standard character controller from the library
         CharacterController::default(),
     )).id();
 
-    // Камера, следующая за игроком
+    // Camera following the player
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(0.0, 0.6, 0.0),
@@ -82,19 +82,7 @@ fn setup(
         },
     ));
 
-    // Визуализация оружия (простой куб, дочерний к камере или игроку)
-    // Для простоты в демо добавим как отдельную сущность или дочернюю
-    // В данном случае, для корректного позиционирования в FPS камере,
-    // лучше добавить дочернюю сущность к камере, но так как камера отдельная сущность,
-    // мы просто добавим визуал к игроку или камере.
-    // Для интеграции с CharacterController, оружие обычно визуализируется на камере.
-    // Добавим визуал оружия как дочернюю сущность к камере (найдем камеру и добавим ребенка).
-    // Но так как мы только что создали камеру, мы можем сделать это сразу.
-
-    // Примечание: В текущей архитектуре `CharacterController` управляет движением игрока,
-    // а `CameraController` управляет камерой. Оружие привязано к сущности игрока (Player).
-
-    // Компоненты оружия и точности для игрока
+    // Weapon and accuracy components for the player
     commands.entity(player_id).insert((
         Weapon {
             weapon_name: "Ballistic Rifle".to_string(),
@@ -108,25 +96,25 @@ fn setup(
             current_reload_timer: 0.0,
             is_reloading: false,
             is_automatic: true,
-            spread: 0.5, // Базовый разброс в градусах
+            spread: 0.5, // Base spread in degrees
             base_spread: 0.5,
             aim_spread_mult: 0.2,
             projectiles_per_shot: 1,
-            projectile_speed: 100.0, // Медленные пули для наглядности
+            projectile_speed: 100.0, // Slow bullets for demonstration
             weapon_type: bevy_allinone::weapons::WeaponType::Rifle,
             attachments: vec![],
-            projectile_mass: 0.01, // 10г
+            projectile_mass: 0.01, // 10g
             projectile_drag_coeff: 0.3,
             projectile_area: 0.00001,
             projectile_penetration: 1000.0,
-            zeroing_distance: 10.0, // Прицелен на 10 метров
+            zeroing_distance: 10.0, // Zeroed at 10 meters
         },
         Accuracy {
             current_bloom: 0.0,
             base_spread: 0.5,
             max_spread: 5.0,
             bloom_per_shot: 0.2,
-            recovery_rate: 2.0, // Восстановление разброса
+            recovery_rate: 2.0, // Spread recovery rate
             movement_penalty: 1.0,
             ads_modifier: 0.5,
             airborne_multiplier: 2.0,
@@ -134,7 +122,7 @@ fn setup(
         VisualEffectPool::default(),
     ));
 
-    // UI (Перекрестие)
+    // UI (Crosshair)
     commands.spawn((
         Crosshair,
         Text2d::new("+"),
@@ -158,20 +146,20 @@ fn handle_shooting(
     let Ok((weapon, mut accuracy)) = player_query.get_single() else { return; };
 
     if mouse_input.pressed(MouseButton::Left) {
-        // Эмуляция логики fire_weapon для демо
+        // Emulate fire_weapon logic for demo
         if weapon.current_fire_timer <= 0.0 {
-            // Расчет направления взгляда
+            // Calculate view direction
             let ray_origin = camera_transform.translation();
             let ray_direction = camera_transform.forward();
 
-            // Применение разброса (Bloom)
+            // Apply spread (Bloom)
             accuracy.current_bloom += accuracy.bloom_per_shot;
             accuracy.current_bloom = accuracy.current_bloom.min(accuracy.max_spread);
 
             let total_spread_deg = weapon.spread + accuracy.current_bloom;
             let spread_angle = total_spread_deg.to_radians();
 
-            // Простой рандом для демо
+            // Simple random for demo
             let rand_x = (time.elapsed_seconds().sin() * 10.0).fract() * 2.0 - 1.0;
             let rand_y = (time.elapsed_seconds().cos() * 10.0).fract() * 2.0 - 1.0;
 
@@ -179,8 +167,8 @@ fn handle_shooting(
             let s_y = rand_y * rand_y * spread_angle * 0.5 * rand_y.signum();
 
             let spread_rot = Quat::from_euler(EulerRot::XYZ, s_y, s_x, 0.0);
-            
-            // Zeroing (компенсация падения)
+
+            // Zeroing (drop compensation)
             let zeroing_angle = if weapon.zeroing_distance > 0.0 && weapon.projectile_speed > 0.0 {
                 let time_to_zero = weapon.zeroing_distance / weapon.projectile_speed;
                 let drop = 0.5 * 9.81 * time_to_zero * time_to_zero;
@@ -190,16 +178,16 @@ fn handle_shooting(
 
             let final_dir = camera_transform.rotation() * zeroing_rot * spread_rot * Vec3::NEG_Z;
 
-            // Спавн снаряда
+            // Spawn projectile
             commands.spawn((
-                Mesh3d(commands.spawn_empty().id()), // Placeholder, будет заменено системой рендеринга если нужно
+                Mesh3d(commands.spawn_empty().id()), // Placeholder, will be replaced by the rendering system if needed
                 Transform::from_translation(ray_origin),
                 GlobalTransform::default(),
                 Projectile {
                     velocity: final_dir * weapon.projectile_speed,
                     damage: weapon.damage,
                     lifetime: 5.0,
-                    owner: commands.spawn_empty().id(), // В демо просто новый ID
+                    owner: commands.spawn_empty().id(), // In demo just a new ID
                     mass: weapon.projectile_mass,
                     drag_coeff: weapon.projectile_drag_coeff,
                     reference_area: weapon.projectile_area,
@@ -208,23 +196,23 @@ fn handle_shooting(
                 Name::new("DemoProjectile"),
             ));
 
-            // Визуальный трассер (простой линейный интерполятор)
-            // В реальном коде это делается отдельной системой, здесь для демо спавним сразу
-            // Но для соответствия архитектуре, мы можем просто позволить системе update_projectiles
-            // обновлять Transform, а визуализацию сделать позже.
-            // Для наглядности в этом демо мы будем просто двигать сущность.
-            
-            // Сброс таймера
-            // Мы не можем мутировать Weapon здесь напрямую, так как он в Query.
-            // В реальном приложении это делается внутри fire_weapon системы.
-            // Для демо просто пропускаем кадры.
+            // Visual tracer (simple linear interpolator)
+            // In real code this is done by a separate system, here we spawn it immediately for the demo
+            // But for architectural consistency, we can just let the update_projectiles system
+            // update the Transform, and do the visualization later.
+            // For clarity in this demo, we will just move the entity.
+
+            // Reset timer
+            // We cannot mutate Weapon here directly because it is in a Query.
+            // In a real application, this is done inside the fire_weapon system.
+            // For the demo, we just skip frames.
         }
     }
 }
 
-// В этом демо мы не можем мутировать Weapon.current_fire_timer напрямую в handle_shooting,
-// так как Query immutable. В реальном коде это часть системы fire_weapon.
-// Для демо добавим систему обновления таймера.
+// In this demo, we cannot mutate Weapon.current_fire_timer directly in handle_shooting,
+// since the Query is immutable. In real code this is part of the fire_weapon system.
+// For the demo, we will add a timer update system.
 fn update_weapon_timer(
     time: Res<Time>,
     mut query: Query<&mut Weapon>,
@@ -242,7 +230,7 @@ fn update_ui(
 ) {
     if let Ok(accuracy) = query.get_single() {
         for mut color in text_query.iter_mut() {
-            // Цвет меняется в зависимости от разброса
+            // Color changes depending on spread
             let intensity = 1.0 - (accuracy.current_bloom / accuracy.max_spread).clamp(0.0, 1.0);
             color.0 = Color::srgba(1.0, 1.0, 1.0, intensity);
         }
