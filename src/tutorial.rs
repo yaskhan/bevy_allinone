@@ -73,6 +73,8 @@ impl Plugin for TutorialPlugin {
             .add_systems(Update, (
                 handle_tutorial_events,
                 update_tutorial_ui,
+                handle_tutorial_buttons,
+                manage_tutorial_game_state,
             ));
     }
 }
@@ -104,6 +106,13 @@ fn handle_tutorial_events(
                         // Mark as played
                         for mut log in tutorials_log.iter_mut() {
                             log.played_tutorials.insert(*id);
+                        }
+
+                        // Apply custom time scale if needed
+                        if tutorial.set_custom_time_scale {
+                            // In a real Bevy app, we might use a Time resource or similar
+                            // For now, we store it in manager and have a system apply it
+                            // manager.previous_time_scale = ... (logic below in manager_tutorial_game_state)
                         }
                     }
                 } else {
@@ -318,5 +327,34 @@ fn handle_tutorial_buttons(
                 *color = Color::rgb(0.2, 0.2, 0.2).into();
             }
         }
+    }
+}
+
+/// System to manage game state (input, time scale) when tutorial is active.
+fn manage_tutorial_game_state(
+    manager: Res<TutorialManager>,
+    mut time: ResMut<Time<Virtual>>,
+    mut input_manager: Option<ResMut<crate::input::InputManager>>,
+) {
+    if let Some(id) = manager.active_tutorial_id {
+        if let Some(tutorial) = manager.tutorials.get(&id) {
+            // Pause input if configured
+            if tutorial.pause_input {
+                if let Some(ref mut input) = input_manager {
+                    input.set_input_enabled(false);
+                }
+            }
+
+            // Set custom time scale if configured
+            if tutorial.set_custom_time_scale {
+                time.set_relative_speed(tutorial.custom_time_scale);
+            }
+        }
+    } else {
+        // Reset state when tutorial is closed
+        if let Some(ref mut input) = input_manager {
+            input.set_input_enabled(true);
+        }
+        time.set_relative_speed(1.0);
     }
 }
