@@ -53,6 +53,18 @@ impl Default for MapSettings {
     }
 }
 
+/// Component for the compass UI element.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct CompassUI;
+
+/// Component for map marker icons in the UI.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MapMarkerIcon {
+    pub marker_entity: Entity,
+}
+
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
@@ -60,16 +72,58 @@ impl Plugin for MapPlugin {
         app.init_resource::<MapSettings>()
             .register_type::<MapMarker>()
             .register_type::<MapSettings>()
+            .register_type::<CompassUI>()
+            .register_type::<MapMarkerIcon>()
             .add_systems(Update, (
                 update_minimap_positions,
+                update_compass,
             ));
     }
 }
 
-/// Placeholder system for updating minimap positions.
-fn update_minimap_positions(
-    _markers: Query<(&Transform, &MapMarker)>,
-    _settings: Res<MapSettings>,
+/// System to update the compass UI rotation based on the camera/player.
+fn update_compass(
+    player_query: Query<&Transform, With<crate::character::Player>>,
+    mut compass_query: Query<&mut Transform, (With<CompassUI>, Without<crate::character::Player>)>,
 ) {
-    // TODO: Implement coordinate transformation to UI space
+    let Ok(player_transform) = player_query.get_single() else { return };
+    let (_, rotation, _) = player_transform.rotation.to_euler(EulerRot::YXZ);
+    
+    for mut compass_transform in compass_query.iter_mut() {
+        // Rotate the compass UI in the opposite direction of the player's yaw
+        compass_transform.rotation = Quat::from_rotation_z(rotation);
+    }
+}
+
+/// System to update marker icons in the UI.
+fn update_minimap_positions(
+    player_query: Query<&Transform, With<crate::character::Player>>,
+    markers: Query<(Entity, &GlobalTransform, &MapMarker)>,
+    mut icons: Query<(&mut Node, &MapMarkerIcon)>,
+    settings: Res<MapSettings>,
+) {
+    let Ok(player_transform) = player_query.get_single() else { return };
+    let player_pos = player_transform.translation;
+
+    for (mut node, icon) in icons.iter_mut() {
+        if let Ok((_entity, marker_transform, marker)) = markers.get(icon.marker_entity) {
+            if !marker.visible_in_minimap {
+                node.display = Display::None;
+                continue;
+            }
+            
+            node.display = Display::Flex;
+            
+            let marker_pos = marker_transform.translation();
+            let delta = marker_pos - player_pos;
+            
+            // Project 3D world delta to 2D UI space (XZ plane to XY plane)
+            // Apply zoom and settings here
+            let ui_x = delta.x * settings.minimap_zoom * 10.0;
+            let ui_y = -delta.z * settings.minimap_zoom * 10.0;
+            
+            node.left = Val::Px(ui_x);
+            node.top = Val::Px(ui_y);
+        }
+    }
 }
