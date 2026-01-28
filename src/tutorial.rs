@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::utils::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 /// A single panel in a tutorial sequence.
@@ -53,6 +53,10 @@ pub enum TutorialEvent {
     Close,
 }
 
+/// Custom queue for tutorial events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct TutorialEventQueue(pub Vec<TutorialEvent>);
+
 #[derive(Component)]
 pub struct TutorialRoot;
 
@@ -65,11 +69,13 @@ pub struct TutorialDescriptionText;
 #[derive(Component)]
 pub struct TutorialPanelImage;
 
+pub struct TutorialPlugin;
+
 impl Plugin for TutorialPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TutorialManager>()
+            .init_resource::<TutorialEventQueue>()
             .register_type::<TutorialLog>()
-            .add_event::<TutorialEvent>()
             .add_systems(Update, (
                 handle_tutorial_events,
                 update_tutorial_ui,
@@ -81,39 +87,36 @@ impl Plugin for TutorialPlugin {
 
 /// System to handle tutorial-related events.
 fn handle_tutorial_events(
-    mut events: EventReader<TutorialEvent>,
+    mut events: ResMut<TutorialEventQueue>,
     mut manager: ResMut<TutorialManager>,
     mut tutorials_log: Query<&mut TutorialLog>,
 ) {
-    for event in events.read() {
+    let events_to_process: Vec<TutorialEvent> = events.0.drain(..).collect();
+    for event in events_to_process {
         match event {
             TutorialEvent::Open(id) => {
-                if let Some(tutorial) = manager.tutorials.get(id) {
+                let tutorial_data = manager.tutorials.get(&id).map(|t| (t.name.clone(), t.play_only_once));
+                if let Some((tutorial_name, play_only_once)) = tutorial_data {
                     // Check if it's already played and should be played only once
                     let mut already_played = false;
                     for log in tutorials_log.iter() {
-                        if log.played_tutorials.contains(id) && tutorial.play_only_once {
+                        if log.played_tutorials.contains(&id) && play_only_once {
                             already_played = true;
                             break;
                         }
                     }
 
                     if !already_played {
-                        manager.active_tutorial_id = Some(*id);
+                        manager.active_tutorial_id = Some(id);
                         manager.current_panel_index = 0;
-                        info!("Opening tutorial: {}", tutorial.name);
+                        info!("Opening tutorial: {}", tutorial_name);
                         
                         // Mark as played
                         for mut log in tutorials_log.iter_mut() {
-                            log.played_tutorials.insert(*id);
+                            log.played_tutorials.insert(id);
                         }
 
-                        // Apply custom time scale if needed
-                        if tutorial.set_custom_time_scale {
-                            // In a real Bevy app, we might use a Time resource or similar
-                            // For now, we store it in manager and have a system apply it
-                            // manager.previous_time_scale = ... (logic below in manager_tutorial_game_state)
-                        }
+                        // Custom time scale is handled by manage_tutorial_game_state system
                     }
                 } else {
                     warn!("Tutorial with ID {} not found", id);
@@ -152,7 +155,7 @@ fn update_tutorial_ui(
     root_query: Query<Entity, With<TutorialRoot>>,
     mut title_query: Query<&mut Text, (With<TutorialTitleText>, Without<TutorialDescriptionText>)>,
     mut desc_query: Query<&mut Text, (With<TutorialDescriptionText>, Without<TutorialTitleText>)>,
-    mut image_query: Query<&mut UiImage, With<TutorialPanelImage>>,
+    mut image_query: Query<&mut ImageNode, With<TutorialPanelImage>>,
 ) {
     if let Some(tutorial_id) = manager.active_tutorial_id {
         if let Some(tutorial) = manager.tutorials.get(&tutorial_id) {
@@ -163,14 +166,14 @@ fn update_tutorial_ui(
                 } else {
                     // Update existing UI
                     for mut text in title_query.iter_mut() {
-                        text.sections[0].value = panel.title.clone();
+                        text.0 = panel.title.clone();
                     }
                     for mut text in desc_query.iter_mut() {
-                        text.sections[0].value = panel.description.clone();
+                        text.0 = panel.description.clone();
                     }
                     if let Some(image_path) = &panel.image_path {
                         for mut ui_image in image_query.iter_mut() {
-                            ui_image.texture = asset_server.load(image_path);
+                            ui_image.image = asset_server.load(image_path);
                         }
                     }
                 }
@@ -179,91 +182,78 @@ fn update_tutorial_ui(
     } else {
         // Remove UI if active tutorial is None
         for entity in root_query.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }
 
-fn setup_tutorial_ui(commands: &mut Commands, asset_server: &Res<AssetServer>, panel: &TutorialPanel) {
+fn setup_tutorial_ui(commands: &mut Commands, _asset_server: &Res<AssetServer>, panel: &TutorialPanel) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-                background_color: Color::rgba(0.0, 0.0, 0.0, 0.7).into(),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
             TutorialRoot,
         ))
         .with_children(|parent| {
             parent
-                .spawn(NodeBundle {
-                    style: Style {
+                .spawn((
+                    Node {
                         width: Val::Px(500.0),
                         flex_direction: FlexDirection::Column,
                         padding: UiRect::all(Val::Px(20.0)),
                         border: UiRect::all(Val::Px(2.0)),
                         ..default()
                     },
-                    background_color: Color::rgb(0.1, 0.1, 0.1).into(),
-                    border_color: Color::rgb(0.3, 0.3, 0.3).into(),
-                    ..default()
-                })
+                    BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
+                    Outline::new(Val::Px(2.0), Val::Px(0.0), Color::srgb(0.3, 0.3, 0.3)),
+                ))
                 .with_children(|parent| {
                     // Title
                     parent.spawn((
-                        TextBundle::from_section(
-                            &panel.title,
-                            TextStyle {
-                                font_size: 30.0,
-                                color: Color::WHITE,
-                                ..default()
-                            },
-                        ),
+                        Text::new(&panel.title),
+                        TextFont {
+                            font_size: 30.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
                         TutorialTitleText,
                     ));
 
                     // Image (Placeholder)
                     parent.spawn((
-                        ImageBundle {
-                            style: Style {
-                                width: Val::Percent(100.0),
-                                height: Val::Px(200.0),
-                                margin: UiRect::vertical(Val::Px(10.0)),
-                                ..default()
-                            },
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(200.0),
+                            margin: UiRect::vertical(Val::Px(10.0)),
                             ..default()
                         },
+                        ImageNode::default(),
                         TutorialPanelImage,
                     ));
 
                     // Description
                     parent.spawn((
-                        TextBundle::from_section(
-                            &panel.description,
-                            TextStyle {
-                                font_size: 20.0,
-                                color: Color::rgb(0.8, 0.8, 0.8),
-                                ..default()
-                            },
-                        ),
+                        Text::new(&panel.description),
+                        TextFont {
+                            font_size: 20.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.8, 0.8, 0.8)),
                         TutorialDescriptionText,
                     ));
 
                     // Buttons
                     parent
-                        .spawn(NodeBundle {
-                            style: Style {
-                                margin: UiRect::top(Val::Px(20.0)),
-                                justify_content: JustifyContent::SpaceBetween,
-                                ..default()
-                            },
+                        .spawn(Node {
+                            margin: UiRect::top(Val::Px(20.0)),
+                            justify_content: JustifyContent::SpaceBetween,
                             ..default()
                         })
                         .with_children(|parent| {
@@ -275,30 +265,28 @@ fn setup_tutorial_ui(commands: &mut Commands, asset_server: &Res<AssetServer>, p
         });
 }
 
-fn spawn_button(parent: &mut ChildBuilder, label: &str, event: TutorialEvent) {
+fn spawn_button(parent: &mut ChildSpawnerCommands, label: &str, event: TutorialEvent) {
     parent
         .spawn((
-            ButtonBundle {
-                style: Style {
-                    width: Val::Px(80.0),
-                    height: Val::Px(40.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                background_color: Color::rgb(0.2, 0.2, 0.2).into(),
+            Button,
+            Node {
+                width: Val::Px(80.0),
+                height: Val::Px(40.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             },
+            BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
             TutorialButton(event),
         ))
         .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                label,
-                TextStyle {
+            parent.spawn((
+                Text::new(label),
+                TextFont {
                     font_size: 18.0,
-                    color: Color::WHITE,
                     ..default()
                 },
+                TextColor(Color::WHITE),
             ));
         });
 }
@@ -312,19 +300,19 @@ fn handle_tutorial_buttons(
         (&Interaction, &TutorialButton, &mut BackgroundColor),
         (Changed<Interaction>, With<Button>),
     >,
-    mut events: EventWriter<TutorialEvent>,
+    mut events: ResMut<TutorialEventQueue>,
 ) {
     for (interaction, button_data, mut color) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
-                events.send(button_data.0.clone());
-                *color = Color::rgb(0.4, 0.4, 0.4).into();
+                events.0.push(button_data.0.clone());
+                *color = BackgroundColor(Color::srgb(0.4, 0.4, 0.4));
             }
             Interaction::Hovered => {
-                *color = Color::rgb(0.3, 0.3, 0.3).into();
+                *color = BackgroundColor(Color::srgb(0.3, 0.3, 0.3));
             }
             Interaction::None => {
-                *color = Color::rgb(0.2, 0.2, 0.2).into();
+                *color = BackgroundColor(Color::srgb(0.2, 0.2, 0.2));
             }
         }
     }
@@ -334,13 +322,13 @@ fn handle_tutorial_buttons(
 fn manage_tutorial_game_state(
     manager: Res<TutorialManager>,
     mut time: ResMut<Time<Virtual>>,
-    mut input_manager: Option<ResMut<crate::input::InputManager>>,
+    mut input_state: Option<ResMut<crate::input::InputState>>,
 ) {
     if let Some(id) = manager.active_tutorial_id {
         if let Some(tutorial) = manager.tutorials.get(&id) {
             // Pause input if configured
             if tutorial.pause_input {
-                if let Some(ref mut input) = input_manager {
+                if let Some(ref mut input) = input_state {
                     input.set_input_enabled(false);
                 }
             }
@@ -352,7 +340,7 @@ fn manage_tutorial_game_state(
         }
     } else {
         // Reset state when tutorial is closed
-        if let Some(ref mut input) = input_manager {
+        if let Some(ref mut input) = input_state {
             input.set_input_enabled(true);
         }
         time.set_relative_speed(1.0);
