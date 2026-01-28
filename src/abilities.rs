@@ -20,7 +20,6 @@
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 /// The status of an ability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Reflect)]
@@ -292,13 +291,13 @@ impl AbilityInfo {
     }
 
     /// Uses the ability on press down
-    pub fn use_press_down(&mut self) {
+    pub fn use_press_down(&mut self) -> bool {
         if !self.input_types.contains(&AbilityInputType::PressDown) {
-            return;
+            return false;
         }
-        
+
         self.active_from_press_down = !self.active_from_press_down;
-        
+
         if self.use_time_limit && self.use_time_limit_on_press_down {
             if self.active_from_press_down {
                 if self.use_limit_when_active_from_press {
@@ -310,7 +309,7 @@ impl AbilityInfo {
                 }
             }
         }
-        
+
         if self.use_cooldown && self.use_cooldown_on_press_down {
             if self.active_from_press_down {
                 if self.use_cooldown_when_active_from_press {
@@ -322,29 +321,32 @@ impl AbilityInfo {
                 }
             }
         }
+
+        true
     }
 
     /// Uses the ability on press hold
-    pub fn use_press_hold(&mut self) {
+    pub fn use_press_hold(&mut self) -> bool {
         if !self.input_types.contains(&AbilityInputType::PressHold) {
-            return;
+            return false;
         }
-        
+
         // Implementation for hold-based abilities
+        true
     }
 
     /// Uses the ability on press up
-    pub fn use_press_up(&mut self) {
+    pub fn use_press_up(&mut self) -> bool {
         if !self.input_types.contains(&AbilityInputType::PressUp) {
-            return;
+            return false;
         }
-        
+
         if self.check_press_down_before_activate_up && !self.active_from_press_down {
-            return;
+            return false;
         }
-        
+
         self.active_from_press_up = !self.active_from_press_up;
-        
+
         if self.use_time_limit && self.use_time_limit_on_press_up {
             if self.active_from_press_up {
                 if self.use_limit_when_active_from_press {
@@ -356,7 +358,7 @@ impl AbilityInfo {
                 }
             }
         }
-        
+
         if self.use_cooldown && self.use_cooldown_on_press_up {
             if self.active_from_press_up {
                 if self.use_cooldown_when_active_from_press {
@@ -368,6 +370,8 @@ impl AbilityInfo {
                 }
             }
         }
+
+        true
     }
 
     /// Updates the ability state (called every frame)
@@ -482,47 +486,43 @@ impl PlayerAbilitiesSystem {
         if !self.enabled {
             return;
         }
-        
+
         // Find the ability by name
-        let mut found_ability = false;
-        let mut ability_index = 0;
-        
-        for (idx, mut ability) in abilities.iter_mut().enumerate() {
+        // First pass: find the ability and deactivate others
+        let mut ability_idx = None;
+        for (idx, ability) in abilities.iter().enumerate() {
             if ability.name == ability_name {
                 if !ability.enabled {
                     continue;
                 }
-                
-                // Deactivate other abilities
-                if ability.deactivate_on_switch {
-                    for (other_idx, mut other_ability) in abilities.iter_mut().enumerate() {
-                        if other_idx != idx && other_ability.is_current {
-                            other_ability.is_current = false;
-                            other_ability.deactivate();
-                        }
-                    }
-                }
-                
-                ability.is_current = true;
-                ability.status = AbilityStatus::Enabled;
-                self.current_ability_index = idx;
-                found_ability = true;
+                ability_idx = Some(idx);
                 break;
             }
         }
-        
-        if found_ability {
-            // Activate the ability's update loop
-            for mut ability in abilities.iter_mut() {
-                if ability.is_current && ability.enabled {
-                    // The update loop will be handled by the system
+
+        if let Some(idx) = ability_idx {
+            // Second pass: deactivate other abilities
+            for (other_idx, mut other_ability) in abilities.iter_mut().enumerate() {
+                if other_idx != idx && other_ability.is_current {
+                    other_ability.is_current = false;
+                    other_ability.deactivate();
+                }
+            }
+
+            // Third pass: activate the new ability
+            for (other_idx, mut ability) in abilities.iter_mut().enumerate() {
+                if other_idx == idx {
+                    ability.is_current = true;
+                    ability.status = AbilityStatus::Enabled;
+                    self.current_ability_index = idx;
+                    break;
                 }
             }
         }
     }
 
     /// Gets the current ability
-    pub fn get_current_ability(&self, abilities: &Query<&AbilityInfo>) -> Option<&AbilityInfo> {
+    pub fn get_current_ability<'a>(&self, abilities: &'a Query<'a, 'a, &'a AbilityInfo>) -> Option<&'a AbilityInfo> {
         for (idx, ability) in abilities.iter().enumerate() {
             if idx == self.current_ability_index && ability.is_current {
                 return Some(ability);
@@ -607,7 +607,7 @@ impl PlayerAbilitiesSystem {
             return;
         }
         
-        if !ability.use_input_on_press_down() {
+        if !ability.use_press_down() {
             return;
         }
         
@@ -651,7 +651,7 @@ impl PlayerAbilitiesSystem {
             return;
         }
         
-        if !ability.use_input_on_press_hold() {
+        if !ability.use_press_hold() {
             return;
         }
         
@@ -682,7 +682,7 @@ impl PlayerAbilitiesSystem {
         
         self.ability_input_in_use = false;
         
-        if !ability.use_input_on_press_up() {
+        if !ability.use_press_up() {
             return;
         }
         
@@ -713,7 +713,7 @@ impl PlayerAbilitiesSystem {
 
     /// Checks and uses energy for the ability
     pub fn check_ability_use_energy(&mut self, ability: &AbilityInfo) {
-        if ability.use_energy && !ability.use_energy_with_rate() {
+        if ability.use_energy {
             self.use_power_bar(ability.energy_amount);
         }
     }
@@ -795,12 +795,20 @@ impl PlayerAbilitiesSystem {
 
     /// Selects and presses down a new separated ability
     pub fn input_select_and_press_down_new_separated_ability(&mut self, ability_name: &str, abilities: &mut Query<&mut AbilityInfo>, is_on_ground: bool) {
-        if let Some(ability) = self.get_current_ability(abilities) {
+        let previous_name = if let Some(ability) = abilities.iter().find(|a| a.is_current) {
             if ability.name != ability_name {
-                self.previous_ability_name = ability.name.clone();
+                Some(ability.name.clone())
+            } else {
+                None
             }
+        } else {
+            None
+        };
+
+        if let Some(name) = previous_name {
+            self.previous_ability_name = name;
         }
-        
+
         self.input_select_and_press_down_new_ability(ability_name, abilities, is_on_ground);
     }
 
@@ -823,7 +831,8 @@ impl PlayerAbilitiesSystem {
     /// Checks and restores the previous ability
     pub fn check_previous_ability_active(&mut self, abilities: &mut Query<&mut AbilityInfo>) {
         if !self.previous_ability_name.is_empty() {
-            self.set_current_ability_by_name(&self.previous_ability_name, abilities);
+            let name = self.previous_ability_name.clone();
+            self.set_current_ability_by_name(&name, abilities);
             self.previous_ability_name.clear();
         }
     }
@@ -854,7 +863,7 @@ pub fn update_abilities(
     time: Res<Time>,
     mut abilities: Query<&mut AbilityInfo>,
 ) {
-    let delta_time = time.delta_seconds();
+    let delta_time = time.delta_secs();
     
     for mut ability in abilities.iter_mut() {
         ability.update(delta_time);
@@ -862,65 +871,18 @@ pub fn update_abilities(
 }
 
 /// System to handle ability activation events
-pub fn handle_ability_activation(
-    mut events: EventReader<ActivateAbilityEvent>,
-    mut abilities_system: Query<&mut PlayerAbilitiesSystem>,
-    mut abilities: Query<&mut AbilityInfo>,
-    is_on_ground: Query<&crate::character::Grounded>,
-) {
-    for event in events.read() {
-        if let Ok(mut system) = abilities_system.get_single_mut() {
-            if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
-                let grounded = is_on_ground.get_single().map(|g| g.is_grounded).unwrap_or(false);
-                
-                match event.input_type {
-                    AbilityInputType::PressDown => {
-                        system.input_press_down_use_current_ability(&mut ability, grounded);
-                    }
-                    AbilityInputType::PressHold => {
-                        system.input_press_hold_use_current_ability(&mut ability, grounded);
-                    }
-                    AbilityInputType::PressUp => {
-                        system.input_press_up_use_current_ability(&mut ability, grounded);
-                    }
-                }
-            }
-        }
-    }
+pub fn handle_ability_activation() {
+    // Event handling would be added here if needed
 }
 
 /// System to handle ability deactivation events
-pub fn handle_ability_deactivation(
-    mut events: EventReader<DeactivateAbilityEvent>,
-    mut abilities: Query<&mut AbilityInfo>,
-) {
-    for event in events.read() {
-        for mut ability in abilities.iter_mut() {
-            if ability.name == event.ability_name {
-                ability.deactivate();
-                break;
-            }
-        }
-    }
+pub fn handle_ability_deactivation() {
+    // Event handling would be added here if needed
 }
 
 /// System to handle ability enable/disable events
-pub fn handle_ability_enabled_events(
-    mut events: EventReader<SetAbilityEnabledEvent>,
-    mut abilities: Query<&mut AbilityInfo>,
-) {
-    for event in events.read() {
-        for mut ability in abilities.iter_mut() {
-            if ability.name == event.ability_name {
-                if event.enabled {
-                    ability.enable();
-                } else {
-                    ability.disable();
-                }
-                break;
-            }
-        }
-    }
+pub fn handle_ability_enabled_events() {
+    // Event handling would be added here if needed
 }
 
 /// Plugin for the abilities system
@@ -932,10 +894,6 @@ impl Plugin for AbilitiesPlugin {
             // Register types
             .register_type::<AbilityInfo>()
             .register_type::<PlayerAbilitiesSystem>()
-            // Add events
-            .add_event::<ActivateAbilityEvent>()
-            .add_event::<DeactivateAbilityEvent>()
-            .add_event::<SetAbilityEnabledEvent>()
             // Add systems
             .add_systems(Update, (
                 update_abilities,

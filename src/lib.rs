@@ -78,24 +78,22 @@ impl Plugin for GameControllerPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add sub-plugins
-            .add_plugins((
-                abilities::AbilitiesPlugin,
-                ai::AiPlugin,
-                camera::CameraPlugin,
-                character::CharacterPlugin,
-                combat::CombatPlugin,
-                input::InputPlugin,
-                interaction::InteractionPlugin,
-                inventory::InventoryPlugin,
-                map::MapPlugin,
-                physics::PhysicsPlugin,
-                quest::QuestPlugin,
-                save::SavePlugin,
-                skills::SkillsPlugin,
-                stats::StatsPlugin,
-                vehicles::VehiclesPlugin,
-                weapons::WeaponsPlugin,
-            ))
+            .add_plugins(abilities::AbilitiesPlugin)
+            .add_plugins(ai::AiPlugin)
+            .add_plugins(camera::CameraPlugin)
+            .add_plugins(character::CharacterPlugin)
+            .add_plugins(combat::CombatPlugin)
+            .add_plugins(input::InputPlugin)
+            .add_plugins(interaction::InteractionPlugin)
+            .add_plugins(inventory::InventoryPlugin)
+            .add_plugins(map::MapPlugin)
+            .add_plugins(physics::PhysicsPlugin)
+            .add_plugins(quest::QuestPlugin)
+            .add_plugins(save::SavePlugin)
+            .add_plugins(skills::SkillsPlugin)
+            .add_plugins(stats::StatsPlugin)
+            .add_plugins(vehicles::VehiclesPlugin)
+            .add_plugins(weapons::WeaponsPlugin)
             // Add resources
             .init_resource::<utils::GameTime>()
             // Add startup systems

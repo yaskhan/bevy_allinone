@@ -975,7 +975,6 @@ pub enum SkillSystemEvent {
 
 /// Skills system update
 pub fn skills_system_update(
-    mut skill_events: EventWriter<SkillSystemEvent>,
     mut query: Query<&mut SkillsSystem>,
 ) {
     for mut skills_system in query.iter_mut() {
@@ -993,8 +992,7 @@ pub struct SkillsPlugin;
 
 impl Plugin for SkillsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SkillSystemEvent>()
-            .add_systems(Update, skills_system_update);
+        app.add_systems(Update, skills_system_update);
     }
 }
 

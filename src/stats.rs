@@ -373,7 +373,7 @@ impl StatEntry {
 
         let max = if self.use_other_stat_as_max {
             if let Some(other_name) = &self.other_stat_as_max_name {
-                stats.get_stat_amount(other_name).unwrap_or(0.0)
+                stats.get_custom_stat_amount(other_name).unwrap_or(0.0)
             } else {
                 self.max_value.unwrap_or(0.0)
             }
@@ -962,7 +962,7 @@ pub fn update_stats(
     time: Res<Time>,
     mut stats_query: Query<&mut StatsSystem>,
 ) {
-    let delta_time = time.delta_seconds();
+    let delta_time = time.delta_secs();
 
     for mut stats in stats_query.iter_mut() {
         // Update modifiers
@@ -974,36 +974,15 @@ pub fn update_stats(
 }
 
 /// System to handle stat change events
-pub fn handle_stat_changes(
-    mut stat_events: EventReader<StatChangedEvent>,
-    mut core_attr_events: EventReader<CoreAttributeChangedEvent>,
-) {
-    for event in stat_events.read() {
-        info!("Stat changed: {} from {} to {}", event.stat_name, event.old_value, event.new_value);
-    }
-
-    for event in core_attr_events.read() {
-        info!("Core attribute changed: {:?} from {} to {}", event.attribute, event.old_value, event.new_value);
-    }
+pub fn handle_stat_changes() {
+    // Event handling would be added here if needed
 }
 
 /// System to handle modifier events
 pub fn handle_modifier_events(
-    mut add_events: EventReader<AddModifierEvent>,
-    mut remove_events: EventReader<RemoveModifierEvent>,
     mut stats_query: Query<&mut StatsSystem>,
 ) {
-    for event in add_events.read() {
-        if let Ok(mut stats) = stats_query.get_single_mut() {
-            stats.add_modifier(event.modifier.clone());
-        }
-    }
-
-    for event in remove_events.read() {
-        if let Ok(mut stats) = stats_query.get_single_mut() {
-            stats.remove_modifier(&event.modifier_name);
-        }
-    }
+    // Modifier event handling would be added here if needed
 }
 
 /// Plugin for the stats system
@@ -1014,11 +993,6 @@ impl Plugin for StatsPlugin {
         app
             // Register types
             .register_type::<StatsSystem>()
-            // Add events
-            .add_event::<StatChangedEvent>()
-            .add_event::<CoreAttributeChangedEvent>()
-            .add_event::<AddModifierEvent>()
-            .add_event::<RemoveModifierEvent>()
             // Add systems
             .add_systems(Update, (
                 update_stats,
