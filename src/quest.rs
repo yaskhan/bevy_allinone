@@ -46,17 +46,64 @@ pub enum QuestEvent {
     Failed(u32),
 }
 
+/// Component for entities that can give quests (NPCs, boards, etc.).
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct QuestStation {
+    pub quest: Quest,
+}
+
 pub struct QuestPlugin;
 
 impl Plugin for QuestPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<QuestEvent>()
             .register_type::<QuestLog>()
+            .register_type::<QuestStation>()
             .add_systems(Update, (
                 handle_quest_events,
                 update_quest_status,
+                handle_quest_interactions,
             ));
     }
+}
+
+/// System to handle interactions with QuestStations.
+fn handle_quest_interactions(
+    mut commands: Commands,
+    mut events: ResMut<crate::interaction::InteractionEventQueue>,
+    quest_stations: Query<&QuestStation>,
+    mut quest_logs: Query<(Entity, &mut QuestLog)>,
+) {
+    let mut interactions_processed = Vec::new();
+    
+    for (idx, event) in events.0.iter().enumerate() {
+        if let Ok(station) = quest_stations.get(event.target) {
+            // Find the quest log for the source (interactor)
+            if let Ok((_log_entity, mut log)) = quest_logs.get_mut(event.source) {
+                // Check if quest is already in log
+                let already_has = log.active_quests.iter().any(|q| q.id == station.quest.id) ||
+                                  log.completed_quests.iter().any(|q| q.id == station.quest.id);
+                
+                if !already_has {
+                    let mut quest = station.quest.clone();
+                    quest.status = QuestStatus::InProgress;
+                    log.active_quests.push(quest);
+                    info!("Quest '{}' accepted!", station.quest.name);
+                } else {
+                    info!("Player already has quest '{}' (active or complete)", station.quest.name);
+                }
+                
+                interactions_processed.push(idx);
+            } else {
+                // If source doesn't have QuestLog, give them one
+                commands.entity(event.source).insert(QuestLog::default());
+            }
+        }
+    }
+    
+    // Note: We are not removing from events.0 here because other systems might need to read it.
+    // In a mature system, we'd use a more robust way to mark events as handled.
 }
 
 /// System to handle quest-related events and update the QuestLog.
