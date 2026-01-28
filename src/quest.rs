@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use bevy::app::App;
-use bevy::ecs::event::EventReader;
 use serde::{Deserialize, Serialize};
 
 /// The status of a quest or an objective.
@@ -40,13 +38,17 @@ pub struct QuestLog {
 }
 
 /// Events for the quest system.
-#[derive(Event)]
+#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
 pub enum QuestEvent {
     Started(u32),
     ObjectiveCompleted(u32, usize),
     Completed(u32),
     Failed(u32),
 }
+
+/// Custom queue for quest events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct QuestEventQueue(pub Vec<QuestEvent>);
 
 /// Component for entities that can give quests (NPCs, boards, etc.).
 #[derive(Component, Debug, Clone, Reflect)]
@@ -59,7 +61,7 @@ pub struct QuestPlugin;
 
 impl Plugin for QuestPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<QuestEvent>()
+        app.init_resource::<QuestEventQueue>()
             .register_type::<QuestLog>()
             .register_type::<QuestStation>()
             .add_systems(Update, (
@@ -73,13 +75,12 @@ impl Plugin for QuestPlugin {
 /// System to handle interactions with QuestStations.
 fn handle_quest_interactions(
     mut commands: Commands,
-    mut events: ResMut<crate::interaction::InteractionEventQueue>,
+    mut interaction_events: ResMut<crate::interaction::InteractionEventQueue>,
     quest_stations: Query<&QuestStation>,
     mut quest_logs: Query<(Entity, &mut QuestLog)>,
+    mut quest_events: ResMut<QuestEventQueue>,
 ) {
-    let mut interactions_processed = Vec::new();
-    
-    for (idx, event) in events.0.iter().enumerate() {
+    for event in interaction_events.0.iter() {
         if let Ok(station) = quest_stations.get(event.target) {
             // Find the quest log for the source (interactor)
             if let Ok((_log_entity, mut log)) = quest_logs.get_mut(event.source) {
@@ -92,43 +93,44 @@ fn handle_quest_interactions(
                     quest.status = QuestStatus::InProgress;
                     log.active_quests.push(quest);
                     info!("Quest '{}' accepted!", station.quest.name);
+                    
+                    // Trigger quest started event
+                    quest_events.0.push(QuestEvent::Started(station.quest.id));
                 } else {
                     info!("Player already has quest '{}' (active or complete)", station.quest.name);
                 }
-                
-                interactions_processed.push(idx);
             } else {
                 // If source doesn't have QuestLog, give them one
                 commands.entity(event.source).insert(QuestLog::default());
             }
         }
     }
-    
-    // Note: We are not removing from events.0 here because other systems might need to read it.
-    // In a mature system, we'd use a more robust way to mark events as handled.
 }
 
 /// System to handle quest-related events and update the QuestLog.
 fn handle_quest_events(
-    mut events: EventReader<QuestEvent>,
-    mut quest_logs: Query<&mut QuestLog>,
+    mut events: ResMut<QuestEventQueue>,
 ) {
-    for event in events.read() {
+    // Process events and then clear the queue
+    for event in events.0.iter() {
         match event {
             QuestEvent::Started(id) => {
-                info!("Quest started: {}", id);
+                info!("Quest started event: {}", id);
             }
             QuestEvent::ObjectiveCompleted(quest_id, obj_idx) => {
                 info!("Objective {} completed for quest {}", obj_idx, quest_id);
             }
             QuestEvent::Completed(id) => {
-                info!("Quest completed: {}", id);
+                info!("Quest completed event: {}", id);
             }
             QuestEvent::Failed(id) => {
-                warn!("Quest failed: {}", id);
+                warn!("Quest failed event: {}", id);
             }
         }
     }
+    
+    // Clear the queue after processing - similar to how Bevy events work
+    events.0.clear();
 }
 
 /// System to automatically update quest status based on objective progress.

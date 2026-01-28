@@ -86,7 +86,7 @@ fn update_compass(
     player_query: Query<&Transform, With<crate::character::Player>>,
     mut compass_query: Query<&mut Transform, (With<CompassUI>, Without<crate::character::Player>)>,
 ) {
-    let Ok(player_transform) = player_query.get_single() else { return };
+    let Some(player_transform) = player_query.iter().next() else { return };
     let (_, rotation, _) = player_transform.rotation.to_euler(EulerRot::YXZ);
     
     for mut compass_transform in compass_query.iter_mut() {
@@ -102,7 +102,7 @@ fn update_minimap_positions(
     mut icons: Query<(&mut Node, &MapMarkerIcon)>,
     settings: Res<MapSettings>,
 ) {
-    let Ok(player_transform) = player_query.get_single() else { return };
+    let Some(player_transform) = player_query.iter().next() else { return };
     let player_pos = player_transform.translation;
 
     for (mut node, icon) in icons.iter_mut() {
