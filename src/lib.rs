@@ -42,6 +42,7 @@ pub mod inventory;
 pub mod ladder;
 pub mod map;
 pub mod physics;
+pub mod puzzle;
 pub mod quest;
 pub mod save;
 pub mod skills;
@@ -99,6 +100,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(ladder::LadderPlugin)
             .add_plugins(map::MapPlugin)
             .add_plugins(physics::PhysicsPlugin)
+            .add_plugins(puzzle::PuzzlePlugin)
             .add_plugins(quest::QuestPlugin)
             .add_plugins(save::SavePlugin)
             .add_plugins(skills::SkillsPlugin)
