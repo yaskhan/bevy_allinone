@@ -4,6 +4,7 @@
 //! Supports multiple objects, tag filtering, and delayed state changes.
 
 use bevy::prelude::*;
+// use bevy::ecs::event::Events;
 use avian3d::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -84,23 +85,35 @@ pub struct PressurePlateDeactivated {
     pub plate_entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct PressurePlateActivatedQueue(pub Vec<PressurePlateActivated>);
+
+#[derive(Resource, Default)]
+pub struct PressurePlateDeactivatedQueue(pub Vec<PressurePlateDeactivated>);
+
 // ============================================================================
 // SYSTEMS
 // ============================================================================
 
 /// System to handle collision detection for pressure plates
 pub fn handle_pressure_plate_collisions(
-    mut plate_query: Query<(&mut PressurePlate, &Transform, Option<&Collider>)>,
-    collision_events: EventReader<Collision>,
+    mut plate_query: Query<(Entity, &mut PressurePlate, &Transform, Option<&Collider>)>,
+    // collision_events: Res<Events<Collision>>,
     transform_query: Query<&Transform>,
-    mut activated_events: EventWriter<PressurePlateActivated>,
-    mut deactivated_events: EventWriter<PressurePlateDeactivated>,
+    mut activated_queue: ResMut<PressurePlateActivatedQueue>,
+    mut deactivated_queue: ResMut<PressurePlateDeactivatedQueue>,
 ) {
     // Note: In Bevy 0.18 with avian3d, collision detection works differently
     // This is a simplified version
     
-    for (mut plate, plate_transform, maybe_collider) in plate_query.iter_mut() {
+    for (entity, mut plate, plate_transform, maybe_collider) in plate_query.iter_mut() {
+        // Collect collisions for this plate
         let mut objects_on_plate = HashSet::new();
+        
+        // for event in collision_events.iter_current_update_events() {
+             // Logic to check if event involves this plate (entity and collider)
+             // Simplified for now as we don't have full interaction logic
+        // }
         
         // Check for objects in proximity (simplified collision detection)
         // In a real implementation, you'd use avian3d's collision detection system
@@ -115,8 +128,8 @@ pub fn handle_pressure_plate_collisions(
                     plate.disable_function_called = true;
                     plate.active_function_called = false;
                     
-                    deactivated_events.send(PressurePlateDeactivated {
-                        plate_entity: plate.entities().id(),
+                    deactivated_queue.0.push(PressurePlateDeactivated {
+                        plate_entity: entity,
                     });
                     
                     plate.state_timer = 0.0;
@@ -131,8 +144,8 @@ pub fn handle_pressure_plate_collisions(
                 plate.disable_function_called = false;
                 plate.using_plate = true;
                 
-                activated_events.send(PressurePlateActivated {
-                    plate_entity: plate.entities().id(),
+                activated_queue.0.push(PressurePlateActivated {
+                    plate_entity: entity,
                     objects_on_plate: objects_on_plate.clone(),
                 });
             }
@@ -144,19 +157,19 @@ pub fn handle_pressure_plate_collisions(
 
 /// System to handle position-based pressure plate detection
 pub fn update_pressure_plate_position(
-    mut plate_query: Query<(&mut PressurePlate, &Transform)>,
-    object_query: Query<(Entity, &Transform, &Collider)>,
-    mut activated_events: EventWriter<PressurePlateActivated>,
-    mut deactivated_events: EventWriter<PressurePlateDeactivated>,
+    mut plate_query: Query<(Entity, &mut PressurePlate, &Transform)>,
+    object_query: Query<(Entity, &Transform, &Collider, Option<&Name>)>,
+    mut activated_queue: ResMut<PressurePlateActivatedQueue>,
+    mut deactivated_queue: ResMut<PressurePlateDeactivatedQueue>,
 ) {
-    for (mut plate, plate_transform) in plate_query.iter_mut() {
+    for (entity, mut plate, plate_transform) in plate_query.iter_mut() {
         let mut objects_on_plate = HashSet::new();
         
         // Check distance to objects
-        for (entity, object_transform, collider) in object_query.iter() {
+        for (obj_entity, object_transform, collider, maybe_name) in object_query.iter() {
             // Skip ignored tags
-            if let Some(name) = object_transform.name() {
-                if plate.tags_to_ignore.contains(name) {
+            if let Some(name) = maybe_name {
+                if plate.tags_to_ignore.contains(&name.to_string()) {
                     continue;
                 }
             }
@@ -166,7 +179,7 @@ pub fn update_pressure_plate_position(
                 .distance(object_transform.translation);
             
             if distance <= plate.min_distance {
-                objects_on_plate.insert(entity);
+                objects_on_plate.insert(obj_entity);
             }
         }
         
@@ -180,8 +193,8 @@ pub fn update_pressure_plate_position(
                     plate.disable_function_called = true;
                     plate.active_function_called = false;
                     
-                    deactivated_events.send(PressurePlateDeactivated {
-                        plate_entity: plate.entities().id(),
+                    deactivated_queue.0.push(PressurePlateDeactivated {
+                        plate_entity: entity,
                     });
                     
                     plate.state_timer = 0.0;
@@ -196,8 +209,8 @@ pub fn update_pressure_plate_position(
                 plate.disable_function_called = false;
                 plate.using_plate = true;
                 
-                activated_events.send(PressurePlateActivated {
-                    plate_entity: plate.entities().id(),
+                activated_queue.0.push(PressurePlateActivated {
+                    plate_entity: entity,
                     objects_on_plate: objects_on_plate.clone(),
                 });
             }
@@ -221,7 +234,7 @@ pub fn animate_pressure_plate(
             };
             
             let current_y = transform.translation.y;
-            let new_y = current_y.lerp(target_y, time.delta_seconds() * 5.0);
+            let new_y = current_y.lerp(target_y, time.delta_secs() * 5.0);
             
             transform.translation.y = new_y;
         }
@@ -287,10 +300,10 @@ impl PressurePlate {
 
 /// System to handle pressure plate events
 pub fn handle_pressure_plate_events(
-    mut activated_reader: EventReader<PressurePlateActivated>,
-    mut deactivated_reader: EventReader<PressurePlateDeactivated>,
+    mut activated_queue: ResMut<PressurePlateActivatedQueue>,
+    mut deactivated_queue: ResMut<PressurePlateDeactivatedQueue>,
 ) {
-    for event in activated_reader.read() {
+    for event in activated_queue.0.drain(..) {
         info!(
             "Pressure plate {:?} activated with {} objects",
             event.plate_entity,
@@ -298,7 +311,7 @@ pub fn handle_pressure_plate_events(
         );
     }
     
-    for event in deactivated_reader.read() {
+    for event in deactivated_queue.0.drain(..) {
         info!("Pressure plate {:?} deactivated", event.plate_entity);
     }
 }
@@ -314,8 +327,8 @@ impl Plugin for PressurePlatePlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<PressurePlate>()
-            .add_event::<PressurePlateActivated>()
-            .add_event::<PressurePlateDeactivated>()
+            .init_resource::<PressurePlateActivatedQueue>()
+            .init_resource::<PressurePlateDeactivatedQueue>()
             .add_systems(Update, (
                 handle_pressure_plate_collisions,
                 update_pressure_plate_position,

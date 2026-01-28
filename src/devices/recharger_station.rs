@@ -135,9 +135,9 @@ pub fn update_recharger_station(
     mut station_query: Query<(&mut RechargerStation, &Transform)>,
     player_query: Query<(&Health, &Power)>,
     time: Res<Time>,
-    mut healing_started_events: EventWriter<RechargerStationHealingStarted>,
-    mut healing_stopped_events: EventWriter<RechargerStationHealingStopped>,
-    mut fully_healed_events: EventWriter<RechargerStationFullyHealed>,
+    mut healing_started_queue: ResMut<RechargerStationHealingStartedQueue>,
+    mut healing_stopped_queue: ResMut<RechargerStationHealingStoppedQueue>,
+    mut fully_healed_queue: ResMut<RechargerStationFullyHealedQueue>,
 ) {
     for (mut station, _transform) in station_query.iter_mut() {
         // If station is healing
@@ -153,20 +153,20 @@ pub fn update_recharger_station(
                     if station.health_amount < station.max_health_amount {
                         // In Bevy, we'd modify the Health component
                         // For now, just update the station's tracking value
-                        station.health_amount += station.heal_speed * time.delta_seconds();
+                        station.health_amount += station.heal_speed * time.delta_secs();
                     }
                     
                     // Heal power
                     if station.power_amount < station.max_power_amount {
                         // In Bevy, we'd modify the Power component
                         // For now, just update the station's tracking value
-                        station.power_amount += station.heal_speed * time.delta_seconds();
+                        station.power_amount += station.heal_speed * time.delta_secs();
                     }
                     
                     // Check if fully healed
                     if station.health_amount >= station.max_health_amount && 
                        station.power_amount >= station.max_power_amount {
-                        stop_healing(&mut station, player_entity, &mut fully_healed_events);
+                        stop_healing(&mut station, player_entity, &mut fully_healed_queue);
                     }
                 }
             }
@@ -206,10 +206,10 @@ pub fn update_recharger_station(
 /// System to handle button activation
 pub fn handle_recharger_station_activation(
     mut station_query: Query<&mut RechargerStation>,
-    mut activation_events: EventReader<RechargerStationActivation>,
-    mut healing_started_events: EventWriter<RechargerStationHealingStarted>,
+    mut activation_queue: ResMut<RechargerStationActivationQueue>,
+    mut healing_started_queue: ResMut<RechargerStationHealingStartedQueue>,
 ) {
-    for event in activation_events.read() {
+    for event in activation_queue.0.drain(..) {
         if let Ok(mut station) = station_query.get_mut(event.station_entity) {
             // Check if player is inside and not fully healed
             if station.inside && !station.fully_healed {
@@ -232,9 +232,9 @@ pub fn handle_recharger_station_activation(
                 // Disable button collider
                 station.button_collider = None;
                 
-                healing_started_events.send(RechargerStationHealingStarted {
+                healing_started_queue.0.push(RechargerStationHealingStarted {
                     station_entity: event.station_entity,
-                    player_entity: station.player.unwrap_or(Entity::from_raw(0)),
+                    player_entity: station.player.unwrap_or(Entity::PLACEHOLDER),
                 });
             }
         }
@@ -245,7 +245,7 @@ pub fn handle_recharger_station_activation(
 fn stop_healing(
     station: &mut RechargerStation,
     player_entity: Entity,
-    fully_healed_events: &mut EventWriter<RechargerStationFullyHealed>,
+    fully_healed_queue: &mut ResMut<RechargerStationFullyHealedQueue>,
 ) {
     station.healing = false;
     station.fully_healed = true;
@@ -253,8 +253,8 @@ fn stop_healing(
     // Stop audio loop
     // In Bevy, we'd stop the audio source loop
     
-    fully_healed_events.send(RechargerStationFullyHealed {
-        station_entity: station.entities().id(),
+    fully_healed_queue.0.push(RechargerStationFullyHealed {
+        station_entity: Entity::PLACEHOLDER, // station.entities() not valid on component
         player_entity,
     });
 }
@@ -319,43 +319,62 @@ impl RechargerStation {
 // EVENTS HANDLER
 // ============================================================================
 
+#[derive(Resource, Default)]
+pub struct RechargerStationEnteredQueue(pub Vec<RechargerStationEntered>);
+
+#[derive(Resource, Default)]
+pub struct RechargerStationExitedQueue(pub Vec<RechargerStationExited>);
+
+#[derive(Resource, Default)]
+pub struct RechargerStationHealingStartedQueue(pub Vec<RechargerStationHealingStarted>);
+
+#[derive(Resource, Default)]
+pub struct RechargerStationHealingStoppedQueue(pub Vec<RechargerStationHealingStopped>);
+
+#[derive(Resource, Default)]
+pub struct RechargerStationFullyHealedQueue(pub Vec<RechargerStationFullyHealed>);
+
+#[derive(Resource, Default)]
+pub struct RechargerStationActivationQueue(pub Vec<RechargerStationActivation>);
+
+/// System to handle recharger station events
 /// System to handle recharger station events
 pub fn handle_recharger_station_events(
-    mut entered_reader: EventReader<RechargerStationEntered>,
-    mut exited_reader: EventReader<RechargerStationExited>,
-    mut healing_started_reader: EventReader<RechargerStationHealingStarted>,
-    mut healing_stopped_reader: EventReader<RechargerStationHealingStopped>,
-    mut fully_healed_reader: EventReader<RechargerStationFullyHealed>,
+    mut entered_queue: ResMut<RechargerStationEnteredQueue>,
+    mut exited_queue: ResMut<RechargerStationExitedQueue>,
+    mut healing_started_queue: ResMut<RechargerStationHealingStartedQueue>,
+    mut healing_stopped_queue: ResMut<RechargerStationHealingStoppedQueue>,
+    mut fully_healed_queue: ResMut<RechargerStationFullyHealedQueue>,
 ) {
-    for event in entered_reader.read() {
+    for event in entered_queue.0.drain(..) {
         info!(
             "Player {:?} entered recharger station {:?}",
             event.player_entity, event.station_entity
         );
     }
     
-    for event in exited_reader.read() {
+    for event in exited_queue.0.drain(..) {
         info!(
             "Player {:?} exited recharger station {:?}",
             event.player_entity, event.station_entity
         );
     }
     
-    for event in healing_started_reader.read() {
+    for event in healing_started_queue.0.drain(..) {
         info!(
             "Healing started for player {:?} at station {:?}",
             event.player_entity, event.station_entity
         );
     }
     
-    for event in healing_stopped_reader.read() {
+    for event in healing_stopped_queue.0.drain(..) {
         info!(
             "Healing stopped for player {:?} at station {:?}",
             event.player_entity, event.station_entity
         );
     }
     
-    for event in fully_healed_reader.read() {
+    for event in fully_healed_queue.0.drain(..) {
         info!(
             "Player {:?} fully healed at station {:?}",
             event.player_entity, event.station_entity
@@ -374,12 +393,12 @@ impl Plugin for RechargerStationPlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<RechargerStation>()
-            .add_event::<RechargerStationEntered>()
-            .add_event::<RechargerStationExited>()
-            .add_event::<RechargerStationHealingStarted>()
-            .add_event::<RechargerStationHealingStopped>()
-            .add_event::<RechargerStationFullyHealed>()
-            .add_event::<RechargerStationActivation>()
+            .init_resource::<RechargerStationEnteredQueue>()
+            .init_resource::<RechargerStationExitedQueue>()
+            .init_resource::<RechargerStationHealingStartedQueue>()
+            .init_resource::<RechargerStationHealingStoppedQueue>()
+            .init_resource::<RechargerStationFullyHealedQueue>()
+            .init_resource::<RechargerStationActivationQueue>()
             .add_systems(Update, (
                 update_recharger_station,
                 handle_recharger_station_activation,

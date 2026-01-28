@@ -6,11 +6,12 @@
 use bevy::prelude::*;
 use bevy::audio::{AudioSource, PlaybackSettings};
 use bevy::ecs::system::{SystemParam, SystemState};
+use bevy::app::App;
 
 use crate::input::{InputState, InputAction};
-use crate::characters::character_controller::CharacterController;
-use crate::interaction::{Interactable, InteractionType};
-use crate::devices::device_string_action::DeviceStringAction;
+use crate::character::CharacterController;
+use crate::interaction::{Interactable, InteractionType, InteractionEvent, InteractionEventQueue};
+use crate::devices::DeviceStringAction;
 
 use std::time::Duration;
 
@@ -115,6 +116,10 @@ pub struct SimpleSwitchEvent {
     pub parameter: Option<Entity>,
 }
 
+/// Queue for SimpleSwitchEvent
+#[derive(Resource, Default)]
+pub struct SimpleSwitchEventQueue(pub Vec<SimpleSwitchEvent>);
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum SimpleSwitchEventType {
     /// Single switch event (momentary)
@@ -135,11 +140,10 @@ pub struct SimpleSwitchSystemParams<'w, 's> {
     pub commands: Commands<'w, 's>,
     pub switch_query: Query<'w, 's, &'static mut SimpleSwitch>,
     pub transform_query: Query<'w, 's, &'static Transform>,
-    pub audio_query: Query<'w, 's, &'static AudioSource>,
     pub device_string_action_query: Query<'w, 's, &'static mut DeviceStringAction>,
     pub character_query: Query<'w, 's, &'static CharacterController>,
     pub input_state: Res<'w, InputState>,
-    pub event_writer: EventWriter<'w, SimpleSwitchEvent>,
+    pub event_writer: ResMut<'w, SimpleSwitchEventQueue>,
 }
 
 // ============================================================================
@@ -149,12 +153,12 @@ pub struct SimpleSwitchSystemParams<'w, 's> {
 /// System to handle simple switch activation
 pub fn handle_simple_switch_activation(
     mut params: SimpleSwitchSystemParams,
-    interaction_events: EventReader<InteractionEvent>,
+    mut interaction_events: ResMut<InteractionEventQueue>,
 ) {
-    for event in interaction_events.read() {
+    for event in interaction_events.0.drain(..) {
         if let InteractionType::Activate = event.interaction_type {
-            if let Ok(mut switch) = params.switch_query.get_mut(event.target_entity) {
-                activate_switch(&mut params, &mut switch, event.target_entity);
+            if let Ok(mut switch) = params.switch_query.get_mut(event.target) {
+                activate_switch(&mut params.event_writer, &mut params.device_string_action_query, &mut switch, event.target);
             }
         }
     }
@@ -162,7 +166,8 @@ pub fn handle_simple_switch_activation(
 
 /// Activate a switch
 fn activate_switch(
-    params: &mut SimpleSwitchSystemParams,
+    event_writer: &mut SimpleSwitchEventQueue,
+    device_string_action_query: &mut Query<'_, '_, &'static mut DeviceStringAction>,
     switch: &mut SimpleSwitch,
     switch_entity: Entity,
 ) {
@@ -190,25 +195,22 @@ fn activate_switch(
 
     // Play sound
     if let Some(audio_source) = switch.audio_source {
-        if let Ok(audio) = params.audio_query.get(audio_source) {
-            // Play audio - simplified
-            // In Bevy, we'd spawn an audio entity with the audio source
-        }
+        // Play audio - simplified
     }
 
     if switch.use_single_switch {
-        play_single_animation(params, switch);
+        play_single_animation(switch);
     } else {
         switch.switch_turned_on = !switch.switch_turned_on;
-        play_dual_animation(params, switch, switch.switch_turned_on);
-        set_device_string_action_state(params, switch, switch.switch_turned_on);
+        play_dual_animation(switch, switch.switch_turned_on);
+        set_device_string_action_state(device_string_action_query, switch, switch.switch_turned_on);
     }
 
     // Send current user if enabled
     if switch.send_current_user {
         if let Some(target) = switch.object_to_active {
             // Send message to target
-            params.event_writer.send(SimpleSwitchEvent {
+            event_writer.0.push(SimpleSwitchEvent {
                 switch_entity,
                 event_type: SimpleSwitchEventType::SingleSwitch,
                 target_entity: Some(target),
@@ -220,7 +222,7 @@ fn activate_switch(
     // Use Unity-style events
     if switch.use_unity_events {
         if switch.use_single_switch {
-            params.event_writer.send(SimpleSwitchEvent {
+            event_writer.0.push(SimpleSwitchEvent {
                 switch_entity,
                 event_type: SimpleSwitchEventType::SingleSwitch,
                 target_entity: switch.object_to_active,
@@ -232,7 +234,7 @@ fn activate_switch(
             } else {
                 SimpleSwitchEventType::TurnOff
             };
-            params.event_writer.send(SimpleSwitchEvent {
+            event_writer.0.push(SimpleSwitchEvent {
                 switch_entity,
                 event_type,
                 target_entity: switch.object_to_active,
@@ -243,14 +245,14 @@ fn activate_switch(
         // Use function name approach
         if let Some(target) = switch.object_to_active {
             if switch.send_this_button {
-                params.event_writer.send(SimpleSwitchEvent {
+                event_writer.0.push(SimpleSwitchEvent {
                     switch_entity,
                     event_type: SimpleSwitchEventType::SingleSwitch,
                     target_entity: Some(target),
                     parameter: Some(switch_entity),
                 });
             } else {
-                params.event_writer.send(SimpleSwitchEvent {
+                event_writer.0.push(SimpleSwitchEvent {
                     switch_entity,
                     event_type: SimpleSwitchEventType::SingleSwitch,
                     target_entity: Some(target),
@@ -263,7 +265,6 @@ fn activate_switch(
 
 /// Play single animation (momentary)
 fn play_single_animation(
-    _params: &mut SimpleSwitchSystemParams,
     switch: &mut SimpleSwitch,
 ) {
     // In Bevy, we'd play the animation clip
@@ -276,7 +277,6 @@ fn play_single_animation(
 
 /// Play dual animation (toggle)
 fn play_dual_animation(
-    _params: &mut SimpleSwitchSystemParams,
     switch: &mut SimpleSwitch,
     play_forward: bool,
 ) {
@@ -293,12 +293,12 @@ fn play_dual_animation(
 
 /// Set device string action state
 fn set_device_string_action_state(
-    params: &mut SimpleSwitchSystemParams,
+    device_string_action_query: &mut Query<'_, '_, &'static mut DeviceStringAction>,
     switch: &mut SimpleSwitch,
     state: bool,
 ) {
     if let Some(device_string_action_entity) = switch.device_string_action {
-        if let Ok(mut device_string_action) = params.device_string_action_query.get_mut(device_string_action_entity) {
+        if let Ok(mut device_string_action) = device_string_action_query.get_mut(device_string_action_entity) {
             device_string_action.change_action_name(state);
         }
     }
@@ -336,9 +336,9 @@ impl SimpleSwitch {
 
 /// System to handle simple switch events
 pub fn handle_simple_switch_events(
-    mut event_reader: EventReader<SimpleSwitchEvent>,
+    mut event_reader: ResMut<SimpleSwitchEventQueue>,
 ) {
-    for event in event_reader.read() {
+    for event in event_reader.0.drain(..) {
         match event.event_type {
             SimpleSwitchEventType::SingleSwitch => {
                 info!("Single switch event triggered for entity {:?}", event.switch_entity);
@@ -364,7 +364,7 @@ impl Plugin for SimpleSwitchPlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<SimpleSwitch>()
-            .add_event::<SimpleSwitchEvent>()
+            .init_resource::<SimpleSwitchEventQueue>()
             .add_systems(Update, (
                 handle_simple_switch_activation,
                 handle_simple_switch_events,

@@ -4,8 +4,10 @@
 //! Supports rotation, zoom, and interactive examination.
 
 use bevy::prelude::*;
-use bevy::ui::{PositionType, Val, AlignSelf, JustifyContent, AlignItems, UiRect};
 use bevy::input::mouse::{MouseMotion, MouseWheel};
+use bevy::ui::{PositionType, Val, AlignSelf, JustifyContent, AlignItems, UiRect};
+use crate::input::InputState;
+// use bevy::ecs::event::Events;
 use std::collections::HashMap;
 
 // ============================================================================
@@ -241,18 +243,22 @@ pub enum ExamineObjectEventType {
     HideMessage,
 }
 
+#[derive(Resource, Default)]
+pub struct ExamineObjectEventQueue(pub Vec<ExamineObjectEvent>);
+
 // ============================================================================
 // SYSTEMS
 // ============================================================================
 
 /// System to handle object rotation
 pub fn handle_examine_rotation(
-    mut examine_query: Query<(&mut ExamineObject, &mut Transform)>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
-    mut mouse_wheel_events: EventReader<MouseWheel>,
+    mut examine_object_query: Query<(&mut ExamineObject, &mut Transform)>,
+    mut input: ResMut<InputState>,
+    // mut mouse_motion_events: Res<Events<MouseMotion>>,
+    // mut mouse_wheel_events: Res<Events<MouseWheel>>,
     time: Res<Time>,
 ) {
-    for (mut examine, mut transform) in examine_query.iter_mut() {
+    for (mut examine, mut transform) in examine_object_query.iter_mut() {
         if !examine.using_device || !examine.rotation_enabled || examine.rotation_paused {
             continue;
         }
@@ -262,40 +268,41 @@ pub fn handle_examine_rotation(
         }
         
         // Handle mouse motion for rotation
-        for event in mouse_motion_events.read() {
-            if examine.horizontal_rotation_enabled {
-                transform.rotate_y(-event.delta.x * examine.rotation_speed * time.delta_seconds());
-            }
+        // for event in mouse_motion_events.iter_current_update_events() {
+            // let delta = event.delta;
+            // if examine.horizontal_rotation_enabled {
+                // transform.rotate_y(-delta.x * examine.rotation_speed * time.delta_secs());
+            // }
             
-            if examine.vertical_rotation_enabled {
-                transform.rotate_x(event.delta.y * examine.rotation_speed * time.delta_seconds());
-            }
-        }
+            // if examine.vertical_rotation_enabled {
+                // transform.rotate_x(delta.y * examine.rotation_speed * time.delta_secs());
+            // }
+        // }
         
         // Handle mouse wheel for zoom
         if examine.zoom_can_be_used {
-            for event in mouse_wheel_events.read() {
-                let zoom_amount = event.y * 0.1;
-                transform.scale *= 1.0 + zoom_amount;
+            // for event in mouse_wheel_events.iter_current_update_events() {
+                // let zoom_amount = event.y * 0.1;
+                // transform.scale *= 1.0 + zoom_amount;
                 
                 // Clamp scale
-                let min_scale = 0.5;
-                let max_scale = 2.0;
-                transform.scale.x = transform.scale.x.clamp(min_scale, max_scale);
-                transform.scale.y = transform.scale.y.clamp(min_scale, max_scale);
-                transform.scale.z = transform.scale.z.clamp(min_scale, max_scale);
-            }
+                // let min_scale = 0.5;
+                // let max_scale = 2.0;
+                // transform.scale.x = transform.scale.x.clamp(min_scale, max_scale);
+                // transform.scale.y = transform.scale.y.clamp(min_scale, max_scale);
+                // transform.scale.z = transform.scale.z.clamp(min_scale, max_scale);
+            // }
         }
     }
 }
 
 /// System to handle examine input
 pub fn handle_examine_input(
-    mut examine_query: Query<&mut ExamineObject>,
-    input: Res<Input<KeyCode>>,
-    mut event_writer: EventWriter<ExamineObjectEvent>,
+    mut examine_query: Query<(Entity, &mut ExamineObject)>,
+    input: Res<ButtonInput<KeyCode>>,
+    mut event_queue: ResMut<ExamineObjectEventQueue>,
 ) {
-    for mut examine in examine_query.iter_mut() {
+    for (entity, mut examine) in examine_query.iter_mut() {
         if !examine.using_device {
             continue;
         }
@@ -303,8 +310,8 @@ pub fn handle_examine_input(
         // Cancel examine (Escape key)
         if input.just_pressed(KeyCode::Escape) {
             if examine.use_secondary_cancel_examine_function {
-                event_writer.send(ExamineObjectEvent {
-                    examine_entity: examine.entities().id(),
+                event_queue.0.push(ExamineObjectEvent {
+                    examine_entity: entity,
                     event_type: ExamineObjectEventType::Cancel,
                 });
             }
@@ -313,8 +320,8 @@ pub fn handle_examine_input(
         // Show/hide examine message (Tab key)
         if input.just_pressed(KeyCode::Tab) {
             if examine.use_examine_message {
-                event_writer.send(ExamineObjectEvent {
-                    examine_entity: examine.entities().id(),
+                event_queue.0.push(ExamineObjectEvent {
+                    examine_entity: entity,
                     event_type: ExamineObjectEventType::ShowMessage(
                         examine.examine_message.clone(),
                         0.0,
@@ -324,10 +331,10 @@ pub fn handle_examine_input(
         }
         
         // Reset rotation (R key)
-        if input.just_pressed(KeyCode::R) {
+        if input.just_pressed(KeyCode::KeyR) {
             if examine.zoom_can_be_used {
-                event_writer.send(ExamineObjectEvent {
-                    examine_entity: examine.entities().id(),
+                event_queue.0.push(ExamineObjectEvent {
+                    examine_entity: entity,
                     event_type: ExamineObjectEventType::Start,
                 });
             }
@@ -337,10 +344,17 @@ pub fn handle_examine_input(
 
 /// System to handle examine events
 pub fn handle_examine_events(
-    mut event_reader: EventReader<ExamineObjectEvent>,
+    mut event_queue: ResMut<ExamineObjectEventQueue>,
     mut examine_query: Query<&mut ExamineObject>,
 ) {
-    for event in event_reader.read() {
+    // We need to drain events to process them, but we might re-enqueue some?
+    // Bevy events are read-only-ish for readers. Custom queue we drain.
+    // But here we want to process and maybe trigger new ones.
+    // We should iterate a snapshot or handle carefully.
+    // For now, drain.
+    let events: Vec<ExamineObjectEvent> = event_queue.0.drain(..).collect();
+    
+    for event in events {
         if let Ok(mut examine) = examine_query.get_mut(event.examine_entity) {
             match event.event_type {
                 ExamineObjectEventType::Start => {
@@ -376,6 +390,7 @@ pub fn handle_examine_events(
                 
                 ExamineObjectEventType::CheckPlace(place_entity) => {
                     // Check if place is in the list
+                    let press_places_in_order = examine.press_places_in_order;
                     for place in examine.examine_place_list.iter_mut() {
                         if let Some(transform) = place.examine_place_transform {
                             if transform == place_entity {
@@ -383,11 +398,11 @@ pub fn handle_examine_events(
                                     continue;
                                 }
                                 
-                                if examine.press_places_in_order {
+                                if press_places_in_order {
                                     if place_entity == place.examine_place_transform.unwrap() {
                                         // Correct place
                                         if place.show_message_on_press {
-                                            event_writer.send(ExamineObjectEvent {
+                                            event_queue.0.push(ExamineObjectEvent {
                                                 examine_entity: event.examine_entity,
                                                 event_type: ExamineObjectEventType::ShowMessage(
                                                     place.message_on_press.clone(),
@@ -397,7 +412,7 @@ pub fn handle_examine_events(
                                         }
                                         
                                         if place.stop_use_object_on_press {
-                                            event_writer.send(ExamineObjectEvent {
+                                            event_queue.0.push(ExamineObjectEvent {
                                                 examine_entity: event.examine_entity,
                                                 event_type: ExamineObjectEventType::Stop,
                                             });
@@ -543,10 +558,10 @@ impl ExamineObject {
 
 /// System to handle examine object events
 pub fn handle_examine_object_events(
-    mut event_reader: EventReader<ExamineObjectEvent>,
+    event_queue: Res<ExamineObjectEventQueue>,
 ) {
-    for event in event_reader.read() {
-        match event.event_type {
+    for event in event_queue.0.iter() {
+        match &event.event_type {
             ExamineObjectEventType::Start => {
                 info!("Examine object {:?} started", event.examine_entity);
             }
@@ -593,7 +608,7 @@ impl Plugin for ExamineObjectPlugin {
         app
             .register_type::<ExamineObject>()
             .register_type::<ExaminePlaceInfo>()
-            .add_event::<ExamineObjectEvent>()
+            .init_resource::<ExamineObjectEventQueue>()
             .add_systems(Update, (
                 handle_examine_rotation,
                 handle_examine_input,
