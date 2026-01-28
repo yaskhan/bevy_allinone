@@ -49,7 +49,64 @@ pub enum QuestEvent {
 pub struct QuestPlugin;
 
 impl Plugin for QuestPlugin {
-    fn build(&self, _app: &mut App) {
-        // TODO: Register systems and events
+    fn build(&self, app: &mut App) {
+        app.add_event::<QuestEvent>()
+            .register_type::<QuestLog>()
+            .add_systems(Update, (
+                handle_quest_events,
+                update_quest_status,
+            ));
+    }
+}
+
+/// System to handle quest-related events and update the QuestLog.
+fn handle_quest_events(
+    mut events: EventReader<QuestEvent>,
+    mut quest_logs: Query<&mut QuestLog>,
+) {
+    for event in events.read() {
+        match event {
+            QuestEvent::Started(id) => {
+                info!("Quest started: {}", id);
+            }
+            QuestEvent::ObjectiveCompleted(quest_id, obj_idx) => {
+                info!("Objective {} completed for quest {}", obj_idx, quest_id);
+            }
+            QuestEvent::Completed(id) => {
+                info!("Quest completed: {}", id);
+            }
+            QuestEvent::Failed(id) => {
+                warn!("Quest failed: {}", id);
+            }
+        }
+    }
+}
+
+/// System to automatically update quest status based on objective progress.
+fn update_quest_status(
+    mut quest_logs: Query<&mut QuestLog>,
+) {
+    for mut log in quest_logs.iter_mut() {
+        for quest in log.active_quests.iter_mut() {
+            if quest.status == QuestStatus::InProgress {
+                let all_completed = quest.objectives.iter().all(|obj| obj.status == QuestStatus::Completed);
+                if all_completed {
+                    quest.status = QuestStatus::Completed;
+                }
+            }
+        }
+        
+        // Move completed quests to the completed list
+        let mut completed_indices = Vec::new();
+        for (idx, quest) in log.active_quests.iter().enumerate() {
+            if quest.status == QuestStatus::Completed {
+                completed_indices.push(idx);
+            }
+        }
+        
+        for idx in completed_indices.into_iter().rev() {
+            let quest = log.active_quests.remove(idx);
+            log.completed_quests.push(quest);
+        }
     }
 }
