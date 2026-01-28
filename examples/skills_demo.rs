@@ -10,24 +10,24 @@ fn main() {
         .run();
 }
 
-/// Система для демонстрации работы системы скиллов
+/// System for demonstrating skills system functionality
 #[derive(Debug, Component)]
 pub struct DemoSkillsSystem;
 
-/// Инициализация системы скиллов
+/// Initialize skills system
 fn setup_systems(mut commands: Commands) {
-    // Создаем систему скиллов
+    // Create skills system
     let mut skills_system = SkillsSystem::new();
 
-    // Создаем категории скиллов
-    let mut combat_category = SkillCategory::new("Боевые");
-    let mut magic_category = SkillCategory::new("Магические");
-    let mut utility_category = SkillCategory::new("Утилитарные");
+    // Create skill categories
+    let mut combat_category = SkillCategory::new("Combat");
+    let mut magic_category = SkillCategory::new("Magic");
+    let mut utility_category = SkillCategory::new("Utility");
 
-    // Добавляем скиллы в категорию "Боевые"
+    // Add skills to "Combat" category
     combat_category.add_skill(Skill {
-        name: "Урон".to_string(),
-        description: "Увеличивает урон на 10% за уровень".to_string(),
+        name: "Damage".to_string(),
+        description: "Increases damage by 10% per level".to_string(),
         skill_type: SkillType::Numeric,
         enabled: true,
         unlocked: true,
@@ -42,59 +42,59 @@ fn setup_systems(mut commands: Commands) {
         bool_state_to_configure: false,
         levels: vec![
             SkillLevel {
-                description: "Базовый урон".to_string(),
+                description: "Basic damage".to_string(),
                 required_points: 1,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(10.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(10.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Увеличенный урон".to_string(),
+                description: "Increased damage".to_string(),
                 required_points: 2,
                 value: 20.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(20.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(20.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Мощный урон".to_string(),
+                description: "Powerful damage".to_string(),
                 required_points: 3,
                 value: 30.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(30.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(30.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Экспертный урон".to_string(),
+                description: "Expert damage".to_string(),
                 required_points: 4,
                 value: 40.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(40.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(40.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Мастерский урон".to_string(),
+                description: "Master damage".to_string(),
                 required_points: 5,
                 value: 50.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(50.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(50.0),
+                on_activate: SkillSystemEvent::None,
             },
         ],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::None,
-        on_activate_bool: SkillEvent::None,
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::None,
+        on_activate_bool: SkillSystemEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
     combat_category.add_skill(Skill {
-        name: "Защита".to_string(),
-        description: "Увеличивает защиту на 5% за уровень".to_string(),
+        name: "Defense".to_string(),
+        description: "Increases defense by 5% per level".to_string(),
         skill_type: SkillType::Numeric,
         enabled: true,
         unlocked: false,
@@ -109,43 +109,43 @@ fn setup_systems(mut commands: Commands) {
         bool_state_to_configure: false,
         levels: vec![
             SkillLevel {
-                description: "Базовая защита".to_string(),
+                description: "Basic defense".to_string(),
                 required_points: 2,
                 value: 5.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(5.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(5.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Улучшенная защита".to_string(),
+                description: "Improved defense".to_string(),
                 required_points: 3,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(10.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(10.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Максимальная защита".to_string(),
+                description: "Maximum defense".to_string(),
                 required_points: 4,
                 value: 15.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(15.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(15.0),
+                on_activate: SkillSystemEvent::None,
             },
         ],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::None,
-        on_activate_bool: SkillEvent::None,
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::None,
+        on_activate_bool: SkillSystemEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
     combat_category.add_skill(Skill {
-        name: "Критический удар".to_string(),
-        description: "Увеличивает шанс критического удара".to_string(),
+        name: "Critical Strike".to_string(),
+        description: "Increases critical strike chance".to_string(),
         skill_type: SkillType::Boolean,
         enabled: true,
         unlocked: false,
@@ -159,20 +159,20 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::WithBool(false),
-        on_activate_bool: SkillEvent::WithBool(true),
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::WithBool(false),
+        on_activate_bool: SkillSystemEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
-    // Добавляем скиллы в категорию "Магические"
+    // Add skills to "Magic" category
     magic_category.add_skill(Skill {
-        name: "Мана".to_string(),
-        description: "Увеличивает максимальную ману".to_string(),
+        name: "Mana".to_string(),
+        description: "Increases maximum mana".to_string(),
         skill_type: SkillType::Numeric,
         enabled: true,
         unlocked: true,
@@ -187,51 +187,51 @@ fn setup_systems(mut commands: Commands) {
         bool_state_to_configure: false,
         levels: vec![
             SkillLevel {
-                description: "Базовая мана".to_string(),
+                description: "Basic mana".to_string(),
                 required_points: 1,
                 value: 50.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(50.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(50.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Увеличенная мана".to_string(),
+                description: "Increased mana".to_string(),
                 required_points: 2,
                 value: 100.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(100.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(100.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Большая мана".to_string(),
+                description: "Large mana".to_string(),
                 required_points: 3,
                 value: 150.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(150.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(150.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Максимальная мана".to_string(),
+                description: "Maximum mana".to_string(),
                 required_points: 4,
                 value: 200.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(200.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(200.0),
+                on_activate: SkillSystemEvent::None,
             },
         ],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::None,
-        on_activate_bool: SkillEvent::None,
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::None,
+        on_activate_bool: SkillSystemEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
     magic_category.add_skill(Skill {
-        name: "Магический щит".to_string(),
-        description: "Активирует магический щит".to_string(),
+        name: "Magic Shield".to_string(),
+        description: "Activates magic shield".to_string(),
         skill_type: SkillType::Boolean,
         enabled: true,
         unlocked: false,
@@ -245,20 +245,20 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::WithBool(false),
-        on_activate_bool: SkillEvent::WithBool(true),
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::WithBool(false),
+        on_activate_bool: SkillSystemEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
-    // Добавляем скиллы в категорию "Утилитарные"
+    // Add skills to "Utility" category
     utility_category.add_skill(Skill {
-        name: "Скорость".to_string(),
-        description: "Увеличивает скорость передвижения".to_string(),
+        name: "Speed".to_string(),
+        description: "Increases movement speed".to_string(),
         skill_type: SkillType::Numeric,
         enabled: true,
         unlocked: true,
@@ -273,43 +273,43 @@ fn setup_systems(mut commands: Commands) {
         bool_state_to_configure: false,
         levels: vec![
             SkillLevel {
-                description: "Базовая скорость".to_string(),
+                description: "Basic speed".to_string(),
                 required_points: 1,
                 value: 10.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(10.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(10.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Увеличенная скорость".to_string(),
+                description: "Increased speed".to_string(),
                 required_points: 2,
                 value: 20.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(20.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(20.0),
+                on_activate: SkillSystemEvent::None,
             },
             SkillLevel {
-                description: "Максимальная скорость".to_string(),
+                description: "Maximum speed".to_string(),
                 required_points: 3,
                 value: 30.0,
                 bool_value: false,
-                on_initialize: SkillEvent::WithValue(30.0),
-                on_activate: SkillEvent::None,
+                on_initialize: SkillSystemEvent::WithValue(30.0),
+                on_activate: SkillSystemEvent::None,
             },
         ],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::None,
-        on_activate_bool: SkillEvent::None,
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::None,
+        on_activate_bool: SkillSystemEvent::None,
         use_two_events: true,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
     utility_category.add_skill(Skill {
-        name: "Невидимость".to_string(),
-        description: "Активирует невидимость".to_string(),
+        name: "Invisibility".to_string(),
+        description: "Activates invisibility".to_string(),
         skill_type: SkillType::Boolean,
         enabled: true,
         unlocked: false,
@@ -323,50 +323,50 @@ fn setup_systems(mut commands: Commands) {
         current_bool_state: false,
         bool_state_to_configure: true,
         levels: vec![],
-        on_initialize: SkillEvent::None,
-        on_increase: SkillEvent::None,
-        on_initialize_bool: SkillEvent::WithBool(false),
-        on_activate_bool: SkillEvent::WithBool(true),
+        on_initialize: SkillSystemEvent::None,
+        on_increase: SkillSystemEvent::None,
+        on_initialize_bool: SkillSystemEvent::WithBool(false),
+        on_activate_bool: SkillSystemEvent::WithBool(true),
         use_two_events: false,
-        on_initialize_active: SkillEvent::None,
-        on_initialize_not_active: SkillEvent::None,
+        on_initialize_active: SkillSystemEvent::None,
+        on_initialize_not_active: SkillSystemEvent::None,
         template_id: None,
     });
 
-    // Добавляем категории в дерево скиллов
+    // Add categories to skill tree
     skills_system.skill_tree.add_category(combat_category);
     skills_system.skill_tree.add_category(magic_category);
     skills_system.skill_tree.add_category(utility_category);
 
-    // Инициализируем значения скиллов
+    // Initialize skill values
     skills_system.initialize_values();
 
-    // Создаем ресурс для хранения очков скиллов
+    // Create resource for storing skill points
     commands.insert_resource(SkillPoints(10));
 
-    // Создаем сущность с системой скиллов
+    // Create entity with skills system
     commands.spawn((
         DemoSkillsSystem,
         skills_system,
     ));
 
-    println!("=== Демонстрация системы скиллов ===");
-    println!("Управление:");
-    println!("  1 - Увеличить уровень 'Урон' (стоимость: 1 очко)");
-    println!("  2 - Увеличить уровень 'Защита' (стоимость: 2 очка)");
-    println!("  3 - Активировать 'Критический удар' (стоимость: 3 очка)");
-    println!("  4 - Увеличить уровень 'Мана' (стоимость: 1 очко)");
-    println!("  5 - Активировать 'Магический щит' (стоимость: 2 очка)");
-    println!("  6 - Увеличить уровень 'Скорость' (стоимость: 1 очко)");
-    println!("  7 - Активировать 'Невидимость' (стоимость: 3 очка)");
-    println!("  S - Сохранить настройки в шаблон");
-    println!("  L - Загрузить настройки из шаблона");
-    println!("  R - Сбросить все скиллы");
-    println!("  Q - Выход");
-    println!("====================================");
+    println!("=== Skills System Demo ===");
+    println!("Controls:");
+    println!("  1 - Level up 'Damage' (cost: 1 point)");
+    println!("  2 - Level up 'Defense' (cost: 2 points)");
+    println!("  3 - Activate 'Critical Strike' (cost: 3 points)");
+    println!("  4 - Level up 'Mana' (cost: 1 point)");
+    println!("  5 - Activate 'Magic Shield' (cost: 2 points)");
+    println!("  6 - Level up 'Speed' (cost: 1 point)");
+    println!("  7 - Activate 'Invisibility' (cost: 3 points)");
+    println!("  S - Save settings to template");
+    println!("  L - Load settings from template");
+    println!("  R - Reset all skills");
+    println!("  Q - Exit");
+    println!("===========================");
 }
 
-/// Обновление скиллов
+/// Update skills
 fn update_skills(
     mut query: Query<&mut SkillsSystem, With<DemoSkillsSystem>>,
     mut skill_points: ResMut<SkillPoints>,
@@ -376,12 +376,12 @@ fn update_skills(
             continue;
         }
 
-        // Здесь можно добавить логику обновления скиллов
-        // Например, автоматическое восстановление маны или обработка длительных эффектов
+        // Add skill update logic here
+        // For example, automatic mana recovery or processing long-term effects
     }
 }
 
-/// Обработка ввода
+/// Handle input
 fn handle_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<&mut SkillsSystem, With<DemoSkillsSystem>>,
@@ -392,91 +392,91 @@ fn handle_input(
             continue;
         }
 
-        // Увеличение уровня 'Урон'
+        // Level up 'Damage'
         if keyboard_input.just_pressed(KeyCode::Digit1) {
             if let Some(points_used) = skills_system.use_skill_points(0, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("Уровень 'Урон' повышен! Осталось очков: {}", skill_points.0);
+                println!("Damage leveled up! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для повышения уровня 'Урон'");
+                println!("Not enough points to level up Damage");
             }
         }
 
-        // Увеличение уровня 'Защита'
+        // Level up 'Defense'
         if keyboard_input.just_pressed(KeyCode::Digit2) {
             if let Some(points_used) = skills_system.use_skill_points(0, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("Уровень 'Защита' повышен! Осталось очков: {}", skill_points.0);
+                println!("Defense leveled up! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для повышения уровня 'Защита'");
+                println!("Not enough points to level up Defense");
             }
         }
 
-        // Активация 'Критический удар'
+        // Activate 'Critical Strike'
         if keyboard_input.just_pressed(KeyCode::Digit3) {
             if let Some(points_used) = skills_system.use_skill_points(0, 2, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("'Критический удар' активирован! Осталось очков: {}", skill_points.0);
+                println!("Critical Strike activated! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для активации 'Критический удар'");
+                println!("Not enough points to activate Critical Strike");
             }
         }
 
-        // Увеличение уровня 'Мана'
+        // Level up 'Mana'
         if keyboard_input.just_pressed(KeyCode::Digit4) {
             if let Some(points_used) = skills_system.use_skill_points(1, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("Уровень 'Мана' повышен! Осталось очков: {}", skill_points.0);
+                println!("Mana leveled up! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для повышения уровня 'Мана'");
+                println!("Not enough points to level up Mana");
             }
         }
 
-        // Активация 'Магический щит'
+        // Activate 'Magic Shield'
         if keyboard_input.just_pressed(KeyCode::Digit5) {
             if let Some(points_used) = skills_system.use_skill_points(1, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("'Магический щит' активирован! Осталось очков: {}", skill_points.0);
+                println!("Magic Shield activated! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для активации 'Магический щит'");
+                println!("Not enough points to activate Magic Shield");
             }
         }
 
-        // Увеличение уровня 'Скорость'
+        // Level up 'Speed'
         if keyboard_input.just_pressed(KeyCode::Digit6) {
             if let Some(points_used) = skills_system.use_skill_points(2, 0, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("Уровень 'Скорость' повышен! Осталось очков: {}", skill_points.0);
+                println!("Speed leveled up! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для повышения уровня 'Скорость'");
+                println!("Not enough points to level up Speed");
             }
         }
 
-        // Активация 'Невидимость'
+        // Activate 'Invisibility'
         if keyboard_input.just_pressed(KeyCode::Digit7) {
             if let Some(points_used) = skills_system.use_skill_points(2, 1, skill_points.0, false) {
                 skill_points.0 -= points_used;
-                println!("'Невидимость' активирована! Осталось очков: {}", skill_points.0);
+                println!("Invisibility activated! Points remaining: {}", skill_points.0);
             } else {
-                println!("Не хватает очков для активации 'Невидимость'");
+                println!("Not enough points to activate Invisibility");
             }
         }
 
-        // Сохранить в шаблон
+        // Save to template
         if keyboard_input.just_pressed(KeyCode::KeyS) {
             skills_system.save_to_template();
-            println!("Настройки скиллов сохранены в шаблон");
+            println!("Settings saved to template");
         }
 
-        // Загрузить из шаблона
+        // Load from template
         if keyboard_input.just_pressed(KeyCode::KeyL) {
             skills_system.load_from_template();
-            println!("Настройки скиллов загружены из шаблона");
+            println!("Settings loaded from template");
         }
 
-        // Сбросить все скиллы
+        // Reset all skills
         if keyboard_input.just_pressed(KeyCode::KeyR) {
-            // Сбрасываем все скиллы
+            // Reset all skills
             for category in &mut skills_system.skill_tree.categories {
                 for skill in &mut category.skills {
                     skill.current_level = 0;
@@ -484,24 +484,24 @@ fn handle_input(
                     skill.current_bool_state = false;
                     skill.complete = false;
                     skill.active = false;
-                    if skill.name != "Урон" && skill.name != "Мана" && skill.name != "Скорость" {
+                    if skill.name != "Damage" && skill.name != "Mana" && skill.name != "Speed" {
                         skill.unlocked = false;
                     }
                 }
             }
             skill_points.0 = 10;
-            println!("Все скиллы сброшены. Очистков: {}", skill_points.0);
+            println!("All skills reset. Points: {}", skill_points.0);
         }
 
-        // Выход
+        // Exit
         if keyboard_input.just_pressed(KeyCode::KeyQ) {
-            println!("Выход из демонстрации...");
+            println!("Exiting demo...");
             std::process::exit(0);
         }
     }
 }
 
-/// Отображение информации о скиллах
+/// Display skill information
 fn display_skills(
     query: Query<&SkillsSystem, With<DemoSkillsSystem>>,
     skill_points: Res<SkillPoints>,
@@ -511,48 +511,49 @@ fn display_skills(
             continue;
         }
 
-        println!("\n=== Состояние скиллов ===");
-        println!("Очков скиллов: {}", skill_points.0);
+        println!("\n=== Skills State ===");
+        println!("Skill points: {}", skill_points.0);
 
         for category in &skills_system.skill_tree.categories {
-            println!("\nКатегория: {}", category.name);
+            println!("\nCategory: {}", category.name);
             for skill in &category.skills {
                 if skill.enabled {
                     let status = if skill.unlocked {
                         if skill.complete {
-                            "✓ Завершен"
+                            "✓ Complete"
                         } else if skill.active {
-                            "✓ Активен"
+                            "✓ Active"
                         } else {
-                            "✓ Разблокирован"
+                            "✓ Unlocked"
                         }
                     } else {
-                        "🔒 Заблокирован"
+                        "🔒 Locked"
                     };
 
                     let level_info = if skill.levels.is_empty() {
-                        format!("Уровень: {}", skill.current_level)
+                        format!("Level: {}", skill.current_level)
                     } else {
-                        format!("Уровень: {}/{}", skill.current_level, skill.max_level)
+                        format!("Level: {}/{}", skill.current_level, skill.max_level)
                     };
 
                     let value_info = if skill.skill_type == SkillType::Boolean {
-                        format!("Состояние: {}", skill.current_bool_state)
+                        format!("State: {}", skill.current_bool_state)
                     } else {
-                        format!("Значение: {:.1}", skill.current_value)
+                        format!("Value: {:.1}", skill.current_value)
                     };
 
                     println!(
-                        "  {} - {} ({}) [{}] {}",
-                        skill.name, status, level_info, value_info, skill.description
+                        "  {} - {} ({}) [{}]",
+                        skill.name, status, level_info, value_info
                     );
+                    println!("      {}", skill.description);
                 }
             }
         }
-        println!("=========================\n");
+        println!("=====================\n");
     }
 }
 
-/// Ресурс для хранения очков скиллов
+/// Resource for storing skill points
 #[derive(Debug, Resource)]
 pub struct SkillPoints(pub u32);
