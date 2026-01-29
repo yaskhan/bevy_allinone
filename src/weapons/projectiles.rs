@@ -9,7 +9,7 @@ pub fn handle_advanced_projectiles(
     time: Res<Time>,
     mut damage_events: ResMut<DamageEventQueue>,
     spatial_query: SpatialQuery,
-    mut projectile_query: Query<(Entity, &mut Projectile, &mut Transform, &GlobalTransform, Option<&mut Homing>, Option<&mut StickToSurface>)>,
+    mut projectile_query: Query<(Entity, &mut Projectile, &mut Transform, &GlobalTransform, Option<&mut Homing>, Option<&mut StickToSurface>), Without<CapturedProjectile>>,
     target_query: Query<&GlobalTransform, (With<Health>, Without<Projectile>)>,
 ) {
     let dt = time.delta_secs();
@@ -91,7 +91,48 @@ pub fn handle_projectile_impacts(
     spatial_query: SpatialQuery,
     mut damage_events: ResMut<DamageEventQueue>,
 ) {
-    // This would be called when a projectile hits a surface.
-    // In avian3d, we usually use Collision events or Raycasts.
-    // For now, these are stubs to show where the logic goes.
+    // Standard impact logic (not implemented yet, handled by firing.rs usually)
+}
+
+/// System to check for ArmorSurface collisions and catch projectiles
+pub fn handle_armor_collisions(
+    mut commands: Commands,
+    projectile_query: Query<(Entity, &Projectile, &GlobalTransform, &Transform), (Without<CapturedProjectile>, Without<StickToSurface>)>,
+    mut armor_query: Query<(Entity, &mut ArmorSurface, &GlobalTransform)>,
+    spatial_query: SpatialQuery,
+) {
+    for (proj_ent, projectile, global_transform, transform) in projectile_query.iter() {
+        let velocity = projectile.velocity;
+        if velocity.length_squared() < 0.001 { continue; }
+        
+        let ray_dir = Dir3::new(velocity.normalize()).unwrap_or(Dir3::Y);
+        let ray_dist = velocity.length() * 0.02; // Small lookahead
+        
+        let filter = SpatialQueryFilter::from_excluded_entities([proj_ent, projectile.owner]);
+        
+        if let Some(hit) = spatial_query.cast_ray(
+            global_transform.translation(),
+            ray_dir,
+            ray_dist,
+            true,
+            &filter,
+        ) {
+            if let Ok((armor_ent, mut armor, _)) = armor_query.get_mut(hit.entity) {
+                if armor.is_active {
+                    // Catch the projectile
+                    armor.caught_projectiles.push(proj_ent);
+                    
+                    commands.entity(proj_ent)
+                        .insert(CapturedProjectile {
+                            original_velocity: velocity,
+                            original_owner: Some(projectile.owner),
+                        })
+                        .set_parent(armor_ent);
+                    
+                    // Stop movement (system in mod.rs or firing.rs should check CapturedProjectile)
+                    commands.entity(proj_ent).insert(Visibility::Hidden); 
+                }
+            }
+        }
+    }
 }

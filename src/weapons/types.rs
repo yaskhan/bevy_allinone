@@ -692,3 +692,20 @@ pub struct WeaponIkState {
     pub recoil_offset: Vec3,
     pub recoil_rotation: Quat,
 }
+
+/// Component for surfaces that can catch and return projectiles
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct ArmorSurface {
+    pub is_active: bool,
+    pub owner: Option<Entity>,
+    pub caught_projectiles: Vec<Entity>,
+}
+
+/// Component added to projectiles caught by an ArmorSurface
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct CapturedProjectile {
+    pub original_velocity: Vec3,
+    pub original_owner: Option<Entity>,
+}
