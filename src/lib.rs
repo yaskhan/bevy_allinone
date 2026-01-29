@@ -44,6 +44,7 @@ pub mod inventory;
 pub mod ladder;
 pub mod map;
 pub mod physics;
+pub mod player;
 pub mod puzzle;
 pub mod quest;
 pub mod save;
@@ -74,6 +75,7 @@ pub mod prelude {
     pub use crate::ladder::*;
     pub use crate::map::*;
     pub use crate::physics::*;
+    pub use crate::player::*;
     pub use crate::puzzle::*;
     pub use crate::quest::*;
     pub use crate::save::*;
@@ -111,6 +113,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(ladder::LadderPlugin)
             .add_plugins(map::MapPlugin)
             .add_plugins(physics::PhysicsPlugin)
+            .add_plugins(player::PlayerPlugin)
             .add_plugins(puzzle::PuzzlePlugin)
             .add_plugins(quest::QuestPlugin)
             .add_plugins(save::SavePlugin)
