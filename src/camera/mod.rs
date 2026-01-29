@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 mod types;
 mod follow;
-mod waypoints;
 mod collision;
 mod fov;
 mod shake;
@@ -12,9 +11,15 @@ mod collision_lean;
 mod lock;
 mod zones;
 
+// New Submodules
+pub mod effect;
+pub mod captures;
+pub mod cutscene;
+pub mod others;
+pub mod vehicles;
+
 pub use types::*;
 pub use follow::*;
-pub use waypoints::*;
 pub use collision::*;
 pub use fov::*;
 pub use shake::*;
@@ -40,6 +45,13 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraTargetState>()
             .register_type::<CameraZone>()
             .register_type::<CameraZoneTracker>()
+            .add_plugins((
+                effect::CameraEffectPlugin,
+                captures::CameraCapturesPlugin,
+                cutscene::CameraCutscenePlugin,
+                others::CameraOthersPlugin,
+                vehicles::CameraVehiclesPlugin,
+            ))
             .add_systems(Update, (
                 update_camera_state_offsets,
                 update_target_marking,
@@ -53,7 +65,6 @@ impl Plugin for CameraPlugin {
                 update_camera_bob,
                 update_camera_lean_collision,
                 update_camera_follow,
-                update_camera_waypoint_follow,
                 handle_camera_collision,
                 update_camera_fov,
                 handle_camera_mode_switch,
