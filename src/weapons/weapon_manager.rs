@@ -195,7 +195,6 @@ impl Default for WeaponManager {
 }
 
 /// Handle weapon switching via input
-/// Ported from GKC's chooseNextWeapon/choosePreviousWeapon methods
 pub fn handle_weapon_switching(
     time: Res<Time>,
     mut query: Query<(&InputState, &mut WeaponManager)>,
@@ -218,6 +217,23 @@ pub fn handle_weapon_switching(
         else if input.prev_weapon_pressed {
             should_switch = true;
             switch_direction = -1;
+        }
+        // Check for direct weapon selection
+        else if let Some(target_index) = input.select_weapon {
+            if target_index < manager.weapons_list.len() && target_index != manager.current_index {
+                manager.current_index = target_index;
+                manager.choosed_weapon = manager.current_index;
+                
+                if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                    manager.changing_weapon = true;
+                    manager.keeping_weapon = false;
+                }
+                
+                if manager.show_debug_log {
+                    info!("Selecting weapon index: {}", manager.current_index);
+                }
+                continue; // Skip the directional logic below
+            }
         }
 
         if should_switch && !manager.weapons_list.is_empty() {
@@ -280,8 +296,11 @@ pub fn handle_weapon_manager_input(
         // Aim weapon input
         if input.aim_pressed {
             if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                //  aiming usually toggles or holds based on settings. 
+                // Here we'll stick to the existing toggle logic but ensure it's responsive.
                 manager.aiming_in_third_person = !manager.aiming_in_third_person;
-                manager.aim_mode_input_pressed = manager.aiming_in_third_person;
+                manager.aiming_in_first_person = !manager.aiming_in_first_person; // Mirror for 1P
+                manager.aim_mode_input_pressed = manager.aiming_in_third_person || manager.aiming_in_first_person;
             }
         }
 
