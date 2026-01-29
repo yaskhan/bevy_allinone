@@ -15,8 +15,12 @@ impl Plugin for InteractionPlugin {
             .init_resource::<InteractionEventQueue>()
             .init_resource::<CurrentInteractable>()
             .init_resource::<InteractionDebugSettings>()
+            .add_event::<AddDeviceEvent>()
+            .add_event::<RemoveDeviceEvent>()
             .add_systems(Update, (
                 detect_interactables,
+                update_device_list,
+                select_closest_device,
                 validate_interactions,
                 process_interactions,
                 update_interaction_ui,
@@ -24,6 +28,20 @@ impl Plugin for InteractionPlugin {
             ).chain())
             .add_systems(Startup, setup_interaction_ui);
     }
+}
+
+/// Event to add a device to the player's list
+#[derive(Event)]
+pub struct AddDeviceEvent {
+    pub player: Entity,
+    pub device: Entity,
+}
+
+/// Event to remove a device from the player's list
+#[derive(Event)]
+pub struct RemoveDeviceEvent {
+    pub player: Entity,
+    pub device: Entity,
 }
 
 /// Component for entities that can detect and interact with objects
@@ -554,5 +572,79 @@ fn debug_draw_interaction_rays(
                 debug_settings.hit_color,
             );
         }
+    }
+}
+
+/// System to update the player's device list based on events
+pub fn update_device_list(
+    mut add_events: EventReader<AddDeviceEvent>,
+    mut remove_events: EventReader<RemoveDeviceEvent>,
+    mut players: Query<&mut UsingDevicesSystem>,
+    devices: Query<(&DeviceStringAction, &GlobalTransform)>,
+) {
+    for event in add_events.read() {
+        if let Ok(mut player_system) = players.get_mut(event.player) {
+            if let Ok((device_action, _transform)) = devices.get(event.device) {
+                // Check if already in list
+                if !player_system.device_list.iter().any(|d| d.entity == event.device) {
+                    player_system.device_list.push(DeviceInfo {
+                        name: device_action.device_name.clone(),
+                        entity: event.device,
+                        action_offset: device_action.action_offset,
+                        use_local_offset: device_action.use_local_offset,
+                        use_custom_min_distance: device_action.use_custom_min_distance,
+                        custom_min_distance: device_action.custom_min_distance,
+                        use_custom_min_angle: device_action.use_custom_min_angle,
+                        custom_min_angle: device_action.custom_min_angle,
+                        use_relative_direction: device_action.use_relative_direction,
+                        ignore_use_only_if_visible: device_action.ignore_use_only_if_visible,
+                        check_if_obstacle: device_action.check_if_obstacle,
+                    });
+                }
+            }
+        }
+    }
+
+    for event in remove_events.read() {
+        if let Ok(mut player_system) = players.get_mut(event.player) {
+            player_system.device_list.retain(|d| d.entity != event.device);
+        }
+    }
+}
+
+/// System to select the closest device from the player's list
+pub fn select_closest_device(
+    mut players: Query<(Entity, &GlobalTransform, &mut UsingDevicesSystem)>,
+    devices: Query<&GlobalTransform>,
+) {
+    for (player_entity, player_transform, mut player_system) in players.iter_mut() {
+        if !player_system.can_use_devices || player_system.device_list.is_empty() {
+            player_system.current_device_index = -1;
+            continue;
+        }
+
+        let mut min_dist = f32::INFINITY;
+        let mut best_index = -1;
+        let player_pos = player_transform.translation();
+
+        for (i, device_info) in player_system.device_list.iter().enumerate() {
+            if let Ok(device_transform) = devices.get(device_info.entity) {
+                let dist = player_pos.distance(device_transform.translation());
+                
+                // Check distance limits
+                let max_dist = if device_info.use_custom_min_distance {
+                    device_info.custom_min_distance
+                } else {
+                    player_system.min_distance_to_use_devices
+                };
+
+                if dist < max_dist && dist < min_dist {
+                    min_dist = dist;
+                    best_index = i as i32;
+                }
+            }
+        }
+
+        player_system.current_device_index = best_index;
     }
 }
