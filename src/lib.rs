@@ -38,6 +38,7 @@ pub mod combat;
 pub mod currency;
 pub mod devices;
 pub mod dialog;
+pub mod extra_movements;
 pub mod input;
 pub mod interaction;
 pub mod inventory;
@@ -76,6 +77,7 @@ pub mod prelude {
     pub use crate::currency::*;
     pub use crate::devices::*;
     pub use crate::dialog::*;
+    pub use crate::extra_movements::*;
     pub use crate::input::*;
     pub use crate::interaction::*;
     pub use crate::inventory::*;
@@ -121,6 +123,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(currency::CurrencyPlugin)
             .add_plugins(devices::DevicesPlugin)
             .add_plugins(dialog::DialogPlugin)
+            .add_plugins(extra_movements::ExtraMovementsPlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(interaction::InteractionPlugin)
             .add_plugins(inventory::InventoryPlugin)
