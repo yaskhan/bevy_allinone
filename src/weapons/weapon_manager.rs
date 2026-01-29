@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use crate::input::InputState;
 use crate::character::Player;
 use super::types::{Weapon, WeaponPocket, WeaponListOnPocket, PocketType};
+use super::attachments::{WeaponAttachmentSystem, AttachmentStatModifiers};
 use std::collections::HashMap;
 
 /// Weapon manager component
@@ -559,5 +560,222 @@ impl WeaponManager {
             self.add_pocket(pocket)?;
         }
         Ok(())
+    }
+
+    // ============================================================================
+    // Weapon Attachment Management Methods
+    // ============================================================================
+
+    /// Open or close the weapon attachment editor
+    pub fn open_attachment_editor(
+        &mut self,
+        weapon_entity: Entity,
+        commands: &mut Commands,
+        attachment_query: &mut Query<&mut WeaponAttachmentSystem>,
+    ) -> Result<(), String> {
+        if let Ok(mut attachment_system) = attachment_query.get_mut(weapon_entity) {
+            attachment_system.editing_attachments = !attachment_system.editing_attachments;
+
+            if attachment_system.editing_attachments {
+                info!("Opening attachment editor");
+            } else {
+                info!("Closing attachment editor");
+            }
+
+            Ok(())
+        } else {
+            Err("Weapon attachment system not found".to_string())
+        }
+    }
+
+    /// Select an attachment for a weapon
+    pub fn select_attachment(
+        &mut self,
+        weapon_entity: Entity,
+        place_id: &str,
+        attachment_id: &str,
+        commands: &mut Commands,
+        weapon_query: &mut Query<&mut Weapon>,
+        attachment_query: &mut Query<&mut WeaponAttachmentSystem>,
+    ) -> Result<(), String> {
+        // Get the attachment system
+        let mut attachment_system = match attachment_query.get_mut(weapon_entity) {
+            Ok(system) => system,
+            Err(_) => return Err("Weapon attachment system not found".to_string()),
+        };
+
+        // Find the attachment place
+        let place_index = match attachment_system
+            .attachment_places
+            .iter()
+            .position(|p| p.id == place_id)
+        {
+            Some(index) => index,
+            None => return Err(format!("Attachment place '{}' not found", place_id)),
+        };
+
+        // Find the attachment
+        let attachment_index = match attachment_system.attachment_places[place_index]
+            .available_attachments
+            .iter()
+            .position(|a| a.id == attachment_id)
+        {
+            Some(index) => index,
+            None => return Err(format!("Attachment '{}' not found", attachment_id)),
+        };
+
+        // Check if attachment is enabled
+        if !attachment_system.attachment_places[place_index].available_attachments[attachment_index]
+            .enabled
+        {
+            return Err(format!("Attachment '{}' is not enabled", attachment_id));
+        }
+
+        // Deactivate previous attachment
+        let previous_selection = attachment_system.attachment_places[place_index].current_selection;
+        if previous_selection >= 0 {
+            attachment_system.attachment_places[place_index]
+                .available_attachments
+                .get_mut(previous_selection as usize)
+                .unwrap()
+                .active = false;
+        }
+
+        // Activate new attachment
+        attachment_system.attachment_places[place_index]
+            .available_attachments
+            .get_mut(attachment_index)
+            .unwrap()
+            .active = true;
+        attachment_system.attachment_places[place_index].current_selection = attachment_index as i32;
+
+        // Update selected attachments map
+        attachment_system.selected_attachments.insert(
+            place_id.to_string(),
+            attachment_id.to_string(),
+        );
+
+        // Apply attachment modifiers to weapon
+        if let Ok(mut weapon) = weapon_query.get_mut(weapon_entity) {
+            let attachment = &attachment_system.attachment_places[place_index]
+                .available_attachments[attachment_index];
+
+            // First remove previous attachment modifiers
+            if previous_selection >= 0 {
+                let prev_attachment = &attachment_system.attachment_places[place_index]
+                    .available_attachments[previous_selection as usize];
+                prev_attachment.stat_modifiers.remove_from_weapon(&mut weapon);
+            }
+
+            // Then apply new attachment modifiers
+            attachment.stat_modifiers.apply_to_weapon(&mut weapon);
+
+            info!(
+                "Applied attachment '{}' to weapon. New stats: damage={}, spread={}",
+                attachment.name, weapon.damage, weapon.spread
+            );
+        }
+
+        info!(
+            "Selected attachment '{}' for place '{}'",
+            attachment_id, place_id
+        );
+
+        Ok(())
+    }
+
+    /// Remove an attachment from a weapon
+    pub fn remove_attachment(
+        &mut self,
+        weapon_entity: Entity,
+        place_id: &str,
+        commands: &mut Commands,
+        weapon_query: &mut Query<&mut Weapon>,
+        attachment_query: &mut Query<&mut WeaponAttachmentSystem>,
+    ) -> Result<(), String> {
+        // Get the attachment system
+        let mut attachment_system = match attachment_query.get_mut(weapon_entity) {
+            Ok(system) => system,
+            Err(_) => return Err("Weapon attachment system not found".to_string()),
+        };
+
+        // Find the attachment place
+        let place_index = match attachment_system
+            .attachment_places
+            .iter()
+            .position(|p| p.id == place_id)
+        {
+            Some(index) => index,
+            None => return Err(format!("Attachment place '{}' not found", place_id)),
+        };
+
+        // Get current selection
+        let current_selection = attachment_system.attachment_places[place_index].current_selection;
+
+        if current_selection < 0 {
+            return Err(format!("No attachment selected for place '{}'", place_id));
+        }
+
+        // Deactivate current attachment
+        let attachment = &mut attachment_system.attachment_places[place_index]
+            .available_attachments[current_selection as usize];
+
+        // Remove modifiers from weapon
+        if let Ok(mut weapon) = weapon_query.get_mut(weapon_entity) {
+            attachment.stat_modifiers.remove_from_weapon(&mut weapon);
+        }
+
+        attachment.active = false;
+
+        // Clear selection
+        attachment_system.attachment_places[place_index].current_selection = -1;
+        attachment_system.selected_attachments.remove(place_id);
+
+        info!("Removed attachment from place '{}'", place_id);
+
+        Ok(())
+    }
+
+    /// Get current attachment for a place
+    pub fn get_current_attachment(
+        &self,
+        weapon_entity: Entity,
+        place_id: &str,
+        attachment_query: &Query<&WeaponAttachmentSystem>,
+    ) -> Option<String> {
+        if let Ok(attachment_system) = attachment_query.get(weapon_entity) {
+            attachment_system.selected_attachments.get(place_id).cloned()
+        } else {
+            None
+        }
+    }
+
+    /// Check if a weapon has attachments
+    pub fn has_attachments(
+        &self,
+        weapon_entity: Entity,
+        attachment_query: &Query<&WeaponAttachmentSystem>,
+    ) -> bool {
+        if let Ok(attachment_system) = attachment_query.get(weapon_entity) {
+            attachment_system.attachments_active && !attachment_system.attachment_places.is_empty()
+        } else {
+            false
+        }
+    }
+
+    /// Toggle attachments active state
+    pub fn toggle_attachments(
+        &mut self,
+        weapon_entity: Entity,
+        active: bool,
+        attachment_query: &mut Query<&mut WeaponAttachmentSystem>,
+    ) -> Result<(), String> {
+        if let Ok(mut attachment_system) = attachment_query.get_mut(weapon_entity) {
+            attachment_system.attachments_active = active;
+            info!("Attachments {} for weapon", if active { "enabled" } else { "disabled" });
+            Ok(())
+        } else {
+            Err("Weapon attachment system not found".to_string())
+        }
     }
 }

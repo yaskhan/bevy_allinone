@@ -12,6 +12,7 @@
 //! - **Ballistics**: Advanced projectile physics with drag and gravity
 //! - **Accuracy System**: Dynamic spread/bloom system
 //! - **Visual Tracers**: Bullet tracer visualization
+//! - **Weapon Attachments**: Scopes, silencers, magazines, etc.
 
 pub mod types;
 pub mod accuracy;
@@ -19,6 +20,7 @@ pub mod ballistics;
 pub mod weapon_manager;
 pub mod firing;
 pub mod tracers;
+pub mod attachments;
 
 use bevy::prelude::*;
 
@@ -29,6 +31,7 @@ pub use ballistics::*;
 pub use weapon_manager::*;
 pub use firing::*;
 pub use tracers::*;
+pub use attachments::*;
 
 pub struct WeaponsPlugin;
 
@@ -42,6 +45,13 @@ impl Plugin for WeaponsPlugin {
             .register_type::<WeaponManager>()
             .register_type::<WeaponPocket>()
             .register_type::<WeaponListOnPocket>()
+            .register_type::<WeaponAttachmentSystem>()
+            .register_type::<AttachmentPlace>()
+            .register_type::<AttachmentInfo>()
+            .register_type::<AttachmentStatModifiers>()
+            .add_event::<ToggleAttachmentEditor>()
+            .add_event::<SelectAttachment>()
+            .add_event::<RemoveAttachment>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -53,6 +63,11 @@ impl Plugin for WeaponsPlugin {
                 update_tracers,  // New system for visual interpolation
                 handle_weapon_manager_input, // New system for Weapon Manager input
                 update_weapon_manager, // New system for Weapon Manager updates
+                // Attachment systems
+                handle_attachment_editor_toggle,
+                handle_attachment_selection,
+                handle_attachment_removal,
+                update_weapon_stats_from_attachments,
             ));
     }
 }

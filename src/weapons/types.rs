@@ -46,6 +46,13 @@ pub struct Weapon {
     pub last_fired_time: f32,           // Last time weapon was fired
     pub last_reloaded_time: f32,        // Last time weapon was reloaded
     pub last_drawn_time: f32,           // Last time weapon was drawn
+    // Base stats (for attachment modifiers)
+    pub base_damage: f32,
+    pub base_spread_value: f32,
+    pub base_fire_rate: f32,
+    pub base_reload_time: f32,
+    pub base_ammo_capacity: i32,
+    pub base_range: f32,
 }
 
 impl Default for Weapon {
@@ -86,6 +93,13 @@ impl Default for Weapon {
             last_fired_time: 0.0,
             last_reloaded_time: 0.0,
             last_drawn_time: 0.0,
+            // Base stats (for attachment modifiers)
+            base_damage: 10.0,
+            base_spread_value: 2.0,
+            base_fire_rate: 0.1,
+            base_reload_time: 1.5,
+            base_ammo_capacity: 30,
+            base_range: 50.0,
         }
     }
 }
