@@ -297,48 +297,68 @@ fn setup_interaction_ui(mut commands: Commands) {
 fn update_interaction_ui(
     current_interactable: Res<CurrentInteractable>,
     interactables: Query<&Interactable>,
+    player_query: Query<&UsingDevicesSystem>,
     mut ui_query: Query<(&mut Visibility, &Children), With<InteractionPrompt>>,
     mut text_query: Query<(&mut Text, &mut TextColor)>,
 ) {
     for (mut visibility, children) in ui_query.iter_mut() {
-        if let Some(entity) = current_interactable.entity {
-            if let Ok(interactable) = interactables.get(entity) {
-                *visibility = Visibility::Visible;
-                
-                // Update text
-                for child in children.iter() {
-                    if let Ok((mut text, mut text_color)) = text_query.get_mut(child) {
-                        // In real implementation, get keybinding from InputMap
-                        let key_text = "E"; 
+        let mut target_label = None;
+        let mut target_is_in_range = false;
 
-                        let (color, suffix) = if current_interactable.is_in_range {
-                            (Color::WHITE, "")
-                        } else {
-                            (Color::srgb(1.0, 0.2, 0.2), " (Too Far)")
-                        };
-
-                        text_color.0 = color;
-                        
-                        text.0 = format!("Press {} to {} {}{}", 
-                            key_text, 
-                            match interactable.interaction_type {
-                                InteractionType::Pickup => "pick up",
-                                InteractionType::Use => "use",
-                                InteractionType::Talk => "talk to",
-                                InteractionType::Open => "open",
-                                InteractionType::Activate => "activate",
-                                InteractionType::Examine => "examine",
-                                InteractionType::Toggle => "toggle",
-                                InteractionType::Grab => "grab",
-                                InteractionType::Device => "use device",
-                            },
-                            interactable.interaction_text,
-                            suffix
-                        );
+        // Try to get info from UsingDevicesSystem first
+        if let Ok(player_system) = player_query.get_single() {
+            if player_system.current_device_index >= 0 {
+                if let Some(device) = player_system.device_list.get(player_system.current_device_index as usize) {
+                    if let Ok(interactable) = interactables.get(device.entity) {
+                        target_label = Some((interactable.interaction_type, interactable.interaction_text.clone()));
+                        target_is_in_range = true;
                     }
                 }
-            } else {
-                *visibility = Visibility::Hidden;
+            }
+        }
+
+        // Fallback to CurrentInteractable
+        if target_label.is_none() {
+            if let Some(entity) = current_interactable.entity {
+                if let Ok(interactable) = interactables.get(entity) {
+                    target_label = Some((interactable.interaction_type, interactable.interaction_text.clone()));
+                    target_is_in_range = current_interactable.is_in_range;
+                }
+            }
+        }
+
+        if let Some((interaction_type, interaction_text)) = target_label {
+            *visibility = Visibility::Visible;
+            
+            for child in children.iter() {
+                if let Ok((mut text, mut text_color)) = text_query.get_mut(child) {
+                    let key_text = "E"; 
+
+                    let (color, suffix) = if target_is_in_range {
+                        (Color::WHITE, "")
+                    } else {
+                        (Color::srgb(1.0, 0.2, 0.2), " (Too Far)")
+                    };
+
+                    text_color.0 = color;
+                    
+                    text.0 = format!("Press {} to {} {}{}", 
+                        key_text, 
+                        match interaction_type {
+                            InteractionType::Pickup => "pick up",
+                            InteractionType::Use => "use",
+                            InteractionType::Talk => "talk to",
+                            InteractionType::Open => "open",
+                            InteractionType::Activate => "activate",
+                            InteractionType::Examine => "examine",
+                            InteractionType::Toggle => "toggle",
+                            InteractionType::Grab => "grab",
+                            InteractionType::Device => "use device",
+                        },
+                        interaction_text,
+                        suffix
+                    );
+                }
             }
         } else {
             *visibility = Visibility::Hidden;
