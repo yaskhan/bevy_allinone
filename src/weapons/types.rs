@@ -59,6 +59,20 @@ pub struct Weapon {
     pub base_reload_time: f32,
     pub base_ammo_capacity: i32,
     pub base_range: f32,
+
+    // Extended settings
+    pub use_raycast_shoot: bool,
+    pub infinite_ammo: bool,
+    pub ammo_name: String,
+    pub explosion_settings: Option<ExplosionSettings>,
+    pub impact_force: ImpactForceSettings,
+    pub noise_settings: NoiseSettings,
+
+    // HUD settings
+    pub show_weapon_name_in_hud: bool,
+    pub show_weapon_icon_in_hud: bool,
+    pub show_ammo_slider_in_hud: bool,
+    pub show_ammo_text_in_hud: bool,
 }
 
 impl Default for Weapon {
@@ -112,8 +126,40 @@ impl Default for Weapon {
             base_reload_time: 1.5,
             base_ammo_capacity: 30,
             base_range: 50.0,
+
+            use_raycast_shoot: true,
+            infinite_ammo: false,
+            ammo_name: "Generic Ammo".to_string(),
+            explosion_settings: None,
+            impact_force: ImpactForceSettings::default(),
+            noise_settings: NoiseSettings::default(),
+
+            show_weapon_name_in_hud: true,
+            show_weapon_icon_in_hud: true,
+            show_ammo_slider_in_hud: true,
+            show_ammo_text_in_hud: true,
         }
     }
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct ExplosionSettings {
+    pub force: f32,
+    pub radius: f32,
+    pub damage: f32,
+    pub push_characters: bool,
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct ImpactForceSettings {
+    pub amount: f32,
+    pub direction: Vec3,
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct NoiseSettings {
+    pub radius: f32,
+    pub decibels: f32,
 }
 
 /// Weapon type enumeration
@@ -203,7 +249,7 @@ pub struct WeaponBundle {
     pub view_visibility: ViewVisibility,
 }
 
-/// Weapon animation modes corresponding to GKC animator states
+/// Weapon animation modes corresponding to animator states
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Default)]
 pub enum WeaponAnimationMode {
     #[default]

@@ -58,6 +58,40 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_explosive(mut self, radius: f32, damage: f32, force: f32) -> Self {
+        self.weapon.explosion_settings = Some(ExplosionSettings {
+            radius,
+            damage,
+            force,
+            push_characters: true,
+        });
+        self
+    }
+
+    pub fn with_impact_force(mut self, amount: f32) -> Self {
+        self.weapon.impact_force.amount = amount;
+        self
+    }
+
+    pub fn with_noise(mut self, radius: f32, decibels: f32) -> Self {
+        self.weapon.noise_settings.radius = radius;
+        self.weapon.noise_settings.decibels = decibels;
+        self
+    }
+
+    pub fn with_hitscan(mut self, is_hitscan: bool) -> Self {
+        self.weapon.use_raycast_shoot = is_hitscan;
+        if is_hitscan {
+            self.weapon.projectile_speed = 0.0;
+        }
+        self
+    }
+
+    pub fn with_infinite_ammo(mut self, infinite: bool) -> Self {
+        self.weapon.infinite_ammo = infinite;
+        self
+    }
+
     pub fn with_visuals(mut self, muzzle: bool, shells: bool) -> Self {
         self.weapon.visual_settings.muzzle_flash_enabled = muzzle;
         self.weapon.visual_settings.shell_ejection_enabled = shells;
