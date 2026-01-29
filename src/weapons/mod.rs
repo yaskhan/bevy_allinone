@@ -24,6 +24,7 @@ pub mod attachments;
 pub mod vfx;
 pub mod animation;
 pub mod builder;
+pub mod sniper_sight;
 
 use bevy::prelude::*;
 
@@ -38,6 +39,7 @@ pub use attachments::*;
 pub use vfx::*;
 pub use animation::*;
 pub use builder::*;
+pub use sniper_sight::*;
 
 pub struct WeaponsPlugin;
 
@@ -59,6 +61,7 @@ impl Plugin for WeaponsPlugin {
             .register_type::<MuzzleFlash>()
             .register_type::<EjectedShell>()
             .register_type::<WeaponAnimationState>()
+            .register_type::<SniperSight>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -83,6 +86,7 @@ impl Plugin for WeaponsPlugin {
                 handle_ejected_shells,
                 initialize_weapon_animation,
                 handle_weapon_animation,
+                handle_sniper_sight,
             ));
     }
 }

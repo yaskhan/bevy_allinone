@@ -177,6 +177,8 @@ pub struct CameraState {
     pub is_aiming: bool,
     pub is_crouching: bool,
     pub lock_on_target: Option<Entity>,
+    pub fov_override: Option<f32>,
+    pub fov_override_speed: Option<f32>,
 }
 
 // ============================================================================
@@ -420,9 +422,17 @@ fn update_camera_fov(
 ) {
     for (camera, state, mut projection) in query.iter_mut() {
         if let Projection::Perspective(ref mut p) = *projection {
-            let target_fov = if state.is_aiming { camera.aim_fov } else { camera.default_fov };
+            let target_fov = if let Some(fov) = state.fov_override {
+                fov
+            } else if state.is_aiming {
+                camera.aim_fov
+            } else {
+                camera.default_fov
+            };
+            
+            let speed = state.fov_override_speed.unwrap_or(camera.fov_speed);
             let target_rad = target_fov.to_radians();
-            p.fov = p.fov + (target_rad - p.fov) * camera.fov_speed * time.delta_secs();
+            p.fov = p.fov + (target_rad - p.fov) * speed * time.delta_secs();
         }
     }
 }

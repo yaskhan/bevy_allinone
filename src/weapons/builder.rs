@@ -98,6 +98,18 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_sniper_sight(mut self, fov: f32, speed: f32, overlay: &str) -> Self {
+        self.weapon.sniper_sight_settings = Some(SniperSightSettings {
+            enabled_third_person: true,
+            enabled_first_person: true,
+            fov_value: fov,
+            smooth_fov: true,
+            fov_speed: speed,
+            overlay_path: overlay.to_string(),
+        });
+        self
+    }
+
     pub fn with_transform(mut self, transform: Transform) -> Self {
         self.transform = transform;
         self

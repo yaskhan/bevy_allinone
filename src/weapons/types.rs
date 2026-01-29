@@ -73,6 +73,9 @@ pub struct Weapon {
     pub show_weapon_icon_in_hud: bool,
     pub show_ammo_slider_in_hud: bool,
     pub show_ammo_text_in_hud: bool,
+    
+    // Sniper Sight Settings
+    pub sniper_sight_settings: Option<SniperSightSettings>,
 }
 
 impl Default for Weapon {
@@ -138,8 +141,25 @@ impl Default for Weapon {
             show_weapon_icon_in_hud: true,
             show_ammo_slider_in_hud: true,
             show_ammo_text_in_hud: true,
+            sniper_sight_settings: None,
         }
     }
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct SniperSightSettings {
+    pub enabled_third_person: bool,
+    pub enabled_first_person: bool,
+    pub fov_value: f32,
+    pub smooth_fov: bool,
+    pub fov_speed: f32,
+    pub overlay_path: String,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct SniperSight {
+    pub active: bool,
 }
 
 #[derive(Debug, Clone, Reflect, Default, PartialEq)]
