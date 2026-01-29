@@ -25,6 +25,11 @@ pub struct Weapon {
     pub projectiles_per_shot: u32,
     pub projectile_speed: f32,
     pub weapon_type: WeaponType,
+    pub firing_mode: FiringMode,
+    pub burst_settings: BurstSettings,
+    pub visual_settings: VisualSettings,
+    pub audio_settings: AudioSettings,
+    pub recoil_settings: RecoilSettings,
     pub attachments: Vec<Attachment>,
     // Ballistic properties for projectiles fired from this weapon
     pub projectile_mass: f32,           // kg
@@ -75,6 +80,11 @@ impl Default for Weapon {
             projectiles_per_shot: 1,
             projectile_speed: 0.0, // 0 = hitscan
             weapon_type: WeaponType::Pistol,
+            firing_mode: FiringMode::SemiAuto,
+            burst_settings: BurstSettings::default(),
+            visual_settings: VisualSettings::default(),
+            audio_settings: AudioSettings::default(),
+            recoil_settings: RecoilSettings::default(),
             attachments: Vec::new(),
             projectile_mass: 0.008, // 9mm approx 8g
             projectile_drag_coeff: 0.3,
@@ -114,6 +124,67 @@ pub enum WeaponType {
     Shotgun,
     Bow,
     Thrown,
+}
+
+/// Firing mode for weapons
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Default)]
+pub enum FiringMode {
+    #[default]
+    SemiAuto,
+    FullAuto,
+    Burst,
+}
+
+/// Settings for burst fire
+#[derive(Debug, Clone, Copy, Reflect, Default)]
+pub struct BurstSettings {
+    pub amount: u32,
+    pub fire_rate: f32,
+    pub current_burst_count: u32,
+    pub is_bursting: bool,
+}
+
+/// Visual settings for weapons
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct VisualSettings {
+    pub muzzle_flash_enabled: bool,
+    pub muzzle_flash_duration: f32,
+    pub muzzle_flash_path: String,
+    pub shell_ejection_enabled: bool,
+    pub shell_ejection_force: f32,
+    pub shell_model_path: String,
+}
+
+/// Audio settings for weapons
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct AudioSettings {
+    pub shoot_sound: String,
+    pub reload_sound: String,
+    pub out_of_ammo_sound: String,
+    pub draw_sound: String,
+    pub holster_sound: String,
+}
+
+/// Recoil settings for weapons
+#[derive(Debug, Clone, Copy, Reflect)]
+pub struct RecoilSettings {
+    pub kick_back: f32,
+    pub vertical_recoil: f32,
+    pub horizontal_recoil: f32,
+    pub recovery_speed: f32,
+    pub ads_multiplier: f32,
+}
+
+impl Default for RecoilSettings {
+    fn default() -> Self {
+        Self {
+            kick_back: 0.1,
+            vertical_recoil: 0.5,
+            horizontal_recoil: 0.2,
+            recovery_speed: 5.0,
+            ads_multiplier: 0.5,
+        }
+    }
 }
 
 /// Weapon attachment types

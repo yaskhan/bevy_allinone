@@ -183,6 +183,7 @@ pub struct InputState {
     pub block_pressed: bool,
     pub switch_camera_mode_pressed: bool,
     pub fire_pressed: bool,
+    pub fire_just_pressed: bool,
     pub reload_pressed: bool,
     pub next_weapon_pressed: bool,
     pub prev_weapon_pressed: bool,
@@ -215,6 +216,7 @@ impl Default for InputState {
             block_pressed: false,
             switch_camera_mode_pressed: false,
             fire_pressed: false,
+            fire_just_pressed: false,
             reload_pressed: false,
             next_weapon_pressed: false,
             prev_weapon_pressed: false,
@@ -249,6 +251,7 @@ impl InputState {
             self.block_pressed = false;
             self.switch_camera_mode_pressed = false;
             self.fire_pressed = false;
+            self.fire_just_pressed = false;
             self.reload_pressed = false;
             self.next_weapon_pressed = false;
             self.prev_weapon_pressed = false;
@@ -392,6 +395,7 @@ fn update_input_state(
     input_state.switch_camera_mode_pressed = check_action_just_pressed(InputAction::SwitchCameraMode);
     
     input_state.fire_pressed = check_action(InputAction::Fire); // Continuous for auto
+    input_state.fire_just_pressed = check_action_just_pressed(InputAction::Fire);
     input_state.reload_pressed = check_action_just_pressed(InputAction::Reload);
     input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
     input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);

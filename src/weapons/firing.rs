@@ -39,34 +39,75 @@ pub fn handle_weapon_firing(
     mut weapon_query: Query<(&mut Weapon, &mut Accuracy, &GlobalTransform)>,
 ) {
     let dt = time.delta_secs();
-
     for (player_entity, player_transform, mut manager, input) in manager_query.iter_mut() {
         // Skip if busy
         if manager.reloading_with_animation_active || manager.changing_weapon {
             continue;
         }
 
-        if input.fire_pressed && manager.any_weapon_available {
-            // Find current weapon entity
-            if let Some(&weapon_entity) = manager.weapons_list.get(manager.current_index) {
-                if let Ok((mut weapon, mut accuracy, weapon_transform)) = weapon_query.get_mut(weapon_entity) {
-                    if weapon.current_fire_timer <= 0.0 && !weapon.is_reloading {
-                        if weapon.current_ammo > 0 {
-                            fire_weapon(
-                                &mut commands,
-                                &mut weapon,
-                                &mut accuracy,
-                                weapon_transform,
-                                &mut damage_events,
-                                &spatial_query,
-                                player_entity
-                            );
-                            manager.shooting_single_weapon = true;
-                            manager.last_time_fired = time.elapsed_secs();
-                        } else {
-                            info!("Out of ammo!");
+        if let Some(&weapon_entity) = manager.weapons_list.get(manager.current_index) {
+            if let Ok((mut weapon, mut accuracy, weapon_transform)) = weapon_query.get_mut(weapon_entity) {
+                let mut want_to_fire = false;
+
+                // Handle Burst mode (continues even if fire not pressed)
+                if weapon.firing_mode == crate::weapons::types::FiringMode::Burst && weapon.burst_settings.is_bursting {
+                    if weapon.current_fire_timer <= 0.0 {
+                        want_to_fire = true;
+                        weapon.burst_settings.current_burst_count += 1;
+                        if weapon.burst_settings.current_burst_count >= weapon.burst_settings.amount {
+                            weapon.burst_settings.is_bursting = false;
                         }
                     }
+                } 
+                // Handle initial trigger press/hold
+                else if manager.any_weapon_available && !weapon.is_reloading {
+                    let fire_input = match weapon.firing_mode {
+                        crate::weapons::types::FiringMode::FullAuto => input.fire_pressed,
+                        crate::weapons::types::FiringMode::SemiAuto => input.fire_just_pressed,
+                        crate::weapons::types::FiringMode::Burst => input.fire_just_pressed,
+                    };
+
+                    if fire_input && weapon.current_fire_timer <= 0.0 {
+                        want_to_fire = true;
+                        
+                        // Start burst if needed
+                        if weapon.firing_mode == crate::weapons::types::FiringMode::Burst {
+                            weapon.burst_settings.is_bursting = true;
+                            weapon.burst_settings.current_burst_count = 1;
+                            // Reset fire rate for burst shots
+                            weapon.current_fire_timer = 1.0 / weapon.burst_settings.fire_rate;
+                        } else {
+                            // Standard fire rate
+                            weapon.current_fire_timer = 1.0 / weapon.fire_rate;
+                        }
+                    }
+                }
+
+                if want_to_fire {
+                    if weapon.current_ammo > 0 {
+                        fire_weapon(
+                            &mut commands,
+                            &mut weapon,
+                            &mut accuracy,
+                            weapon_transform,
+                            &mut damage_events,
+                            &spatial_query,
+                            player_entity
+                        );
+                        manager.shooting_single_weapon = true;
+                        manager.last_time_fired = time.elapsed_secs();
+                        
+                        // Set timer for next shot (if bursting, already set above for the first shot, 
+                        // but subsequent shots need it here)
+                        if weapon.firing_mode == crate::weapons::types::FiringMode::Burst && weapon.burst_settings.is_bursting {
+                            weapon.current_fire_timer = 1.0 / weapon.burst_settings.fire_rate;
+                        }
+                    } else {
+                        weapon.burst_settings.is_bursting = false;
+                        info!("Out of ammo!");
+                    }
+                } else if !weapon.burst_settings.is_bursting {
+                    manager.shooting_single_weapon = false;
                 }
             }
         } else {
@@ -86,12 +127,31 @@ pub fn fire_weapon(
     source_entity: Entity,
 ) {
     weapon.current_ammo -= 1;
-    weapon.current_fire_timer = 1.0 / weapon.fire_rate;
+    // Timer is now managed in handle_weapon_firing for better control over burst/auto logic
 
-    // Update Bloom
+    // --- RECOIL ---
     accuracy.current_bloom += accuracy.bloom_per_shot;
     if accuracy.current_bloom > accuracy.max_spread {
         accuracy.current_bloom = accuracy.max_spread;
+    }
+    
+    // Add vertical kick based on weapon settings
+    // This would typically affect the camera rotation, but for now we increase bloom
+    accuracy.current_bloom += weapon.recoil_settings.vertical_recoil * 0.1;
+
+    // --- VFX ---
+    if weapon.visual_settings.muzzle_flash_enabled {
+        crate::weapons::vfx::spawn_muzzle_flash(commands, source_entity, weapon.visual_settings.muzzle_flash_duration);
+    }
+    
+    // Shell ejection
+    if weapon.visual_settings.shell_ejection_enabled {
+        crate::weapons::vfx::spawn_ejected_shell(
+            commands, 
+            transform, 
+            weapon.visual_settings.shell_ejection_force,
+            5.0 // Lifetime
+        );
     }
 
     let forward = transform.forward();

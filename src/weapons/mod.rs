@@ -21,6 +21,7 @@ pub mod weapon_manager;
 pub mod firing;
 pub mod tracers;
 pub mod attachments;
+pub mod vfx;
 
 use bevy::prelude::*;
 
@@ -32,6 +33,7 @@ pub use weapon_manager::*;
 pub use firing::*;
 pub use tracers::*;
 pub use attachments::*;
+pub use vfx::*;
 
 pub struct WeaponsPlugin;
 
@@ -50,6 +52,8 @@ impl Plugin for WeaponsPlugin {
             .register_type::<AttachmentPlace>()
             .register_type::<AttachmentInfo>()
             .register_type::<AttachmentStatModifiers>()
+            .register_type::<MuzzleFlash>()
+            .register_type::<EjectedShell>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -69,6 +73,9 @@ impl Plugin for WeaponsPlugin {
                 // Weapon selection systems
                 handle_weapon_selection_input,
                 update_weapon_selection_ui,
+                // VFX systems
+                handle_muzzle_flash,
+                handle_ejected_shells,
             ));
     }
 }
