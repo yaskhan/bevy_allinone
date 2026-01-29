@@ -34,6 +34,7 @@ pub fn update_camera_rotation(
 pub fn update_camera_follow(
     time: Res<Time>,
     mut camera_query: Query<(&CameraController, &mut CameraState, &mut Transform)>,
+    target_query: Query<&GlobalTransform, Without<CameraController>>, // Proper type
 ) {
     for (camera, mut state, mut transform) in camera_query.iter_mut() {
         let Some(target_entity) = camera.follow_target else { continue };
@@ -73,7 +74,8 @@ pub fn handle_camera_mode_switch(
                 CameraMode::ThirdPerson => CameraMode::FirstPerson,
                 CameraMode::FirstPerson => CameraMode::Locked,
                 CameraMode::Locked => CameraMode::SideScroller,
-                CameraMode::SideScroller => CameraMode::ThirdPerson,
+                CameraMode::SideScroller => CameraMode::TopDown,
+                CameraMode::TopDown => CameraMode::ThirdPerson,
             };
             info!("Switched Camera Mode to: {:?}", camera.mode);
         }

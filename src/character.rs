@@ -632,6 +632,7 @@ pub fn spawn_character(
         CharacterAnimationState::default(),
         crate::combat::Health::default(),
         InputState::default(),
+        crate::camera::CameraZoneTracker::default(),
         Transform::from_translation(position),
         GlobalTransform::default(),
     ))

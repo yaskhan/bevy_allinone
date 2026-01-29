@@ -10,6 +10,7 @@ mod bob;
 mod state_offsets;
 mod collision_lean;
 mod lock;
+mod zones;
 
 pub use types::*;
 pub use follow::*;
@@ -21,6 +22,7 @@ pub use bob::*;
 pub use state_offsets::*;
 pub use collision_lean::*;
 pub use lock::*;
+pub use zones::*;
 
 pub struct CameraPlugin;
 
@@ -36,11 +38,17 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraShakeInstance>()
             .register_type::<CameraBobState>()
             .register_type::<CameraTargetState>()
+            .register_type::<CameraZone>()
+            .register_type::<CameraZoneTracker>()
             .add_systems(Update, (
                 update_camera_state_offsets,
                 update_target_marking,
                 update_target_lock,
+                update_camera_zones,
+                apply_camera_zone_settings,
                 update_camera_rotation,
+            ).chain())
+            .add_systems(Update, (
                 update_camera_shake,
                 update_camera_bob,
                 update_camera_lean_collision,

@@ -56,6 +56,61 @@ pub enum CameraMode {
     FirstPerson,
     Locked,
     SideScroller,
+    TopDown,
+}
+
+#[derive(Debug, Clone, Reflect)]
+pub struct CameraZoneSettings {
+    pub mode: CameraMode,
+    pub distance: Option<f32>,
+    pub pivot_offset: Option<Vec3>,
+    pub fov: Option<f32>,
+    pub fixed_yaw: Option<f32>,
+    pub fixed_pitch: Option<f32>,
+    pub follow_rotation: bool,
+    pub look_at_player: bool,
+    pub transition_speed: f32,
+}
+
+impl Default for CameraZoneSettings {
+    fn default() -> Self {
+        Self {
+            mode: CameraMode::ThirdPerson,
+            distance: None,
+            pivot_offset: None,
+            fov: None,
+            fixed_yaw: None,
+            fixed_pitch: None,
+            follow_rotation: true,
+            look_at_player: true,
+            transition_speed: 5.0,
+        }
+    }
+}
+
+/// A component for a trigger volume that changes camera settings
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct CameraZone {
+    pub settings: CameraZoneSettings,
+    pub priority: i32,
+}
+
+impl Default for CameraZone {
+    fn default() -> Self {
+        Self {
+            settings: CameraZoneSettings::default(),
+            priority: 0,
+        }
+    }
+}
+
+/// Tracks the current camera zone for an entity
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct CameraZoneTracker {
+    pub current_zone: Option<Entity>,
+    pub active_zones: Vec<Entity>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
@@ -64,6 +119,8 @@ pub enum CameraSide {
     Right,
     Left,
 }
+
+/// Camera side preference
 
 #[derive(Debug, Clone, Reflect)]
 pub struct TargetLockSettings {
