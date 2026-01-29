@@ -54,6 +54,7 @@ pub mod skills;
 pub mod stats;
 pub mod stealth;
 pub mod tutorial;
+pub mod upper_body_rotation;
 pub mod utils;
 pub mod vehicles;
 pub mod vendor;
@@ -87,6 +88,7 @@ pub mod prelude {
     pub use crate::stats::*;
     pub use crate::stealth::*;
     pub use crate::tutorial::*;
+    pub use crate::upper_body_rotation::*;
     pub use crate::utils::*;
     pub use crate::vehicles::*;
     pub use crate::vendor::*;
@@ -127,6 +129,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(stats::StatsPlugin)
             .add_plugins(stealth::StealthPlugin)
             .add_plugins(tutorial::TutorialPlugin)
+            .add_plugins(upper_body_rotation::UpperBodyRotationPlugin)
             .add_plugins(vehicles::VehiclesPlugin)
             .add_plugins(vendor::VendorPlugin)
             .add_plugins(weapons::WeaponsPlugin)
