@@ -7,6 +7,7 @@ mod collision;
 mod fov;
 mod shake;
 mod bob;
+mod state_offsets;
 
 pub use types::*;
 pub use follow::*;
@@ -15,6 +16,7 @@ pub use collision::*;
 pub use fov::*;
 pub use shake::*;
 pub use bob::*;
+pub use state_offsets::*;
 
 pub struct CameraPlugin;
 
@@ -30,7 +32,7 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraShakeInstance>()
             .register_type::<CameraBobState>()
             .add_systems(Update, (
-                update_camera_state,
+                update_camera_state_offsets,
                 update_camera_rotation,
                 update_camera_shake,
                 update_camera_bob,

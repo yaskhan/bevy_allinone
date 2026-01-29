@@ -58,12 +58,20 @@ pub enum CameraMode {
     SideScroller,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
+pub enum CameraSide {
+    #[default]
+    Right,
+    Left,
+}
+
 /// Camera controller component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct CameraController {
     pub follow_target: Option<Entity>,
     pub mode: CameraMode,
+    pub current_side: CameraSide,
     
     // Sensitivity
     pub rot_sensitivity_3p: f32,
@@ -85,6 +93,7 @@ pub struct CameraController {
     pub pivot_smooth_speed: f32,
     
     // Offsets (Dynamic)
+    pub side_offset: f32,
     pub default_pivot_offset: Vec3,
     pub aim_pivot_offset: Vec3,
     pub crouch_pivot_offset: Vec3,
@@ -109,6 +118,7 @@ impl Default for CameraController {
         Self {
             follow_target: None,
             mode: CameraMode::ThirdPerson,
+            current_side: CameraSide::Right,
             
             rot_sensitivity_3p: 0.15,
             rot_sensitivity_1p: 0.1,
@@ -125,6 +135,7 @@ impl Default for CameraController {
             smooth_rotation_speed: 20.0,
             pivot_smooth_speed: 10.0,
             
+            side_offset: 0.5,
             default_pivot_offset: Vec3::new(0.0, 1.6, 0.0),
             aim_pivot_offset: Vec3::new(0.5, 1.5, 0.0),
             crouch_pivot_offset: Vec3::new(0.0, 1.0, 0.0),
@@ -151,6 +162,7 @@ pub struct CameraState {
     pub pitch: f32,
     pub current_distance: f32,
     pub current_pivot: Vec3,
+    pub current_side_interpolator: f32, // -1.0 (Left) to 1.0 (Right)
     pub current_lean: f32,
     pub noise_offset: Vec2,
     pub bob_offset: Vec3,

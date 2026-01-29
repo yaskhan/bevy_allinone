@@ -1,22 +1,8 @@
 use bevy::prelude::*;
 use crate::input::InputState;
-use crate::character::CharacterController;
 use super::types::*;
 
-pub fn update_camera_state(
-    input: Res<InputState>,
-    mut query: Query<(&CameraController, &mut CameraState)>,
-    target_query: Query<(&CharacterController, &crate::character::CharacterMovementState)>,
-) {
-    for (camera, mut state) in query.iter_mut() {
-        if let Some(target) = camera.follow_target {
-            if let Ok((_controller, movement)) = target_query.get(target) {
-                state.is_aiming = input.aim_pressed;
-                state.is_crouching = movement.is_crouching;
-            }
-        }
-    }
-}
+// Character movement state sync and pivot logic removed - handled in state_offsets.rs
 
 pub fn update_camera_rotation(
     input: Res<InputState>,
@@ -68,22 +54,13 @@ pub fn update_camera_follow(
 ) {
     for (camera, mut state, mut transform) in camera_query.iter_mut() {
         let Some(target_entity) = camera.follow_target else { continue };
-        let Ok(target_transform) = target_query.get(target_entity) else { continue };
+        let Ok(_target_transform) = target_query.get(target_entity) else { continue };
 
-        // Dynamic pivot calculation
-        let base_pivot = if state.is_aiming {
-            camera.aim_pivot_offset
-        } else if state.is_crouching {
-            camera.crouch_pivot_offset
-        } else {
-            camera.default_pivot_offset
-        };
-
-        // Apply leaning to pivot
+        // Pivot is now handled in update_camera_state_offsets
         let lean_pivot_offset = transform.right() * state.current_lean * camera.lean_amount;
-        let target_pivot_pos = target_transform.translation + base_pivot + lean_pivot_offset;
-        
-        state.current_pivot = state.current_pivot.lerp(target_pivot_pos, camera.pivot_smooth_speed * time.delta_secs());
+        // We can still apply lean here if we want it to be "on top" of the smoothed pivot, 
+        // or calculate it in state_offsets. Let's apply it here for now.
+        let final_pivot = state.current_pivot + lean_pivot_offset;
 
         // Rotation
         let rotation = Quat::from_rotation_y((state.yaw + state.noise_offset.x).to_radians()) 
@@ -99,7 +76,7 @@ pub fn update_camera_follow(
         let direction = transform.back();
         
         // Final position with bobbing
-        transform.translation = state.current_pivot + direction * state.current_distance + state.bob_offset;
+        transform.translation = final_pivot + direction * state.current_distance + state.bob_offset;
     }
 }
 

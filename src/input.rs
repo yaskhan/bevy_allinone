@@ -74,6 +74,7 @@ pub enum InputAction {
     ResetCamera,
     ZoomIn,
     ZoomOut,
+    SideSwitch,
 }
 
 /// Input binding types
@@ -132,6 +133,7 @@ impl Default for InputMap {
         bindings.insert(InputAction::ResetCamera, vec![InputBinding::Key(KeyCode::KeyR)]);
         bindings.insert(InputAction::ZoomIn, vec![InputBinding::Key(KeyCode::NumpadAdd)]);
         bindings.insert(InputAction::ZoomOut, vec![InputBinding::Key(KeyCode::NumpadSubtract)]);
+        bindings.insert(InputAction::SideSwitch, vec![InputBinding::Mouse(MouseButton::Middle), InputBinding::Key(KeyCode::KeyV)]);
         Self { bindings }
     }
 }
@@ -195,6 +197,7 @@ pub struct InputState {
     pub reset_camera_pressed: bool,
     pub zoom_in_pressed: bool,
     pub zoom_out_pressed: bool,
+    pub side_switch_pressed: bool,
     pub select_weapon: Option<usize>,
     pub enabled: bool,
 }
@@ -227,6 +230,7 @@ impl Default for InputState {
             reset_camera_pressed: false,
             zoom_in_pressed: false,
             zoom_out_pressed: false,
+            side_switch_pressed: false,
             select_weapon: None,
             enabled: true,
         }
@@ -262,6 +266,7 @@ impl InputState {
             self.reset_camera_pressed = false;
             self.zoom_in_pressed = false;
             self.zoom_out_pressed = false;
+            self.side_switch_pressed = false;
             self.select_weapon = None;
         }
     }
@@ -400,6 +405,7 @@ fn update_input_state(
     input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
     input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);
     input_state.toggle_inventory_pressed = check_action_just_pressed(InputAction::ToggleInventory);
+    input_state.side_switch_pressed = check_action_just_pressed(InputAction::SideSwitch);
 
     // Weapon selection
     input_state.select_weapon = None;
