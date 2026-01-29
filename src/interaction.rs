@@ -487,14 +487,31 @@ fn process_interactions(
     current_interactable: Res<CurrentInteractable>,
     mut events: ResMut<InteractionEventQueue>,
     mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>, Option<&mut UsableDevice>)>,
-    player_query: Query<Entity, With<InteractionDetector>>, // Assuming player has detector
+    mut player_query: Query<(Entity, &mut UsingDevicesSystem), With<InteractionDetector>>,
+    mut electronic_device_activation_queue: ResMut<crate::devices::electronic_device::ElectronicDeviceActivationEventQueue>,
 ) {
     if !input.interact_pressed && !input_buffer.is_buffered(InputAction::Interact) {
         return;
     }
 
-    if let Some(entity) = current_interactable.entity {
-        if !current_interactable.is_in_range {
+    // Determine target entity
+    let mut target_entity = current_interactable.entity;
+    let mut is_in_range = current_interactable.is_in_range;
+
+    // Preference for UsingDevicesSystem
+    let mut source_entity = Entity::PLACEHOLDER;
+    if let Ok((player_entity, player_system)) = player_query.get_single_mut() {
+        source_entity = player_entity;
+        if player_system.current_device_index >= 0 {
+            if let Some(device) = player_system.device_list.get(player_system.current_device_index as usize) {
+                target_entity = Some(device.entity);
+                is_in_range = true; // Devices in the list are already checked for range
+            }
+        }
+    }
+
+    if let Some(entity) = target_entity {
+        if !is_in_range {
             return;
         }
 
@@ -527,11 +544,17 @@ fn process_interactions(
             }
             
             // Trigger Event
-            if let Some(source_entity) = player_query.iter().next() {
-                 events.0.push(InteractionEvent {
+            if source_entity != Entity::PLACEHOLDER {
+                events.0.push(InteractionEvent {
                     source: source_entity,
                     target: entity,
                     interaction_type: interactable.interaction_type,
+                });
+
+                // Specifically trigger Electronic Device activation if applicable
+                electronic_device_activation_queue.0.push(crate::devices::electronic_device::ElectronicDeviceActivationEvent {
+                    device_entity: entity,
+                    player_entity: source_entity,
                 });
             }
         }
