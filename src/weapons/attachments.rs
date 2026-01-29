@@ -13,9 +13,22 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
+use avian3d::prelude::*;
 use crate::input::InputState;
 use super::types::Weapon;
 use super::weapon_manager::WeaponManager;
+use crate::camera::CameraState;
+
+/// Component for laser sight attachments
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct LaserAttachment {
+    pub enabled: bool,
+    pub color: Color,
+    pub max_distance: f32,
+    pub hit_point: Option<Vec3>,
+    pub dot_entity: Option<Entity>,
+}
 
 /// Main attachment system component
 #[derive(Component, Debug, Reflect, Default)]
@@ -543,4 +556,50 @@ pub fn create_weapon_with_attachments() -> WeaponAttachmentSystem {
         use_smooth_transition: true,
         disable_hud_when_editing: true,
     }
+}
+
+/// System to handle laser attachment raycasting and visual data
+pub fn handle_laser_attachment(
+    mut commands: Commands,
+    mut laser_query: Query<(&mut LaserAttachment, &GlobalTransform)>,
+    camera_query: Query<(&crate::camera::CameraState, &GlobalTransform)>,
+    spatial_query: SpatialQuery,
+) {
+    let Ok((camera_state, camera_global)) = camera_query.get_single() else { return };
+    
+    for (mut laser, laser_transform) in laser_query.iter_mut() {
+        if !laser.enabled {
+            laser.hit_point = None;
+            continue;
+        }
+
+        let laser_pos = laser_transform.translation();
+        let laser_dir = if camera_state.is_aiming {
+            camera_global.forward()
+        } else {
+            laser_transform.forward()
+        };
+
+        if let Some(hit) = spatial_query.cast_ray(
+            laser_pos,
+            Dir3::new(laser_dir).unwrap_or(Dir3::Y),
+            laser.max_distance,
+            true,
+            SpatialQueryFilter::default(),
+        ) {
+            let hit_point = laser_pos + laser_dir * hit.distance;
+            laser.hit_point = Some(hit_point);
+
+            if let Some(dot_ent) = laser.dot_entity {
+                commands.entity(dot_ent).insert(Transform::from_translation(hit_point));
+            }
+        } else {
+            laser.hit_point = None;
+        }
+    }
+}
+
+/// System to update visual lines in the attachment editor
+pub fn update_attachment_ui_lines() {
+    // Stub for UI line rendering logic
 }

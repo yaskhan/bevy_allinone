@@ -11,6 +11,7 @@ pub struct WeaponBuilder {
     accuracy: Accuracy,
     animation_state: WeaponAnimationState,
     transform: Transform,
+    attachment_system: Option<WeaponAttachmentSystem>,
 }
 
 impl WeaponBuilder {
@@ -25,6 +26,7 @@ impl WeaponBuilder {
             accuracy: Accuracy::default(),
             animation_state: WeaponAnimationState::default(),
             transform: Transform::IDENTITY,
+            attachment_system: None,
         }
     }
 
@@ -141,6 +143,27 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_attachment_slot(mut self, id: &str, name: &str) -> Self {
+        if self.attachment_system.is_none() {
+            self.attachment_system = Some(WeaponAttachmentSystem::default());
+        }
+        
+        if let Some(system) = &mut self.attachment_system {
+            system.attachment_places.push(AttachmentPlace {
+                id: id.to_string(),
+                name: name.to_string(),
+                enabled: true,
+                ..Default::default()
+            });
+        }
+        self
+    }
+
+    pub fn with_default_attachments(mut self) -> Self {
+        self.attachment_system = Some(create_weapon_with_attachments());
+        self
+    }
+
     pub fn with_accuracy(mut self, base_spread: f32, max_spread: f32, bloom_per_shot: f32) -> Self {
         self.accuracy.base_spread = base_spread;
         self.accuracy.max_spread = max_spread;
@@ -162,6 +185,13 @@ impl WeaponBuilder {
     }
 
     pub fn spawn(self, commands: &mut Commands) -> Entity {
-        commands.spawn(self.build()).id()
+        let attachment_system = self.attachment_system.clone();
+        let weapon_entity = commands.spawn(self.build()).id();
+        
+        if let Some(system) = attachment_system {
+            commands.entity(weapon_entity).insert(system);
+        }
+        
+        weapon_entity
     }
 }

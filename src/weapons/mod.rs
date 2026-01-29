@@ -68,6 +68,7 @@ impl Plugin for WeaponsPlugin {
             .register_type::<SniperSight>()
             .register_type::<BowState>()
             .register_type::<WeaponTransformInfo>()
+            .register_type::<LaserAttachment>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -95,6 +96,8 @@ impl Plugin for WeaponsPlugin {
                 handle_sniper_sight,
                 handle_bow_logic,
                 update_weapon_transforms,
+                handle_laser_attachment,
+                update_attachment_ui_lines,
             ));
     }
 }
