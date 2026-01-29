@@ -14,6 +14,7 @@ pub struct WeaponBuilder {
     attachment_system: Option<WeaponAttachmentSystem>,
     homing_settings: Option<Homing>,
     is_sticky: bool,
+    ik_settings: Option<WeaponIkSettings>,
 }
 
 impl WeaponBuilder {
@@ -31,6 +32,7 @@ impl WeaponBuilder {
             attachment_system: None,
             homing_settings: None,
             is_sticky: false,
+            ik_settings: None,
         }
     }
 
@@ -190,6 +192,12 @@ impl WeaponBuilder {
     }
 
     pub fn with_sticky_projectile(mut self) -> Self {
+        self.is_sticky = true;
+        self
+    }
+
+    pub fn with_ik(mut self, settings: WeaponIkSettings) -> Self {
+        self.ik_settings = Some(settings);
         self
     }
 
@@ -237,6 +245,10 @@ impl WeaponBuilder {
         }
         if is_sticky {
             commands.entity(weapon_entity).insert(StickToSurface::default());
+        }
+
+        if let Some(ik) = self.ik_settings {
+            commands.entity(weapon_entity).insert((ik, WeaponIkState::default()));
         }
         
         weapon_entity

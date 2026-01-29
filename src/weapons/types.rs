@@ -660,3 +660,35 @@ pub struct GrenadeState {
     pub charge_timer: f32,
     pub settings: GrenadeSettings,
 }
+
+/// Settings for procedural weapon swaying
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct SwaySettings {
+    pub horizontal_amount: f32,
+    pub vertical_amount: f32,
+    pub lerp_speed: f32,
+    pub max_offset: Vec3,
+}
+
+/// Settings for weapon procedural IK positioning
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct WeaponIkSettings {
+    pub aim_offset: Transform,
+    pub walk_offset: Transform,
+    pub run_offset: Transform,
+    pub crouch_offset: Transform,
+    pub sway_settings: SwaySettings,
+    pub bob_amount: Vec3,
+}
+
+/// Runtime state for procedural weapon IK
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct WeaponIkState {
+    pub current_offset: Transform,
+    pub target_offset: Transform,
+    pub sway_offset: Vec3,
+    pub bob_offset: Vec3,
+    pub recoil_offset: Vec3,
+    pub recoil_rotation: Quat,
+}

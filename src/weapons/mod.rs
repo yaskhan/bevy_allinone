@@ -24,6 +24,7 @@ pub mod attachments;
 pub mod specialty;
 pub mod projectiles;
 pub mod grenades;
+pub mod ik;
 pub mod vfx;
 pub mod animation;
 pub mod builder;
@@ -44,6 +45,7 @@ pub use attachments::*;
 pub use specialty::*;
 pub use projectiles::*;
 pub use grenades::*;
+pub use ik::*;
 pub use vfx::*;
 pub use animation::*;
 pub use builder::*;
@@ -79,6 +81,7 @@ impl Plugin for WeaponsPlugin {
             .register_type::<Homing>()
             .register_type::<StickToSurface>()
             .register_type::<GrenadeState>()
+            .register_type::<WeaponIkState>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -111,6 +114,7 @@ impl Plugin for WeaponsPlugin {
                 handle_specialty_behaviors,
                 handle_advanced_projectiles,
                 handle_grenade_system,
+                handle_weapon_ik,
             ));
     }
 }
