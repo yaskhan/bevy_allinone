@@ -30,6 +30,7 @@ pub struct Weapon {
     pub visual_settings: VisualSettings,
     pub audio_settings: AudioSettings,
     pub recoil_settings: RecoilSettings,
+    pub animation_settings: WeaponAnimationSettings,
     pub attachments: Vec<Attachment>,
     // Ballistic properties for projectiles fired from this weapon
     pub projectile_mass: f32,           // kg
@@ -85,6 +86,7 @@ impl Default for Weapon {
             visual_settings: VisualSettings::default(),
             audio_settings: AudioSettings::default(),
             recoil_settings: RecoilSettings::default(),
+            animation_settings: WeaponAnimationSettings::default(),
             attachments: Vec::new(),
             projectile_mass: 0.008, // 9mm approx 8g
             projectile_drag_coeff: 0.3,
@@ -185,6 +187,59 @@ impl Default for RecoilSettings {
             ads_multiplier: 0.5,
         }
     }
+}
+
+/// Weapon animation modes corresponding to GKC animator states
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Default)]
+pub enum WeaponAnimationMode {
+    #[default]
+    Idle,
+    Walk,
+    Run,
+    Shoot,
+    AimShoot,
+    ReloadWithAmmo,
+    ReloadWithoutAmmo,
+    Draw,
+    Holster,
+    AimIn,
+    AimOut,
+    MeleeAttack,
+    NoAmmo,
+}
+
+/// Settings for weapon-specific animations
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct WeaponAnimationSettings {
+    pub idle_anim: String,
+    pub walk_anim: String,
+    pub run_anim: String,
+    pub shoot_anim: String,
+    pub aim_shoot_anim: String,
+    pub reload_with_ammo_anim: String,
+    pub reload_without_ammo_anim: String,
+    pub draw_anim: String,
+    pub holster_anim: String,
+    pub aim_in_anim: String,
+    pub aim_out_anim: String,
+    pub melee_attack_anim: String,
+    pub no_ammo_anim: String,
+    
+    // Durations
+    pub shoot_duration: f32,
+    pub reload_duration: f32,
+    pub draw_duration: f32,
+    pub holster_duration: f32,
+}
+
+/// Component to track current weapon animation state
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct WeaponAnimationState {
+    pub current_mode: WeaponAnimationMode,
+    pub previous_mode: WeaponAnimationMode,
+    pub timer: f32,
+    pub is_looping: bool,
 }
 
 /// Weapon attachment types
