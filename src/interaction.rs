@@ -118,6 +118,118 @@ pub enum InteractionType {
     Device,
 }
 
+/// Information about a detected device, matching the original project structure.
+#[derive(Debug, Clone, Reflect)]
+pub struct DeviceInfo {
+    pub name: String,
+    pub entity: Entity,
+    pub action_offset: f32,
+    pub use_local_offset: bool,
+    pub use_custom_min_distance: bool,
+    pub custom_min_distance: f32,
+    pub use_custom_min_angle: bool,
+    pub custom_min_angle: f32,
+    pub use_relative_direction: bool,
+    pub ignore_use_only_if_visible: bool,
+    pub check_if_obstacle: bool,
+}
+
+impl Default for DeviceInfo {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            entity: Entity::PLACEHOLDER,
+            action_offset: 1.0,
+            use_local_offset: true,
+            use_custom_min_distance: false,
+            custom_min_distance: 0.0,
+            use_custom_min_angle: false,
+            custom_min_angle: 0.0,
+            use_relative_direction: false,
+            ignore_use_only_if_visible: false,
+            check_if_obstacle: false,
+        }
+    }
+}
+
+/// Component for the player to manage nearby devices.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct UsingDevicesSystem {
+    pub can_use_devices: bool,
+    pub device_list: Vec<DeviceInfo>,
+    pub current_device_index: i32,
+    pub use_device_action_name: String,
+    pub raycast_distance: f32,
+    pub layer_mask: u32,
+    pub searching_devices_with_raycast: bool,
+    pub show_use_device_icon_enabled: bool,
+    pub use_min_distance_to_use_devices: bool,
+    pub min_distance_to_use_devices: f32,
+    pub use_only_device_if_visible_on_camera: bool,
+    pub driving: bool,
+}
+
+impl Default for UsingDevicesSystem {
+    fn default() -> Self {
+        Self {
+            can_use_devices: true,
+            device_list: Vec::new(),
+            current_device_index: -1,
+            use_device_action_name: "Activate Device".to_string(),
+            raycast_distance: 5.0,
+            layer_mask: 0xFFFFFFFF,
+            searching_devices_with_raycast: false,
+            show_use_device_icon_enabled: true,
+            use_min_distance_to_use_devices: true,
+            min_distance_to_use_devices: 4.0,
+            use_only_device_if_visible_on_camera: false,
+            driving: false,
+        }
+    }
+}
+
+/// Component for metadata about device interaction, matching the original project's architecture.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct DeviceStringAction {
+    pub device_name: String,
+    pub device_action: String,
+    pub secondary_device_action: String,
+    pub show_icon: bool,
+    pub action_offset: f32,
+    pub use_local_offset: bool,
+    pub use_custom_min_distance: bool,
+    pub custom_min_distance: f32,
+    pub use_custom_min_angle: bool,
+    pub custom_min_angle: f32,
+    pub use_relative_direction: bool,
+    pub ignore_use_only_if_visible: bool,
+    pub check_if_obstacle: bool,
+    pub icon_enabled: bool,
+}
+
+impl Default for DeviceStringAction {
+    fn default() -> Self {
+        Self {
+            device_name: "Device".to_string(),
+            device_action: "Activate".to_string(),
+            secondary_device_action: String::new(),
+            show_icon: true,
+            action_offset: 1.0,
+            use_local_offset: true,
+            use_custom_min_distance: false,
+            custom_min_distance: 0.0,
+            use_custom_min_angle: false,
+            custom_min_angle: 0.0,
+            use_relative_direction: false,
+            ignore_use_only_if_visible: false,
+            check_if_obstacle: true,
+            icon_enabled: true,
+        }
+    }
+}
+
 /// Component for the interaction UI prompt text
 #[derive(Component)]
 pub struct InteractionPrompt;
