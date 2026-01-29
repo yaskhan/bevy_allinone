@@ -102,6 +102,8 @@ pub struct CameraController {
     pub lean_amount: f32,
     pub lean_angle: f32,
     pub lean_speed: f32,
+    pub lean_raycast_dist: f32,
+    pub lean_wall_angle: f32,
     
     // FOV
     pub default_fov: f32,
@@ -143,6 +145,8 @@ impl Default for CameraController {
             lean_amount: 0.4,
             lean_angle: 15.0,
             lean_speed: 8.0,
+            lean_raycast_dist: 0.8,
+            lean_wall_angle: 5.0, // Subtle angle when hitting a wall
             
             default_fov: 60.0,
             aim_fov: 40.0,

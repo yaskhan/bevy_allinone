@@ -41,9 +41,7 @@ pub fn update_camera_rotation(
 
         state.pitch = state.pitch.clamp(camera.min_vertical_angle, camera.max_vertical_angle);
 
-        // Leaning logic
-        let target_lean = if input.lean_left { -1.0 } else if input.lean_right { 1.0 } else { 0.0 };
-        state.current_lean = state.current_lean + (target_lean - state.current_lean) * camera.lean_speed * time.delta_secs();
+        // Leaning logic moved to collision_lean.rs
     }
 }
 

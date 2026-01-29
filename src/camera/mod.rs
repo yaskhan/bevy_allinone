@@ -8,6 +8,7 @@ mod fov;
 mod shake;
 mod bob;
 mod state_offsets;
+mod collision_lean;
 
 pub use types::*;
 pub use follow::*;
@@ -17,6 +18,7 @@ pub use fov::*;
 pub use shake::*;
 pub use bob::*;
 pub use state_offsets::*;
+pub use collision_lean::*;
 
 pub struct CameraPlugin;
 
@@ -36,6 +38,7 @@ impl Plugin for CameraPlugin {
                 update_camera_rotation,
                 update_camera_shake,
                 update_camera_bob,
+                update_camera_lean_collision,
                 update_camera_follow,
                 update_camera_waypoint_follow,
                 handle_camera_collision,
