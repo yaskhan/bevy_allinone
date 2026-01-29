@@ -3,7 +3,7 @@
 //! Manages jetpack mechanics including equipping, fuel consumption/regeneration, and thrust physics.
 
 use bevy::prelude::*;
-use crate::input::InputState; // Assuming InputState is available
+use crate::input::InputState;
 
 pub struct JetpackPlugin;
 
@@ -11,9 +11,9 @@ impl Plugin for JetpackPlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<Jetpack>()
-            .add_event::<EquipJetpackEvent>()
-            .add_event::<ToggleJetpackEvent>()
-            .add_event::<JetpackTurboEvent>()
+            .init_resource::<EquipJetpackQueue>()
+            .init_resource::<ToggleJetpackQueue>()
+            .init_resource::<JetpackTurboQueue>()
             .add_systems(Update, (
                 handle_jetpack_events,
                 update_jetpack_physics,
@@ -66,53 +66,59 @@ impl Default for Jetpack {
     }
 }
 
-/// Event to toggle equipped state
-#[derive(Event)]
+/// Event data to toggle equipped state
+#[derive(Debug, Clone, Copy)]
 pub struct EquipJetpackEvent {
     pub entity: Entity,
     pub equip: bool,
 }
 
-/// Event to toggle active thrusting state
-#[derive(Event)]
+#[derive(Resource, Default)]
+pub struct EquipJetpackQueue(pub Vec<EquipJetpackEvent>);
+
+/// Event data to toggle active thrusting state
+#[derive(Debug, Clone, Copy)]
 pub struct ToggleJetpackEvent {
     pub entity: Entity,
     pub active: bool,
 }
 
-/// Event to toggle turbo mode
-#[derive(Event)]
+#[derive(Resource, Default)]
+pub struct ToggleJetpackQueue(pub Vec<ToggleJetpackEvent>);
+
+/// Event data to toggle turbo mode
+#[derive(Debug, Clone, Copy)]
 pub struct JetpackTurboEvent {
     pub entity: Entity,
     pub active: bool,
 }
 
+#[derive(Resource, Default)]
+pub struct JetpackTurboQueue(pub Vec<JetpackTurboEvent>);
+
 /// System to handle jetpack state events
 pub fn handle_jetpack_events(
-    mut equip_events: EventReader<EquipJetpackEvent>,
-    mut toggle_events: EventReader<ToggleJetpackEvent>,
-    mut turbo_events: EventReader<JetpackTurboEvent>,
+    mut equip_queue: ResMut<EquipJetpackQueue>,
+    mut toggle_queue: ResMut<ToggleJetpackQueue>,
+    mut turbo_queue: ResMut<JetpackTurboQueue>,
     mut query: Query<&mut Jetpack>,
     time: Res<Time>,
 ) {
-    for event in equip_events.read() {
+    for event in equip_queue.0.drain(..) {
         if let Ok(mut jetpack) = query.get_mut(event.entity) {
             jetpack.equipped = event.equip;
             if !jetpack.equipped {
-                jetpack.active = false; // Auto deactivate if unequipped
+                jetpack.active = false;
             }
             info!("Jetpack: Equipped state set to {} for {:?}", jetpack.equipped, event.entity);
         }
     }
 
-    for event in toggle_events.read() {
+    for event in toggle_queue.0.drain(..) {
         if let Ok(mut jetpack) = query.get_mut(event.entity) {
             if jetpack.equipped && jetpack.current_fuel > 0.0 {
                 jetpack.active = event.active;
-                if jetpack.active {
-                     // Reset last used time will happen when stopping? 
-                     // Or maybe tracking active state handles it.
-                } else {
+                if !jetpack.active {
                      jetpack.last_used_time = time.elapsed_secs();
                 }
                 info!("Jetpack: Active state set to {} for {:?}", jetpack.active, event.entity);
@@ -124,7 +130,7 @@ pub fn handle_jetpack_events(
         }
     }
     
-    for event in turbo_events.read() {
+    for event in turbo_queue.0.drain(..) {
         if let Ok(mut jetpack) = query.get_mut(event.entity) {
             jetpack.turbo_active = event.active;
             info!("Jetpack: Turbo state set to {} for {:?}", jetpack.turbo_active, event.entity);
@@ -139,18 +145,15 @@ pub fn manage_jetpack_fuel(
 ) {
     for mut jetpack in query.iter_mut() {
         if jetpack.active {
-            // Consume fuel
             let consumption = jetpack.fuel_burn_rate * time.delta_secs();
             jetpack.current_fuel = (jetpack.current_fuel - consumption).max(0.0);
             
-            // Auto-cutoff if out of fuel
             if jetpack.current_fuel <= 0.0 {
                 jetpack.active = false;
                 jetpack.last_used_time = time.elapsed_secs();
                 info!("Jetpack: Out of fuel!");
             }
         } else {
-            // Regenerate fuel if enough time passed since use
             if time.elapsed_secs() > jetpack.last_used_time + jetpack.recharge_delay {
                 if jetpack.current_fuel < jetpack.max_fuel {
                     let recharge = jetpack.fuel_recharge_rate * time.delta_secs();
@@ -172,17 +175,15 @@ pub fn update_jetpack_physics(
             continue;
         }
 
-        // Calculate force direction (Up + Horizontal Input)
-        let up = Vec3::Y; // Global Up
-        let move_input = input_state.move_direction;
+        let up = Vec3::Y;
+        let move_input = input_state.movement;
         let forward = global_transform.forward();
         let right = global_transform.right();
         
-        let mut force_dir = up; // Primary thrust is up
+        let mut force_dir = up; 
         
-        // Add horizontal control
-        force_dir += forward * move_input.z * 0.5; // Scale horizontal influence
-        force_dir += right * move_input.x * 0.5;
+        force_dir += *forward * move_input.y * 0.5;
+        force_dir += *right * move_input.x * 0.5;
         
         force_dir = force_dir.normalize();
 
@@ -191,16 +192,13 @@ pub fn update_jetpack_physics(
             force_magnitude *= jetpack.turbo_force_multiplier;
         }
 
-        // Apply to velocity (Simulated)
         let acceleration = force_dir * force_magnitude;
         jetpack.velocity += acceleration * time.delta_secs();
         
-         // Clamp max velocity
         if jetpack.velocity.length() > jetpack.max_velocity {
             jetpack.velocity = jetpack.velocity.normalize() * jetpack.max_velocity;
         }
 
-        // Apply velocity to transform (Manual integration)
         if let Some(mut transform) = transform_opt {
              transform.translation += jetpack.velocity * time.delta_secs();
         }

@@ -12,9 +12,9 @@ impl Plugin for PlayerModesPlugin {
             .register_type::<PlayerModesSystem>()
             .register_type::<PlayerMode>()
             .register_type::<PlayerControlState>()
-            .add_event::<SetPlayerModeEvent>()
-            .add_event::<SetControlStateEvent>()
-            .add_event::<PlayerModeChangedEvent>()
+            .init_resource::<SetPlayerModeQueue>()
+            .init_resource::<SetControlStateQueue>()
+            .init_resource::<PlayerModeChangedQueue>()
             .add_systems(Update, (
                 handle_mode_changes,
                 handle_control_state_changes,
@@ -94,34 +94,43 @@ impl Default for PlayerModesSystem {
 }
 
 /// Event to set the active player mode
-#[derive(Event)]
+#[derive(Debug, Clone)]
 pub struct SetPlayerModeEvent {
     pub player_entity: Entity,
     pub mode_name: String,
 }
 
+#[derive(Resource, Default)]
+pub struct SetPlayerModeQueue(pub Vec<SetPlayerModeEvent>);
+
 /// Event to set the active control state
-#[derive(Event)]
+#[derive(Debug, Clone)]
 pub struct SetControlStateEvent {
     pub player_entity: Entity,
     pub state_name: String,
 }
 
+#[derive(Resource, Default)]
+pub struct SetControlStateQueue(pub Vec<SetControlStateEvent>);
+
 /// Event fired when player mode changes
-#[derive(Event)]
+#[derive(Debug, Clone)]
 pub struct PlayerModeChangedEvent {
     pub player_entity: Entity,
     pub new_mode_name: String,
     pub is_control_state: bool, // true if it's a control state change, false if it's a player mode change
 }
 
+#[derive(Resource, Default)]
+pub struct PlayerModeChangedQueue(pub Vec<PlayerModeChangedEvent>);
+
 /// System to handle player mode changes
 pub fn handle_mode_changes(
-    mut events: EventReader<SetPlayerModeEvent>,
-    mut change_events: EventWriter<PlayerModeChangedEvent>,
+    mut events_queue: ResMut<SetPlayerModeQueue>,
+    mut change_events_queue: ResMut<PlayerModeChangedQueue>,
     mut query: Query<&mut PlayerModesSystem>,
 ) {
-    for event in events.read() {
+    for event in events_queue.0.drain(..) {
         if let Ok(mut modes_system) = query.get_mut(event.player_entity) {
             if !modes_system.change_mode_enabled {
                 continue;
@@ -145,7 +154,7 @@ pub fn handle_mode_changes(
                 modes_system.player_modes[index].is_current_state = true;
                 modes_system.current_players_mode_name = modes_system.player_modes[index].name.clone();
                 
-                 change_events.send(PlayerModeChangedEvent {
+                 change_events_queue.0.push(PlayerModeChangedEvent {
                     player_entity: event.player_entity,
                     new_mode_name: event.mode_name.clone(),
                     is_control_state: false,
@@ -161,11 +170,11 @@ pub fn handle_mode_changes(
 
 /// System to handle control state changes
 pub fn handle_control_state_changes(
-    mut events: EventReader<SetControlStateEvent>,
-    mut change_events: EventWriter<PlayerModeChangedEvent>,
+    mut events_queue: ResMut<SetControlStateQueue>,
+    mut change_events_queue: ResMut<PlayerModeChangedQueue>,
     mut query: Query<&mut PlayerModesSystem>,
 ) {
-    for event in events.read() {
+    for event in events_queue.0.drain(..) {
         if let Ok(mut modes_system) = query.get_mut(event.player_entity) {
             // Find if state exists and is enabled
              let state_index = modes_system.player_control_states.iter().position(|s| s.name == event.state_name);
@@ -185,7 +194,7 @@ pub fn handle_control_state_changes(
                 modes_system.player_control_states[index].is_current_state = true;
                 modes_system.current_control_state_name = modes_system.player_control_states[index].name.clone();
                 
-                change_events.send(PlayerModeChangedEvent {
+                change_events_queue.0.push(PlayerModeChangedEvent {
                     player_entity: event.player_entity,
                     new_mode_name: event.state_name.clone(),
                     is_control_state: true,

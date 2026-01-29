@@ -77,8 +77,8 @@ pub fn update_idle_system(
         }
 
         // Check if player is using input
-        let is_using_input = input_state.move_direction.length_squared() > 0.01 
-            || input_state.look_direction.length_squared() > 0.01;
+        let is_using_input = input_state.movement.length_squared() > 0.01 
+            || input_state.look.length_squared() > 0.01;
 
         if is_using_input {
             if !idle_system.idle_stopped_automatically {

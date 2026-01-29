@@ -62,7 +62,7 @@ pub fn handle_wall_run_check(
 ) {
     for (mut wall_run, global_transform) in query.iter_mut() {
         // Only check if moving forward and in air (simplified condition)
-        if input_state.move_direction.z <= 0.0 { // Assuming Z is forward in local space
+        if input_state.movement.y <= 0.0 { // Assuming Y is forward in input axis
              // Not moving forward, cannot wall run
              if wall_run.active {
                  wall_run.active = false;
@@ -116,7 +116,7 @@ pub fn update_wall_run_physics(
         if let Some(mut transform) = transform_opt {
              // Move forward along the wall
              // In a real system, we project the forward vector onto the wall plane using the normal
-             let forward_speed = if input_state.sprint { wall_run.wall_sprint_speed } else { wall_run.wall_run_speed };
+             let forward_speed = if input_state.sprint_pressed { wall_run.wall_sprint_speed } else { wall_run.wall_run_speed };
              
              // Placeholder movement
              // transform.translation += transform.forward() * forward_speed * time.delta_secs();

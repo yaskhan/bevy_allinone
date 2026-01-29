@@ -3,7 +3,7 @@
 //! Enables 6DOF flight movement for characters.
 
 use bevy::prelude::*;
-use crate::input::InputState; // Assuming InputState is available
+use crate::input::InputState;
 
 pub struct FlyPlugin;
 
@@ -11,8 +11,8 @@ impl Plugin for FlyPlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<Fly>()
-            .add_event::<ToggleFlyModeEvent>()
-            .add_event::<FlyTurboEvent>()
+            .init_resource::<ToggleFlyModeQueue>()
+            .init_resource::<FlyTurboQueue>()
             .add_systems(Update, (
                 handle_fly_mode_events,
                 update_fly_physics,
@@ -31,7 +31,7 @@ pub struct Fly {
     pub max_velocity: f32,
     pub vertical_speed: f32,
     pub turbo_active: bool,
-    pub velocity: Vec3, // Simulated velocity for now, ideally coupled with RB
+    pub velocity: Vec3, // Simulated velocity
 }
 
 impl Default for Fly {
@@ -49,26 +49,34 @@ impl Default for Fly {
     }
 }
 
-/// Event to toggle flight mode
-#[derive(Event)]
+/// Event data to toggle flight mode
+#[derive(Debug, Clone, Copy)]
 pub struct ToggleFlyModeEvent {
     pub entity: Entity,
 }
 
-/// Event to toggle turbo speed
-#[derive(Event)]
+/// Queue for toggle events
+#[derive(Resource, Default)]
+pub struct ToggleFlyModeQueue(pub Vec<ToggleFlyModeEvent>);
+
+/// Event data to toggle turbo speed
+#[derive(Debug, Clone, Copy)]
 pub struct FlyTurboEvent {
     pub entity: Entity,
     pub active: bool,
 }
 
-/// System to handle flight mode toggling
+/// Queue for turbo events
+#[derive(Resource, Default)]
+pub struct FlyTurboQueue(pub Vec<FlyTurboEvent>);
+
+/// System to handle flight mode settings
 pub fn handle_fly_mode_events(
-    mut toggle_events: EventReader<ToggleFlyModeEvent>,
-    mut turbo_events: EventReader<FlyTurboEvent>,
+    mut toggle_queue: ResMut<ToggleFlyModeQueue>,
+    mut turbo_queue: ResMut<FlyTurboQueue>,
     mut query: Query<&mut Fly>,
 ) {
-    for event in toggle_events.read() {
+    for event in toggle_queue.0.drain(..) {
         if let Ok(mut fly) = query.get_mut(event.entity) {
             fly.active = !fly.active;
             fly.velocity = Vec3::ZERO; // Reset velocity on toggle
@@ -76,7 +84,7 @@ pub fn handle_fly_mode_events(
         }
     }
 
-    for event in turbo_events.read() {
+    for event in turbo_queue.0.drain(..) {
         if let Ok(mut fly) = query.get_mut(event.entity) {
             fly.turbo_active = event.active;
             info!("Fly System: Turbo active: {} for {:?}", fly.turbo_active, event.entity);
@@ -95,26 +103,22 @@ pub fn update_fly_physics(
             continue;
         }
 
-        // Calculate target direction relative to camera/character facing
-        // For simplicity, we assume generic movement in XZ plane relative to character forward
         let forward = global_transform.forward();
         let right = global_transform.right();
         let up = Vec3::Y;
 
-        let move_input = input_state.move_direction; // Vec3 (x, y, z) where y might be 0 from input
+        let move_input = input_state.movement;
 
         let mut target_velocity = Vec3::ZERO;
 
         // Horizontal movement
-        target_velocity += forward * move_input.z * fly.fly_speed;
-        target_velocity += right * move_input.x * fly.fly_speed;
+        target_velocity += *forward * move_input.y * fly.fly_speed;
+        target_velocity += *right * move_input.x * fly.fly_speed;
 
-        // Vertical movement (Space/Shift usually, or buttons)
-        // Simulating vertical input check
-        if input_state.jump { // Using jump as Up
+        // Vertical movement
+        if input_state.jump_pressed {
             target_velocity += up * fly.vertical_speed;
         }
-        // Needs a 'Down' input mapping in InputState ideally, assuming none for now or maybe Crouch?
         
         if fly.turbo_active {
             target_velocity *= fly.turbo_speed_multiplier;
@@ -124,12 +128,10 @@ pub fn update_fly_physics(
         let friction_factor = 1.0 - (fly.friction * time.delta_secs()).clamp(0.0, 1.0);
         fly.velocity = fly.velocity * friction_factor + target_velocity * time.delta_secs();
 
-        // Clamp max velocity
         if fly.velocity.length() > fly.max_velocity {
             fly.velocity = fly.velocity.normalize() * fly.max_velocity;
         }
 
-        // Apply velocity to transform (Manual integration)
         if let Some(mut transform) = transform_opt {
             transform.translation += fly.velocity * time.delta_secs();
         }

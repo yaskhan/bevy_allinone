@@ -10,9 +10,9 @@ impl Plugin for NavMeshOverridePlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<NavMeshOverride>()
-            .add_event::<EnableNavMeshOverrideEvent>()
-            .add_event::<DisableNavMeshOverrideEvent>()
-            .add_event::<SetNavMeshTargetEvent>()
+            .init_resource::<EnableNavMeshOverrideQueue>()
+            .init_resource::<DisableNavMeshOverrideQueue>()
+            .init_resource::<SetNavMeshTargetQueue>()
             .add_systems(Update, (
                 handle_navmesh_override_events,
                 update_navmesh_override,
@@ -42,40 +42,49 @@ impl Default for NavMeshOverride {
 }
 
 /// Event to enable NavMesh override
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct EnableNavMeshOverrideEvent {
     pub entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct EnableNavMeshOverrideQueue(pub Vec<EnableNavMeshOverrideEvent>);
+
 /// Event to disable NavMesh override
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct DisableNavMeshOverrideEvent {
     pub entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct DisableNavMeshOverrideQueue(pub Vec<DisableNavMeshOverrideEvent>);
+
 /// Event to set a new NavMesh target
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct SetNavMeshTargetEvent {
     pub entity: Entity,
     pub target_position: Option<Vec3>,
     pub target_entity: Option<Entity>,
 }
 
+#[derive(Resource, Default)]
+pub struct SetNavMeshTargetQueue(pub Vec<SetNavMeshTargetEvent>);
+
 /// System to handle override events
 pub fn handle_navmesh_override_events(
-    mut enable_events: EventReader<EnableNavMeshOverrideEvent>,
-    mut disable_events: EventReader<DisableNavMeshOverrideEvent>,
-    mut target_events: EventReader<SetNavMeshTargetEvent>,
+    mut enable_queue: ResMut<EnableNavMeshOverrideQueue>,
+    mut disable_queue: ResMut<DisableNavMeshOverrideQueue>,
+    mut target_queue: ResMut<SetNavMeshTargetQueue>,
     mut query: Query<&mut NavMeshOverride>,
 ) {
-    for event in enable_events.read() {
+    for event in enable_queue.0.drain(..) {
         if let Ok(mut nav_override) = query.get_mut(event.entity) {
             nav_override.active = true;
             info!("NavMesh Override: Enabled for {:?}", event.entity);
         }
     }
 
-    for event in disable_events.read() {
+    for event in disable_queue.0.drain(..) {
         if let Ok(mut nav_override) = query.get_mut(event.entity) {
             nav_override.active = false;
             nav_override.target_entity = None;
@@ -85,7 +94,7 @@ pub fn handle_navmesh_override_events(
         }
     }
 
-    for event in target_events.read() {
+    for event in target_queue.0.drain(..) {
         if let Ok(mut nav_override) = query.get_mut(event.entity) {
             if !nav_override.active {
                 warn!("NavMesh Override: Received target for {:?} but override is inactive", event.entity);
@@ -123,9 +132,6 @@ pub fn update_navmesh_override(
         }
 
         if let Some(destination) = dest {
-             // Placeholder: In a real system, we would pump this destination into the NavMesh agent component
-             // For now, we just verify logic matches C# intent (setting target)
-             
              // Simple debug check: if close enough, set to Reached
              let dist = (destination - char_global.translation()).length();
              if dist < 0.5 {
@@ -135,9 +141,9 @@ pub fn update_navmesh_override(
                  }
              } else {
                  // Move towards target (Simple simulation)
-                  if let Some(mut transform) = char_transform.as_mut() {
-                      // transform.translation = transform.translation.lerp(destination, time.delta_secs());
-                      // Commented out to prevent unintended movement without proper physics/navmesh integration
+                  if let Some(transform) = char_transform.as_mut() {
+                      // Placeholder for actual movement logic
+                      let _ = transform; 
                   }
              }
         }

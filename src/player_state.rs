@@ -11,8 +11,8 @@ impl Plugin for PlayerStatePlugin {
         app
             .register_type::<PlayerStateSystem>()
             .register_type::<PlayerStateInfo>()
-            .add_event::<SetPlayerStateEvent>()
-            .add_event::<PlayerStateChangedEvent>()
+            .init_resource::<SetPlayerStateQueue>()
+            .init_resource::<PlayerStateChangedQueue>()
             .add_systems(Update, (
                 handle_state_change_events,
                 update_state_timers,
@@ -68,26 +68,32 @@ impl Default for PlayerStateSystem {
 }
 
 /// Event to set a player state
-#[derive(Event)]
+#[derive(Debug, Clone)]
 pub struct SetPlayerStateEvent {
     pub player_entity: Entity,
     pub state_name: String,
 }
 
-#[derive(Event)]
+#[derive(Resource, Default)]
+pub struct SetPlayerStateQueue(pub Vec<SetPlayerStateEvent>);
+
+#[derive(Debug, Clone)]
 pub struct PlayerStateChangedEvent {
     pub player_entity: Entity,
     pub state_name: String,
     pub active: bool,
 }
 
+#[derive(Resource, Default)]
+pub struct PlayerStateChangedQueue(pub Vec<PlayerStateChangedEvent>);
+
 /// System to handle state change events
 pub fn handle_state_change_events(
-    mut events: EventReader<SetPlayerStateEvent>,
-    mut change_events: EventWriter<PlayerStateChangedEvent>,
+    mut events_queue: ResMut<SetPlayerStateQueue>,
+    mut change_events_queue: ResMut<PlayerStateChangedQueue>,
     mut query: Query<&mut PlayerStateSystem>,
 ) {
-    for event in events.read() {
+    for event in events_queue.0.drain(..) {
         if let Ok(mut state_system) = query.get_mut(event.player_entity) {
             if !state_system.player_states_enabled {
                 continue;
@@ -127,7 +133,7 @@ pub fn handle_state_change_events(
                         state.state_active = false;
                         state.current_duration_timer = 0.0;
                         
-                        change_events.send(PlayerStateChangedEvent {
+                        change_events_queue.0.push(PlayerStateChangedEvent {
                             player_entity: event.player_entity,
                             state_name: state.name.clone(),
                             active: false,
@@ -136,14 +142,15 @@ pub fn handle_state_change_events(
                 }
 
                 // Activate new state
+                let state_name_clone = state_system.player_state_list[target_index].name.clone();
                 let state = &mut state_system.player_state_list[target_index];
                 state.state_active = true;
                 state.current_duration_timer = 0.0;
-                state_system.current_state_name = state.name.clone();
+                state_system.current_state_name = state_name_clone.clone();
                 
-                change_events.send(PlayerStateChangedEvent {
+                change_events_queue.0.push(PlayerStateChangedEvent {
                     player_entity: event.player_entity,
-                    state_name: state.name.clone(),
+                    state_name: state_name_clone,
                     active: true,
                 });
                 
@@ -158,7 +165,7 @@ pub fn handle_state_change_events(
 /// System to manage timers for states with durations
 pub fn update_state_timers(
     mut query: Query<(Entity, &mut PlayerStateSystem)>,
-    mut change_events: EventWriter<PlayerStateChangedEvent>,
+    mut change_events_queue: ResMut<PlayerStateChangedQueue>,
     time: Res<Time>,
 ) {
     for (player_entity, mut state_system) in query.iter_mut() {
@@ -176,7 +183,7 @@ pub fn update_state_timers(
                     state.current_duration_timer = 0.0;
                     expired_states.push(state.name.clone());
                     
-                    change_events.send(PlayerStateChangedEvent {
+                    change_events_queue.0.push(PlayerStateChangedEvent {
                         player_entity,
                         state_name: state.name.clone(),
                         active: false,

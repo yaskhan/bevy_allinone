@@ -3,7 +3,7 @@
 //! Manages UI icons visually representing active character states.
 
 use bevy::prelude::*;
-use crate::player_state::PlayerStateChangedEvent;
+use crate::player_state::{PlayerStateChangedEvent, PlayerStateChangedQueue};
 
 pub struct PlayerStateIconPlugin;
 
@@ -62,12 +62,14 @@ impl Default for PlayerStateIconSystem {
 
 /// System to handle visibility of icons based on state changes
 pub fn handle_state_icon_changes(
-    mut events: EventReader<PlayerStateChangedEvent>,
+    mut events_queue: ResMut<PlayerStateChangedQueue>,
     mut query: Query<&mut PlayerStateIconSystem>,
     mut visibility_query: Query<&mut Visibility>,
     time: Res<Time>,
 ) {
-    for event in events.read() {
+    // Note: This logic assumes this is the ONLY consumer of this queue. 
+    // Queues drain events, removing them.
+    for event in events_queue.0.drain(..) {
         for mut icon_system in query.iter_mut() {
             if !icon_system.icons_enabled {
                 continue;

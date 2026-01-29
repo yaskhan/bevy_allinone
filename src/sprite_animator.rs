@@ -92,10 +92,10 @@ pub fn update_sprite_animation(
         // Update data simulation (in real app, this comes from physics/controller)
         // Simulate velocity based on input for demonstration if needed, 
         // but ideally this is driven by the CharacterController
-        if input_state.move_direction.length_squared() > 0.0 {
+        if input_state.movement.length_squared() > 0.0 {
              // Just a simulation hack for state transition verification if no physics is hooked up yet
              if animator.is_grounded {
-                 animator.velocity = (input_state.move_direction.normalize_or_zero() * 3.0).extend(0.0).xzy();
+                 animator.velocity = (input_state.movement.normalize_or_zero() * 3.0).extend(0.0).xzy();
              }
         } else {
              animator.velocity = Vec3::ZERO;
@@ -114,7 +114,7 @@ pub fn handle_sprite_direction(
         }
 
         // Determine direction from input or velocity
-        let move_x = input_state.move_direction.x;
+        let move_x = input_state.movement.x;
 
         if move_x.abs() > 0.01 {
             let should_flip = move_x < 0.0;

@@ -3,7 +3,7 @@
 //! Manages sphere mode mechanics, allowing the player to roll like a ball.
 
 use bevy::prelude::*;
-use crate::input::InputState; // Assuming InputState is available
+use crate::input::InputState;
 
 pub struct SphereModePlugin;
 
@@ -11,7 +11,7 @@ impl Plugin for SphereModePlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<SphereMode>()
-            .add_event::<ToggleSphereModeEvent>()
+            .init_resource::<ToggleSphereModeQueue>()
             .add_systems(Update, (
                 handle_sphere_mode_input,
                 update_sphere_physics,
@@ -28,9 +28,7 @@ pub struct SphereMode {
     pub jump_force: f32,
     pub max_velocity: f32,
     pub friction: f32,
-    
-    // State
-    pub velocity: Vec3, // Simulated velocity
+    pub velocity: Vec3, 
 }
 
 impl Default for SphereMode {
@@ -46,19 +44,21 @@ impl Default for SphereMode {
     }
 }
 
-/// Event to toggle sphere mode
-#[derive(Event)]
+/// Event data to toggle sphere mode
+#[derive(Debug, Clone, Copy)]
 pub struct ToggleSphereModeEvent {
     pub entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct ToggleSphereModeQueue(pub Vec<ToggleSphereModeEvent>);
+
 /// System to handle input and toggle sphere mode
 pub fn handle_sphere_mode_input(
     mut query: Query<&mut SphereMode>,
-    mut toggle_events: EventReader<ToggleSphereModeEvent>,
-    // input_state: Res<InputState>, // Could use input to trigger toggle directly if needed
+    mut toggle_queue: ResMut<ToggleSphereModeQueue>,
 ) {
-    for event in toggle_events.read() {
+    for event in toggle_queue.0.drain(..) {
         if let Ok(mut sphere) = query.get_mut(event.entity) {
             sphere.active = !sphere.active;
             info!("Sphere Mode: Active state set to {} for {:?}", sphere.active, event.entity);
@@ -81,41 +81,34 @@ pub fn update_sphere_physics(
         let right = global_tf.right();
         let up = Vec3::Y;
 
-        let move_input = input_state.move_direction;
-        
-        // Torque/Roll force logic
-        // Ideally we apply torque to a rigid body. 
-        // Here we simulate velocity change based on input direction.
+        let move_input = input_state.movement;
         
         let mut target_velocity = Vec3::ZERO;
         
-        target_velocity += forward * move_input.z * sphere.roll_speed;
-        target_velocity += right * move_input.x * sphere.roll_speed;
+        target_velocity += *forward * move_input.y * sphere.roll_speed;
+        target_velocity += *right * move_input.x * sphere.roll_speed;
         
-        if input_state.jump {
-             // Bounce / Jump
+        if input_state.jump_pressed {
              target_velocity += up * sphere.jump_force;
         }
         
-        // Apply friction
         let friction_factor = 1.0 - (sphere.friction * time.delta_secs()).clamp(0.0, 1.0);
         sphere.velocity = sphere.velocity * friction_factor + target_velocity * time.delta_secs();
 
-        // Clamp
         if sphere.velocity.length() > sphere.max_velocity {
             sphere.velocity = sphere.velocity.normalize() * sphere.max_velocity;
         }
 
-        // Apply translation
         if let Some(mut transform) = transform_opt {
              transform.translation += sphere.velocity * time.delta_secs();
              
-             // Visual Rolling Rotation (Fake visual rotation based on velocity)
              let velocity_mag = sphere.velocity.length();
              if velocity_mag > 0.1 {
                  let axis = sphere.velocity.cross(Vec3::Y).normalize_or_zero();
-                 let angle = velocity_mag * time.delta_secs(); // Approx
-                 transform.rotate_axis(axis, angle);
+                 if let Ok(dir) = Dir3::new(axis) {
+                     let angle = velocity_mag * time.delta_secs();
+                     transform.rotate_axis(dir, angle);
+                 }
              }
         }
     }

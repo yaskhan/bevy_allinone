@@ -11,8 +11,8 @@ impl Plugin for RagdollPlugin {
         app
             .register_type::<Ragdoll>()
             .register_type::<RagdollState>()
-            .add_event::<ActivateRagdollEvent>()
-            .add_event::<DeactivateRagdollEvent>()
+            .init_resource::<ActivateRagdollQueue>()
+            .init_resource::<DeactivateRagdollQueue>()
             .add_systems(Update, (
                 handle_ragdoll_activation,
                 update_ragdoll_state,
@@ -60,40 +60,43 @@ impl Default for Ragdoll {
 }
 
 /// Event to activate ragdoll physics
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct ActivateRagdollEvent {
     pub entity: Entity,
     pub force_direction: Option<Vec3>,
     pub force_magnitude: f32,
 }
 
+#[derive(Resource, Default)]
+pub struct ActivateRagdollQueue(pub Vec<ActivateRagdollEvent>);
+
 /// Event to deactivate ragdoll and return to animation
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct DeactivateRagdollEvent {
     pub entity: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct DeactivateRagdollQueue(pub Vec<DeactivateRagdollEvent>);
+
 /// System to handle activation events
 pub fn handle_ragdoll_activation(
-    mut activate_events: EventReader<ActivateRagdollEvent>,
-    mut deactivate_events: EventReader<DeactivateRagdollEvent>,
+    mut activate_queue: ResMut<ActivateRagdollQueue>,
+    mut deactivate_queue: ResMut<DeactivateRagdollQueue>,
     mut query: Query<&mut Ragdoll>,
-    // mut physics_query: Query<&mut RigidBody>, // Placeholder for physics integration
 ) {
-    for event in activate_events.read() {
+    for event in activate_queue.0.drain(..) {
         if let Ok(mut ragdoll) = query.get_mut(event.entity) {
              if ragdoll.current_state != RagdollState::Ragdolled {
                 ragdoll.current_state = RagdollState::Ragdolled;
                 ragdoll.timer = 0.0;
                 
-                // Placeholder: Enable physics simulation on body parts
                 info!("Ragdoll: Activated for {:?}. Apply force: {:?} * {}", event.entity, event.force_direction, event.force_magnitude);
-                // logic to set rigidbodies to dynamic, disable animator, etc.
              }
         }
     }
 
-    for event in deactivate_events.read() {
+    for event in deactivate_queue.0.drain(..) {
         if let Ok(mut ragdoll) = query.get_mut(event.entity) {
             if ragdoll.current_state == RagdollState::Ragdolled {
                 // Transition to blending state
@@ -113,22 +116,17 @@ pub fn update_ragdoll_state(
     for mut ragdoll in query.iter_mut() {
         match ragdoll.current_state {
             RagdollState::Ragdolled => {
-                // Check if velocity is low enough to be considered on ground/stopped
-                // Update timer if needed for auto-getup
-                
                 // Placeholder logic:
                 ragdoll.timer += time.delta_secs();
                 if ragdoll.timer > 10.0 { // Failsafe auto get up?
-                     // Verify conditions or waiting for trigger
+                     // Verify conditions
                 }
             }
             RagdollState::BlendToAnim => {
-                // Handle blending logic (lerping positions back to animation)
                 ragdoll.timer += time.delta_secs();
-                if ragdoll.timer >= 1.0 { // assume 1 sec blend time
+                if ragdoll.timer >= 1.0 { 
                     ragdoll.current_state = RagdollState::Animated;
                     info!("Ragdoll: Fully recovered to Animated state");
-                    // Logic to re-enable animator and set physics to kinematic
                 }
             }
             RagdollState::Animated => {

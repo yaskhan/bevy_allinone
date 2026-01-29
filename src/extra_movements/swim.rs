@@ -132,20 +132,20 @@ pub fn update_swim_physics(
         let right = global_tf.right();
         let up = Vec3::Y;
         
-        let move_input = input_state.move_direction;
+        let move_input = input_state.movement;
         
         let mut target_velocity = Vec3::ZERO;
         
         // Horizontal Movement
-        target_velocity += forward * move_input.z * swim.swim_speed;
-        target_velocity += right * move_input.x * swim.swim_speed;
+        target_velocity += *forward * move_input.y * swim.swim_speed;
+        target_velocity += *right * move_input.x * swim.swim_speed;
         
         // Vertical Movement (Buoyancy / Diving)
         // If on surface, space to jump out, crouch to dive?
         // If underwater, camera pitch usually controls forward direction (3D swim)
         // For now, simpler implementation:
         
-        if input_state.jump {
+        if input_state.jump_pressed {
             target_velocity += up * swim.vertical_speed;
         }
         // Assuming crouch input exists or mapped
@@ -156,7 +156,7 @@ pub fn update_swim_physics(
         // Surface snapping (Buoyancy)
         if let Some(surface_level) = swim.current_water_level {
             let player_y = global_tf.translation().y;
-            if !swim.is_underwater && !input_state.jump && player_y < surface_level {
+            if !swim.is_underwater && !input_state.jump_pressed && player_y < surface_level {
                  // Float up to surface
                  target_velocity += up * 2.0; 
             }

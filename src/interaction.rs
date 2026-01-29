@@ -15,8 +15,8 @@ impl Plugin for InteractionPlugin {
             .init_resource::<InteractionEventQueue>()
             .init_resource::<CurrentInteractable>()
             .init_resource::<InteractionDebugSettings>()
-            .add_event::<AddDeviceEvent>()
-            .add_event::<RemoveDeviceEvent>()
+            .init_resource::<AddDeviceQueue>()
+            .init_resource::<RemoveDeviceQueue>()
             .add_systems(Update, (
                 detect_interactables,
                 detect_devices_in_proximity,
@@ -32,18 +32,24 @@ impl Plugin for InteractionPlugin {
 }
 
 /// Event to add a device to the player's list
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct AddDeviceEvent {
     pub player: Entity,
     pub device: Entity,
 }
 
+#[derive(Resource, Default)]
+pub struct AddDeviceQueue(pub Vec<AddDeviceEvent>);
+
 /// Event to remove a device from the player's list
-#[derive(Event)]
+#[derive(Debug, Clone, Copy)]
 pub struct RemoveDeviceEvent {
     pub player: Entity,
     pub device: Entity,
 }
+
+#[derive(Resource, Default)]
+pub struct RemoveDeviceQueue(pub Vec<RemoveDeviceEvent>);
 
 /// Component for entities that can detect and interact with objects
 #[derive(Component, Debug, Reflect)]
@@ -306,7 +312,7 @@ fn update_interaction_ui(
         let mut target_is_in_range = false;
 
         // Try to get info from UsingDevicesSystem first
-        if let Ok(player_system) = player_query.get_single() {
+        if let Some(player_system) = player_query.iter().next() {
             if player_system.current_device_index >= 0 {
                 if let Some(device) = player_system.device_list.get(player_system.current_device_index as usize) {
                     if let Ok(interactable) = interactables.get(device.entity) {
@@ -424,7 +430,7 @@ pub struct InteractionEvent {
     pub interaction_type: InteractionType,
 }
 
-/// Custom queue for interaction events (Workaround for Bevy 0.18 EventReader issues)
+/// Custom queue for interaction events
 #[derive(Resource, Default)]
 pub struct InteractionEventQueue(pub Vec<InteractionEvent>);
 
@@ -521,7 +527,7 @@ fn process_interactions(
 
     // Preference for UsingDevicesSystem
     let mut source_entity = Entity::PLACEHOLDER;
-    if let Ok((player_entity, player_system)) = player_query.get_single_mut() {
+    if let Some((player_entity, player_system)) = player_query.iter_mut().next() {
         source_entity = player_entity;
         if player_system.current_device_index >= 0 {
             if let Some(device) = player_system.device_list.get(player_system.current_device_index as usize) {
@@ -621,12 +627,12 @@ fn debug_draw_interaction_rays(
 
 /// System to update the player's device list based on events
 pub fn update_device_list(
-    mut add_events: EventReader<AddDeviceEvent>,
-    mut remove_events: EventReader<RemoveDeviceEvent>,
+    mut add_queue: ResMut<AddDeviceQueue>,
+    mut remove_queue: ResMut<RemoveDeviceQueue>,
     mut players: Query<&mut UsingDevicesSystem>,
     devices: Query<(&DeviceStringAction, &GlobalTransform)>,
 ) {
-    for event in add_events.read() {
+    for event in add_queue.0.drain(..) {
         if let Ok(mut player_system) = players.get_mut(event.player) {
             if let Ok((device_action, _transform)) = devices.get(event.device) {
                 // Check if already in list
@@ -649,7 +655,7 @@ pub fn update_device_list(
         }
     }
 
-    for event in remove_events.read() {
+    for event in remove_queue.0.drain(..) {
         if let Ok(mut player_system) = players.get_mut(event.player) {
             player_system.device_list.retain(|d| d.entity != event.device);
         }
@@ -697,8 +703,8 @@ pub fn select_closest_device(
 pub fn detect_devices_in_proximity(
     player_query: Query<(Entity, &GlobalTransform, &UsingDevicesSystem)>,
     device_query: Query<(Entity, &GlobalTransform), With<DeviceStringAction>>,
-    mut add_events: EventWriter<AddDeviceEvent>,
-    mut remove_events: EventWriter<RemoveDeviceEvent>,
+    mut add_queue: ResMut<AddDeviceQueue>,
+    mut remove_queue: ResMut<RemoveDeviceQueue>,
 ) {
     for (player_entity, player_transform, player_system) in player_query.iter() {
         let player_pos = player_transform.translation();
@@ -710,13 +716,13 @@ pub fn detect_devices_in_proximity(
             
             if dist < player_system.raycast_distance {
                 if !is_in_list {
-                    add_events.send(AddDeviceEvent {
+                    add_queue.0.push(AddDeviceEvent {
                         player: player_entity,
                         device: device_entity,
                     });
                 }
             } else if is_in_list {
-                remove_events.send(RemoveDeviceEvent {
+                remove_queue.0.push(RemoveDeviceEvent {
                     player: player_entity,
                     device: device_entity,
                 });

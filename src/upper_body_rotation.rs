@@ -96,7 +96,7 @@ pub fn update_upper_body_rotation(
         // This is a simplified version applying rotation towards target
         
         // Helper to rotate a bone
-        let rotate_bone = |bone_entity: Entity| {
+        let mut rotate_bone = |bone_entity: Entity| {
             if let Ok(mut transform) = transforms.get_mut(bone_entity) {
                 // Get bone global rotation (simplified assumption: bone is child of character)
                 // In a real scenario we'd need to calculate local rotation required to achieve global look dir
