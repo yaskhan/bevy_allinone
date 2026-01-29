@@ -778,4 +778,438 @@ impl WeaponManager {
             Err("Weapon attachment system not found".to_string())
         }
     }
+
+    // ============================================================================
+    // Weapon Selection and Quick Access Methods
+    // ============================================================================
+
+    /// Select a weapon by its index in the weapons list
+    pub fn select_weapon_by_index(
+        &mut self,
+        index: usize,
+        commands: &mut Commands,
+        weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
+    ) -> Result<(), String> {
+        if index >= self.weapons_list.len() {
+            return Err(format!("Weapon index {} out of range", index));
+        }
+
+        let weapon_entity = self.weapons_list[index];
+
+        // Update current index
+        self.current_index = index;
+        self.choosed_weapon = index;
+
+        // Update visibility for all weapons
+        for (i, &weapon_ent) in self.weapons_list.iter().enumerate() {
+            if let Ok((_, mut visibility)) = weapon_query.get_mut(weapon_ent) {
+                if i == index && self.carrying_weapon_in_third_person {
+                    *visibility = Visibility::Inherited;
+                } else {
+                    *visibility = Visibility::Hidden;
+                }
+            }
+        }
+
+        // Set changing weapon state
+        if self.carrying_weapon_in_third_person || self.carrying_weapon_in_first_person {
+            self.changing_weapon = true;
+            self.keeping_weapon = false;
+        }
+
+        if self.show_debug_log {
+            info!("Selected weapon at index {}: {}", index, self.get_weapon_name(weapon_entity));
+        }
+
+        Ok(())
+    }
+
+    /// Select a weapon by its key number (1-10)
+    pub fn select_weapon_by_key(
+        &mut self,
+        key_number: u8,
+        commands: &mut Commands,
+        weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
+    ) -> Result<(), String> {
+        if key_number < 1 || key_number > 10 {
+            return Err(format!("Key number {} out of range (1-10)", key_number));
+        }
+
+        // Find weapon with matching key number
+        for (index, &weapon_entity) in self.weapons_list.iter().enumerate() {
+            if let Ok((weapon, _)) = weapon_query.get(weapon_entity) {
+                if weapon.key_number == key_number {
+                    return self.select_weapon_by_index(index, commands, weapon_query);
+                }
+            }
+        }
+
+        Err(format!("No weapon assigned to key {}", key_number))
+    }
+
+    /// Assign a weapon to a quick access slot
+    pub fn assign_weapon_to_slot(
+        &mut self,
+        weapon_entity: Entity,
+        slot_number: u8,
+        weapon_query: &mut Query<&mut Weapon>,
+    ) -> Result<(), String> {
+        if slot_number < 1 || slot_number > 10 {
+            return Err(format!("Slot number {} out of range (1-10)", slot_number));
+        }
+
+        // Check if weapon exists in list
+        let weapon_index = match self.weapons_list.iter().position(|&e| e == weapon_entity) {
+            Some(index) => index,
+            None => return Err("Weapon not found in manager".to_string()),
+        };
+
+        // Update weapon's key number
+        if let Ok(mut weapon) = weapon_query.get_mut(weapon_entity) {
+            weapon.key_number = slot_number;
+        }
+
+        if self.show_debug_log {
+            info!(
+                "Assigned weapon to slot {}: {}",
+                slot_number,
+                self.get_weapon_name(weapon_entity)
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Get weapon assigned to a specific slot
+    pub fn get_weapon_from_slot(
+        &self,
+        slot_number: u8,
+        weapon_query: &Query<&Weapon>,
+    ) -> Option<Entity> {
+        if slot_number < 1 || slot_number > 10 {
+            return None;
+        }
+
+        for &weapon_entity in &self.weapons_list {
+            if let Ok(weapon) = weapon_query.get(weapon_entity) {
+                if weapon.key_number == slot_number {
+                    return Some(weapon_entity);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Get all weapons with their slot assignments
+    pub fn get_all_weapon_slots(
+        &self,
+        weapon_query: &Query<&mut Weapon>,
+    ) -> Vec<(u8, Entity, String)> {
+        let mut slots = Vec::new();
+
+        for &weapon_entity in &self.weapons_list {
+            if let Ok(weapon) = weapon_query.get(weapon_entity) {
+                if weapon.key_number > 0 {
+                    slots.push((
+                        weapon.key_number,
+                        weapon_entity,
+                        weapon.weapon_name.clone(),
+                    ));
+                }
+            }
+        }
+
+        // Sort by slot number
+        slots.sort_by_key(|(slot, _, _)| *slot);
+
+        slots
+    }
+
+    /// Clear all slot assignments
+    pub fn clear_all_slots(&mut self, weapon_query: &mut Query<&mut Weapon>) -> Result<(), String> {
+        for &weapon_entity in &self.weapons_list {
+            if let Ok(mut weapon) = weapon_query.get_mut(weapon_entity) {
+                weapon.key_number = 0;
+            }
+        }
+
+        if self.show_debug_log {
+            info!("Cleared all weapon slot assignments");
+        }
+
+        Ok(())
+    }
+
+    /// Select next weapon in list
+    pub fn select_next_weapon(
+        &mut self,
+        commands: &mut Commands,
+        weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
+    ) -> Result<(), String> {
+        if self.weapons_list.is_empty() {
+            return Err("No weapons available".to_string());
+        }
+
+        let next_index = (self.current_index + 1) % self.weapons_list.len();
+        self.select_weapon_by_index(next_index, commands, weapon_query)
+    }
+
+    /// Select previous weapon in list
+    pub fn select_previous_weapon(
+        &mut self,
+        commands: &mut Commands,
+        weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
+    ) -> Result<(), String> {
+        if self.weapons_list.is_empty() {
+            return Err("No weapons available".to_string());
+        }
+
+        let prev_index = if self.current_index == 0 {
+            self.weapons_list.len() - 1
+        } else {
+            self.current_index - 1
+        };
+
+        self.select_weapon_by_index(prev_index, commands, weapon_query)
+    }
+
+    /// Select weapon by name
+    pub fn select_weapon_by_name(
+        &mut self,
+        name: &str,
+        commands: &mut Commands,
+        weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
+    ) -> Result<(), String> {
+        for (index, &weapon_entity) in self.weapons_list.iter().enumerate() {
+            if let Ok(weapon) = weapon_query.get(weapon_entity) {
+                if weapon.weapon_name == name {
+                    return self.select_weapon_by_index(index, commands, weapon_query);
+                }
+            }
+        }
+
+        Err(format!("Weapon '{}' not found", name))
+    }
+
+    /// Get the name of a weapon entity
+    fn get_weapon_name(&self, weapon_entity: Entity) -> String {
+        // This is a helper - in real usage, you'd pass the query
+        format!("Weapon {:?}", weapon_entity)
+    }
+
+    /// Check if a weapon is currently selected
+    pub fn is_weapon_selected(&self, weapon_entity: Entity) -> bool {
+        if self.current_index >= self.weapons_list.len() {
+            return false;
+        }
+        self.weapons_list[self.current_index] == weapon_entity
+    }
+
+    /// Get the currently selected weapon entity
+    pub fn get_current_weapon(&self) -> Option<Entity> {
+        if self.current_index < self.weapons_list.len() {
+            Some(self.weapons_list[self.current_index])
+        } else {
+            None
+        }
+    }
+
+    /// Get all available weapons (for UI display)
+    pub fn get_available_weapons(&self, weapon_query: &Query<&Weapon>) -> Vec<(usize, Entity, String, bool)> {
+        let mut weapons = Vec::new();
+
+        for (index, &weapon_entity) in self.weapons_list.iter().enumerate() {
+            if let Ok(weapon) = weapon_query.get(weapon_entity) {
+                if weapon.enabled {
+                    weapons.push((
+                        index,
+                        weapon_entity,
+                        weapon.weapon_name.clone(),
+                        index == self.current_index,
+                    ));
+                }
+            }
+        }
+
+        weapons
+    }
+
+    /// Add a weapon to the quick access list
+    pub fn add_weapon_to_quick_access(
+        &mut self,
+        weapon_entity: Entity,
+        slot_number: u8,
+        weapon_query: &mut Query<&mut Weapon>,
+    ) -> Result<(), String> {
+        // Check if weapon is already in the list
+        if !self.weapons_list.contains(&weapon_entity) {
+            self.weapons_list.push(weapon_entity);
+        }
+
+        // Assign to slot
+        self.assign_weapon_to_slot(weapon_entity, slot_number, weapon_query)
+    }
+
+    /// Remove weapon from quick access
+    pub fn remove_weapon_from_quick_access(
+        &mut self,
+        weapon_entity: Entity,
+        weapon_query: &mut Query<&mut Weapon>,
+    ) -> Result<(), String> {
+        // Clear slot assignment
+        if let Ok(mut weapon) = weapon_query.get_mut(weapon_entity) {
+            weapon.key_number = 0;
+        }
+
+        // Remove from list
+        if let Some(index) = self.weapons_list.iter().position(|&e| e == weapon_entity) {
+            self.weapons_list.remove(index);
+
+            // Adjust current index if needed
+            if self.current_index >= self.weapons_list.len() {
+                self.current_index = 0;
+            }
+
+            if self.show_debug_log {
+                info!("Removed weapon from quick access");
+            }
+
+            Ok(())
+        } else {
+            Err("Weapon not found in manager".to_string())
+        }
+    }
+
+    /// Get weapon info for UI display
+    pub fn get_weapon_info_for_ui(
+        &self,
+        weapon_entity: Entity,
+        weapon_query: &Query<&mut Weapon>,
+    ) -> Option<WeaponUIInfo> {
+        if let Ok(weapon) = weapon_query.get(weapon_entity) {
+            Some(WeaponUIInfo {
+                name: weapon.weapon_name.clone(),
+                key_number: weapon.key_number,
+                current_ammo: weapon.current_ammo,
+                max_ammo: weapon.ammo_capacity,
+                is_reloading: weapon.is_reloading,
+                is_selected: self.is_weapon_selected(weapon_entity),
+                enabled: weapon.enabled,
+                equipped: weapon.equipped,
+            })
+        } else {
+            None
+        }
+    }
 }
+
+/// Information about a weapon for UI display
+#[derive(Debug, Clone)]
+pub struct WeaponUIInfo {
+    pub name: String,
+    pub key_number: u8,
+    pub current_ammo: i32,
+    pub max_ammo: i32,
+    pub is_reloading: bool,
+    pub is_selected: bool,
+    pub enabled: bool,
+    pub equipped: bool,
+}
+
+/// System to handle weapon selection via number keys
+pub fn handle_weapon_selection_input(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut manager_query: Query<(&mut WeaponManager, &mut WeaponAttachmentSystem)>,
+    mut weapon_query: Query<(&mut Weapon, &mut Visibility)>,
+    mut commands: Commands,
+) {
+    for (mut manager, mut attachment_system) in manager_query.iter_mut() {
+        // Skip if attachment editor is open
+        if attachment_system.editing_attachments {
+            continue;
+        }
+
+        // Skip if weapon is changing or reloading
+        if manager.changing_weapon || manager.reloading_with_animation_active {
+            continue;
+        }
+
+        // Handle number keys 1-10
+        let keys = [
+            (KeyCode::Digit1, 1),
+            (KeyCode::Digit2, 2),
+            (KeyCode::Digit3, 3),
+            (KeyCode::Digit4, 4),
+            (KeyCode::Digit5, 5),
+            (KeyCode::Digit6, 6),
+            (KeyCode::Digit7, 7),
+            (KeyCode::Digit8, 8),
+            (KeyCode::Digit9, 9),
+            (KeyCode::Digit0, 10),
+        ];
+
+        for (key, slot_number) in keys {
+            if keyboard_input.just_pressed(key) {
+                // Check if weapon is assigned to this slot
+                if let Some(weapon_entity) = manager.get_weapon_from_slot(slot_number, &weapon_query) {
+                    // Find index of this weapon
+                    if let Some(index) = manager.weapons_list.iter().position(|&e| e == weapon_entity) {
+                        let result = manager.select_weapon_by_index(index, &mut commands, &mut weapon_query);
+                        if let Err(e) = result {
+                            info!("Error selecting weapon: {}", e);
+                        }
+                    }
+                } else {
+                    if manager.show_debug_log {
+                        info!("No weapon assigned to slot {}", slot_number);
+                    }
+                }
+            }
+        }
+
+        // Handle next/previous weapon (scroll wheel or keys)
+        if keyboard_input.just_pressed(KeyCode::BracketRight) || keyboard_input.just_pressed(KeyCode::Period) {
+            let result = manager.select_next_weapon(&mut commands, &mut weapon_query);
+            if let Err(e) = result {
+                info!("Error selecting next weapon: {}", e);
+            }
+        }
+
+        if keyboard_input.just_pressed(KeyCode::BracketLeft) || keyboard_input.just_pressed(KeyCode::Comma) {
+            let result = manager.select_previous_weapon(&mut commands, &mut weapon_query);
+            if let Err(e) = result {
+                info!("Error selecting previous weapon: {}", e);
+            }
+        }
+    }
+}
+
+/// System to display weapon selection UI
+pub fn update_weapon_selection_ui(
+    manager_query: Query<&WeaponManager>,
+    weapon_query: Query<&Weapon>,
+    mut text_query: Query<&mut Text, With<WeaponSelectionUI>>,
+) {
+    let Some(manager) = manager_query.iter().next() else {
+        return;
+    };
+
+    let weapons = manager.get_available_weapons(&weapon_query);
+
+    if let Some(mut text) = text_query.iter_mut().next() {
+        let mut ui_text = String::from("Weapon Selection:\n");
+
+        for (index, _, name, is_selected) in weapons {
+            let marker = if is_selected { "▶" } else { " " };
+            ui_text.push_str(&format!("{} [{}] {}\n", marker, index + 1, name));
+        }
+
+        text.0 = ui_text;
+    }
+}
+
+/// Marker component for weapon selection UI
+#[derive(Component)]
+pub struct WeaponSelectionUI;
+

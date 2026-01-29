@@ -39,6 +39,7 @@ impl Plugin for WeaponsPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(BallisticsEnvironment::default())
+            .insert_resource(AttachmentEventQueue::default())
             .register_type::<BallisticsEnvironment>()
             .register_type::<Accuracy>()
             .register_type::<BulletTracer>()
@@ -49,9 +50,6 @@ impl Plugin for WeaponsPlugin {
             .register_type::<AttachmentPlace>()
             .register_type::<AttachmentInfo>()
             .register_type::<AttachmentStatModifiers>()
-            .add_event::<ToggleAttachmentEditor>()
-            .add_event::<SelectAttachment>()
-            .add_event::<RemoveAttachment>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -68,6 +66,9 @@ impl Plugin for WeaponsPlugin {
                 handle_attachment_selection,
                 handle_attachment_removal,
                 update_weapon_stats_from_attachments,
+                // Weapon selection systems
+                handle_weapon_selection_input,
+                update_weapon_selection_ui,
             ));
     }
 }

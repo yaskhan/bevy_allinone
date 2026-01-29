@@ -13,6 +13,9 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
+use crate::input::InputState;
+use super::types::Weapon;
+use super::weapon_manager::WeaponManager;
 
 /// Main attachment system component
 #[derive(Component, Debug, Reflect, Default)]
@@ -195,14 +198,15 @@ impl AttachmentStatModifiers {
 }
 
 /// Event for opening/closing the attachment editor
-#[derive(Event, Debug)]
+/// Event for toggling attachment editor
+#[derive(Debug, Clone)]
 pub struct ToggleAttachmentEditor {
     pub weapon_entity: Entity,
     pub open: bool,
 }
 
 /// Event for selecting an attachment
-#[derive(Event, Debug)]
+#[derive(Debug, Clone)]
 pub struct SelectAttachment {
     pub weapon_entity: Entity,
     pub place_id: String,
@@ -210,21 +214,29 @@ pub struct SelectAttachment {
 }
 
 /// Event for removing an attachment
-#[derive(Event, Debug)]
+#[derive(Debug, Clone)]
 pub struct RemoveAttachment {
     pub weapon_entity: Entity,
     pub place_id: String,
 }
 
+/// Custom queue for attachment events (Workaround for Bevy 0.18 EventReader issues)
+#[derive(Resource, Default)]
+pub struct AttachmentEventQueue {
+    pub toggle_events: Vec<ToggleAttachmentEditor>,
+    pub select_events: Vec<SelectAttachment>,
+    pub remove_events: Vec<RemoveAttachment>,
+}
+
 /// System to handle attachment editor toggling
 pub fn handle_attachment_editor_toggle(
-    mut toggle_events: EventReader<ToggleAttachmentEditor>,
+    mut event_queue: ResMut<AttachmentEventQueue>,
     mut query: Query<&mut WeaponAttachmentSystem>,
 ) {
-    for event in toggle_events.read() {
+    for event in event_queue.toggle_events.drain(..) {
         if let Ok(mut attachment_system) = query.get_mut(event.weapon_entity) {
             attachment_system.editing_attachments = event.open;
-            
+
             if event.open {
                 info!("Opening attachment editor for weapon");
             } else {
@@ -236,30 +248,37 @@ pub fn handle_attachment_editor_toggle(
 
 /// System to handle attachment selection
 pub fn handle_attachment_selection(
-    mut select_events: EventReader<SelectAttachment>,
+    mut event_queue: ResMut<AttachmentEventQueue>,
     mut query: Query<&mut WeaponAttachmentSystem>,
 ) {
-    for event in select_events.read() {
+    for event in event_queue.select_events.drain(..) {
         if let Ok(mut attachment_system) = query.get_mut(event.weapon_entity) {
             // Find the attachment place
-            if let Some(place) = attachment_system
+            let place_index = attachment_system
                 .attachment_places
-                .iter_mut()
-                .find(|p| p.id == event.place_id)
-            {
+                .iter()
+                .position(|p| p.id == event.place_id);
+
+            if let Some(place_index) = place_index {
                 // Find the attachment
-                if let Some((index, attachment)) = place
+                let attachment_index = attachment_system.attachment_places[place_index]
                     .available_attachments
-                    .iter_mut()
-                    .enumerate()
-                    .find(|(_, a)| a.id == event.attachment_id)
-                {
+                    .iter()
+                    .position(|a| a.id == event.attachment_id);
+
+                if let Some(attachment_index) = attachment_index {
+                    let attachment = &mut attachment_system.attachment_places[place_index]
+                        .available_attachments[attachment_index];
+
                     if attachment.enabled {
                         // Deactivate previous attachment
-                        if place.current_selection >= 0 {
-                            if let Some(prev_attachment) = place
+                        let prev_selection = attachment_system.attachment_places[place_index]
+                            .current_selection;
+                        if prev_selection >= 0 {
+                            if let Some(prev_attachment) = attachment_system.attachment_places
+                                [place_index]
                                 .available_attachments
-                                .get_mut(place.current_selection as usize)
+                                .get_mut(prev_selection as usize)
                             {
                                 prev_attachment.active = false;
                             }
@@ -267,14 +286,19 @@ pub fn handle_attachment_selection(
 
                         // Activate new attachment
                         attachment.active = true;
-                        place.current_selection = index as i32;
+                        attachment_system.attachment_places[place_index]
+                            .current_selection = attachment_index as i32;
                         attachment_system
                             .selected_attachments
-                            .insert(place.id.clone(), attachment.id.clone());
+                            .insert(
+                                attachment_system.attachment_places[place_index].id.clone(),
+                                attachment.id.clone(),
+                            );
 
                         info!(
                             "Selected attachment '{}' for place '{}'",
-                            attachment.name, place.name
+                            attachment.name,
+                            attachment_system.attachment_places[place_index].name
                         );
                     }
                 }
@@ -285,32 +309,41 @@ pub fn handle_attachment_selection(
 
 /// System to handle attachment removal
 pub fn handle_attachment_removal(
-    mut remove_events: EventReader<RemoveAttachment>,
+    mut event_queue: ResMut<AttachmentEventQueue>,
     mut query: Query<&mut WeaponAttachmentSystem>,
 ) {
-    for event in remove_events.read() {
+    for event in event_queue.remove_events.drain(..) {
         if let Ok(mut attachment_system) = query.get_mut(event.weapon_entity) {
             // Find the attachment place
-            if let Some(place) = attachment_system
+            let place_index = attachment_system
                 .attachment_places
-                .iter_mut()
-                .find(|p| p.id == event.place_id)
-            {
+                .iter()
+                .position(|p| p.id == event.place_id);
+
+            if let Some(place_index) = place_index {
                 // Deactivate current attachment
-                if place.current_selection >= 0 {
-                    if let Some(prev_attachment) = place
+                let current_selection = attachment_system.attachment_places[place_index]
+                    .current_selection;
+                if current_selection >= 0 {
+                    if let Some(prev_attachment) = attachment_system.attachment_places
+                        [place_index]
                         .available_attachments
-                        .get_mut(place.current_selection as usize)
+                        .get_mut(current_selection as usize)
                     {
                         prev_attachment.active = false;
                     }
                 }
 
                 // Clear selection
-                place.current_selection = -1;
-                attachment_system.selected_attachments.remove(&place.id);
+                attachment_system.attachment_places[place_index].current_selection = -1;
+                attachment_system
+                    .selected_attachments
+                    .remove(&attachment_system.attachment_places[place_index].id);
 
-                info!("Removed attachment from place '{}'", place.name);
+                info!(
+                    "Removed attachment from place '{}'",
+                    attachment_system.attachment_places[place_index].name
+                );
             }
         }
     }

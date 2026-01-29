@@ -4,7 +4,8 @@ use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::input::InputState;
 use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
-use super::types::{Weapon, Accuracy, BallisticsEnvironment, Projectile, WeaponManager};
+use super::types::{Weapon, Accuracy, BallisticsEnvironment, Projectile};
+use super::weapon_manager::WeaponManager;
 
 /// Handle weapon reloading
 pub fn handle_reloading(
