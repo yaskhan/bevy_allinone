@@ -153,6 +153,7 @@ pub struct CameraState {
     pub current_pivot: Vec3,
     pub current_lean: f32,
     pub noise_offset: Vec2,
+    pub bob_offset: Vec3,
     pub is_aiming: bool,
     pub is_crouching: bool,
     pub lock_on_target: Option<Entity>,

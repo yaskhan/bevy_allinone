@@ -97,7 +97,9 @@ pub fn update_camera_follow(
         // Position
         state.current_distance = state.current_distance + (camera.distance - state.current_distance) * 5.0 * time.delta_secs();
         let direction = transform.back();
-        transform.translation = state.current_pivot + direction * state.current_distance;
+        
+        // Final position with bobbing
+        transform.translation = state.current_pivot + direction * state.current_distance + state.bob_offset;
     }
 }
 

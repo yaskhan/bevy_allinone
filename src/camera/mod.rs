@@ -6,6 +6,7 @@ mod waypoints;
 mod collision;
 mod fov;
 mod shake;
+mod bob;
 
 pub use types::*;
 pub use follow::*;
@@ -13,6 +14,7 @@ pub use waypoints::*;
 pub use collision::*;
 pub use fov::*;
 pub use shake::*;
+pub use bob::*;
 
 pub struct CameraPlugin;
 
@@ -26,10 +28,12 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraWaypointTrack>()
             .register_type::<CameraWaypointFollower>()
             .register_type::<CameraShakeInstance>()
+            .register_type::<CameraBobState>()
             .add_systems(Update, (
                 update_camera_state,
                 update_camera_rotation,
                 update_camera_shake,
+                update_camera_bob,
                 update_camera_follow,
                 update_camera_waypoint_follow,
                 handle_camera_collision,
@@ -53,6 +57,7 @@ pub fn spawn_camera(
             current_distance: 4.0,
             ..default()
         },
+        CameraBobState::default(),
         Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         GlobalTransform::default(),
     ))
