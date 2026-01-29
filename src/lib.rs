@@ -43,6 +43,7 @@ pub mod interaction;
 pub mod inventory;
 pub mod ladder;
 pub mod map;
+pub mod navmesh_override;
 pub mod physics;
 pub mod player_idle;
 pub mod player_modes;
@@ -80,6 +81,7 @@ pub mod prelude {
     pub use crate::inventory::*;
     pub use crate::ladder::*;
     pub use crate::map::*;
+    pub use crate::navmesh_override::*;
     pub use crate::physics::*;
     pub use crate::player_idle::*;
     pub use crate::player_modes::*;
@@ -124,6 +126,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(inventory::InventoryPlugin)
             .add_plugins(ladder::LadderPlugin)
             .add_plugins(map::MapPlugin)
+            .add_plugins(navmesh_override::NavMeshOverridePlugin)
             .add_plugins(physics::PhysicsPlugin)
             .add_plugins(player_idle::PlayerIdlePlugin)
             .add_plugins(player_modes::PlayerModesPlugin)
