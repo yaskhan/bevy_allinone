@@ -29,7 +29,7 @@ pub fn handle_muzzle_flash(
         flash.timer -= time.delta_secs();
         
         if flash.timer <= 0.0 {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         } else {
             // Simple flicker effect
             if (flash.timer * 40.0) as i32 % 2 == 0 {
@@ -50,7 +50,7 @@ pub fn handle_ejected_shells(
     for (entity, mut shell) in query.iter_mut() {
         shell.lifetime -= time.delta_secs();
         if shell.lifetime <= 0.0 {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }
@@ -83,7 +83,7 @@ pub fn spawn_ejected_shell(
     lifetime: f32,
 ) {
     let spawn_pos = transform.translation() + transform.right() * 0.1;
-    let eject_dir = (transform.right() + transform.up() * 0.5).normalize();
+    let eject_dir = (*transform.right() + *transform.up() * 0.5).normalize();
     
     commands.spawn((
         EjectedShell { lifetime },

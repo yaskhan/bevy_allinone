@@ -54,12 +54,12 @@ pub fn throw_grenade(
     
     if let Some(hit) = spatial_query.cast_ray(
         origin,
-        Dir3::new(target_dir).unwrap_or(Dir3::Y),
+        target_dir,
         100.0,
         true,
         &filter,
     ) {
-        target_point = hit.point;
+        target_point = origin + target_dir * hit.distance;
     }
 
     let velocity = calculate_parable_velocity(origin, target_point, 1.0); // 1.0s flight time approx
@@ -87,7 +87,9 @@ pub fn throw_grenade(
         },
         Transform::from_translation(origin),
         GlobalTransform::default(),
-        VisibilityBundle::default(),
+        Visibility::default(),
+        InheritedVisibility::default(),
+        ViewVisibility::default(),
         RigidBody::Dynamic,
         Collider::sphere(0.1),
     ));

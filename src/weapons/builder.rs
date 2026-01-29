@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 use super::types::*;
+use super::attachments::{WeaponAttachmentSystem, AttachmentPlace, AttachmentInfo, AttachmentStatModifiers, create_weapon_with_attachments};
 
 pub struct WeaponBuilder {
     name: String,
@@ -15,6 +16,7 @@ pub struct WeaponBuilder {
     homing_settings: Option<Homing>,
     is_sticky: bool,
     ik_settings: Option<WeaponIkSettings>,
+    bow_state: BowState,
 }
 
 impl WeaponBuilder {
@@ -33,10 +35,11 @@ impl WeaponBuilder {
             homing_settings: None,
             is_sticky: false,
             ik_settings: None,
+            bow_state: BowState::default(),
         }
     }
 
-    pub fn with_ammo(mut self, capacity: u32) -> Self {
+    pub fn with_ammo(mut self, capacity: i32) -> Self {
         self.weapon.ammo_capacity = capacity;
         self.weapon.current_ammo = capacity;
         self
@@ -54,8 +57,8 @@ impl WeaponBuilder {
 
     pub fn with_burst(mut self, count: u32, fire_rate_mult: f32) -> Self {
         self.weapon.firing_mode = FiringMode::Burst;
-        self.weapon.burst_settings.burst_amount = count;
-        self.weapon.burst_settings.inner_fire_rate = self.weapon.fire_rate * fire_rate_mult;
+        self.weapon.burst_settings.amount = count;
+        self.weapon.burst_settings.fire_rate = self.weapon.fire_rate * fire_rate_mult;
         self
     }
 
@@ -226,6 +229,7 @@ impl WeaponBuilder {
         let specialty_behavior = self.weapon.specialty_behavior.clone();
         let homing_settings = self.homing_settings.clone();
         let is_sticky = self.is_sticky;
+        let ik_settings = self.ik_settings.clone();
         
         let weapon_entity = commands.spawn(self.build()).id();
         
@@ -247,7 +251,7 @@ impl WeaponBuilder {
             commands.entity(weapon_entity).insert(StickToSurface::default());
         }
 
-        if let Some(ik) = self.ik_settings {
+        if let Some(ik) = ik_settings {
             commands.entity(weapon_entity).insert((ik, WeaponIkState::default()));
         }
         

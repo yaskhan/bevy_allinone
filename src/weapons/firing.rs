@@ -247,6 +247,8 @@ pub fn fire_weapon(
                     drag_coeff: weapon.projectile_drag_coeff,
                     reference_area: weapon.projectile_area,
                     penetration_power: weapon.projectile_penetration,
+                    use_gravity: true,
+                    rotate_to_velocity: true,
                 },
                 Name::new("Projectile"),
              ));

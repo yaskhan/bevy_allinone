@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use super::types::*;
-use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
+use crate::combat::{DamageEventQueue, DamageEvent, DamageType, Health};
 
 /// System to handle advanced projectile behaviors
 pub fn handle_advanced_projectiles(
@@ -10,7 +10,7 @@ pub fn handle_advanced_projectiles(
     mut damage_events: ResMut<DamageEventQueue>,
     spatial_query: SpatialQuery,
     mut projectile_query: Query<(Entity, &mut Projectile, &mut Transform, &GlobalTransform, Option<&mut Homing>, Option<&mut StickToSurface>), Without<CapturedProjectile>>,
-    target_query: Query<&GlobalTransform, (With<Health>, Without<Projectile>)>,
+    target_query: Query<(Entity, &GlobalTransform), (With<Health>, Without<Projectile>)>,
 ) {
     let dt = time.delta_secs();
 
@@ -19,7 +19,7 @@ pub fn handle_advanced_projectiles(
         if let Some(mut stuck_data) = stuck {
             if stuck_data.is_stuck {
                 if let Some(parent) = stuck_data.parent_entity {
-                    if let Ok(parent_transform) = target_query.get(parent) {
+                    if let Ok((_parent_ent, parent_transform)) = target_query.get(parent) {
                         // Keep relative position
                         let world_pos = parent_transform.transform_point(stuck_data.relative_transform.translation);
                         let world_rot = parent_transform.compute_transform().rotation * stuck_data.relative_transform.rotation;
@@ -27,7 +27,7 @@ pub fn handle_advanced_projectiles(
                         transform.rotation = world_rot;
                     } else {
                         // Parent is gone, destroy projectile
-                        commands.entity(entity).despawn_recursive();
+                        commands.entity(entity).despawn();
                     }
                 }
                 continue; // Skip movement logic if stuck
@@ -40,7 +40,7 @@ pub fn handle_advanced_projectiles(
                 homing_data.initial_delay -= dt;
             } else {
                 if let Some(target) = homing_data.target {
-                    if let Ok(target_transform) = target_query.get(target) {
+                    if let Ok((_ent, target_transform)) = target_query.get(target) {
                         let target_pos = target_transform.translation();
                         let current_pos = global_transform.translation();
                         let target_dir = (target_pos - current_pos).normalize();
@@ -56,7 +56,7 @@ pub fn handle_advanced_projectiles(
                     // Search for nearest target
                     let mut nearest = None;
                     let mut min_dist = homing_data.search_radius;
-                    for (target_ent, target_transform) in target_query.iter_entities() {
+                    for (target_ent, target_transform) in target_query.iter() {
                         let dist = global_transform.translation().distance(target_transform.translation());
                         if dist < min_dist {
                             min_dist = dist;
@@ -127,7 +127,7 @@ pub fn handle_armor_collisions(
                             original_velocity: velocity,
                             original_owner: Some(projectile.owner),
                         })
-                        .set_parent(armor_ent);
+                        .set_parent_in_place(armor_ent);
                     
                     // Stop movement (system in mod.rs or firing.rs should check CapturedProjectile)
                     commands.entity(proj_ent).insert(Visibility::Hidden); 

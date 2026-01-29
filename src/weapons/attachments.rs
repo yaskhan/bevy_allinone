@@ -31,7 +31,7 @@ pub struct LaserAttachment {
 }
 
 /// Main attachment system component
-#[derive(Component, Debug, Reflect, Default)]
+#[derive(Component, Debug, Reflect, Default, Clone)]
 #[reflect(Component)]
 pub struct WeaponAttachmentSystem {
     /// Whether the attachment editor is currently open
@@ -280,39 +280,50 @@ pub fn handle_attachment_selection(
                     .position(|a| a.id == event.attachment_id);
 
                 if let Some(attachment_index) = attachment_index {
-                    let attachment = &mut attachment_system.attachment_places[place_index]
-                        .available_attachments[attachment_index];
+                    // Capture indices and values we need before mutable borrow
+                    let place_id_clone = attachment_system.attachment_places[place_index].id.clone();
+                    let place_name_clone = attachment_system.attachment_places[place_index].name.clone();
+                    let prev_selection = attachment_system.attachment_places[place_index].current_selection;
+
+                    // Now we can mutate carefully
+                    let place = &mut attachment_system.attachment_places[place_index];
+                    let attachment = &mut place.available_attachments[attachment_index];
+                    let attachment_name_clone = attachment.name.clone();
+                    let attachment_id_clone = attachment.id.clone();
 
                     if attachment.enabled {
                         // Deactivate previous attachment
-                        let prev_selection = attachment_system.attachment_places[place_index]
-                            .current_selection;
                         if prev_selection >= 0 {
-                            if let Some(prev_attachment) = attachment_system.attachment_places
-                                [place_index]
-                                .available_attachments
-                                .get_mut(prev_selection as usize)
+                            if let Some(prev_attachment) = place.available_attachments.get_mut(prev_selection as usize)
                             {
                                 prev_attachment.active = false;
                             }
                         }
 
                         // Activate new attachment
-                        attachment.active = true;
-                        attachment_system.attachment_places[place_index]
-                            .current_selection = attachment_index as i32;
-                        attachment_system
-                            .selected_attachments
-                            .insert(
-                                attachment_system.attachment_places[place_index].id.clone(),
-                                attachment.id.clone(),
-                            );
+                        // Re-borrow attachment because we might have lost it with prev_selection borrow if we aren't careful, 
+                        // but since they are distinct indices in the Vec, it's tricky in Rust.
+                        // Simplest way: separate the steps.
 
-                        info!(
+                         // Step 1: Deactivate prev
+                         // (Already done above)
+
+                         // Step 2: Activate new
+                         // We need to re-access via index to satisfy the borrow checker if we used 'place' above
+                         attachment_system.attachment_places[place_index].available_attachments[attachment_index].active = true;
+                         
+                         attachment_system.attachment_places[place_index].current_selection = attachment_index as i32;
+                         
+                         attachment_system.selected_attachments.insert(
+                                place_id_clone,
+                                attachment_id_clone
+                         );
+
+                         info!(
                             "Selected attachment '{}' for place '{}'",
-                            attachment.name,
-                            attachment_system.attachment_places[place_index].name
-                        );
+                            attachment_name_clone,
+                            place_name_clone
+                         );
                     }
                 }
             }
@@ -335,11 +346,12 @@ pub fn handle_attachment_removal(
 
             if let Some(place_index) = place_index {
                 // Deactivate current attachment
-                let current_selection = attachment_system.attachment_places[place_index]
-                    .current_selection;
+                let current_selection = attachment_system.attachment_places[place_index].current_selection;
+                let place_id_clone = attachment_system.attachment_places[place_index].id.clone();
+                let place_name_clone = attachment_system.attachment_places[place_index].name.clone();
+
                 if current_selection >= 0 {
-                    if let Some(prev_attachment) = attachment_system.attachment_places
-                        [place_index]
+                    if let Some(prev_attachment) = attachment_system.attachment_places[place_index]
                         .available_attachments
                         .get_mut(current_selection as usize)
                     {
@@ -349,13 +361,11 @@ pub fn handle_attachment_removal(
 
                 // Clear selection
                 attachment_system.attachment_places[place_index].current_selection = -1;
-                attachment_system
-                    .selected_attachments
-                    .remove(&attachment_system.attachment_places[place_index].id);
+                attachment_system.selected_attachments.remove(&place_id_clone);
 
                 info!(
                     "Removed attachment from place '{}'",
-                    attachment_system.attachment_places[place_index].name
+                    place_name_clone
                 );
             }
         }
@@ -565,7 +575,7 @@ pub fn handle_laser_attachment(
     camera_query: Query<(&crate::camera::CameraState, &GlobalTransform)>,
     spatial_query: SpatialQuery,
 ) {
-    let Ok((camera_state, camera_global)) = camera_query.get_single() else { return };
+    let Some((camera_state, camera_global)) = camera_query.iter().next() else { return };
     
     for (mut laser, laser_transform) in laser_query.iter_mut() {
         if !laser.enabled {
@@ -582,12 +592,12 @@ pub fn handle_laser_attachment(
 
         if let Some(hit) = spatial_query.cast_ray(
             laser_pos,
-            Dir3::new(laser_dir).unwrap_or(Dir3::Y),
+            laser_dir,
             laser.max_distance,
             true,
-            SpatialQueryFilter::default(),
+            &SpatialQueryFilter::default(),
         ) {
-            let hit_point = laser_pos + laser_dir * hit.distance;
+            let hit_point = laser_pos + (*laser_dir * hit.distance);
             laser.hit_point = Some(hit_point);
 
             if let Some(dot_ent) = laser.dot_entity {

@@ -3,6 +3,7 @@ use avian3d::prelude::*;
 use crate::input::InputState;
 use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
 use super::types::*;
+use super::weapon_manager::WeaponManager;
 
 /// System to handle specialty weapon behaviors
 pub fn handle_specialty_behaviors(
@@ -12,7 +13,7 @@ pub fn handle_specialty_behaviors(
     spatial_query: SpatialQuery,
     mut player_query: Query<(Entity, &InputState, &mut WeaponManager, &GlobalTransform)>,
     mut weapon_query: Query<(&mut Weapon, &mut SpecialtyState, &GlobalTransform)>,
-    mut rb_query: Query<(&mut ExternalForce, &GlobalTransform)>,
+    mut rb_query: Query<(&mut LinearVelocity, &GlobalTransform)>,
 ) {
     let dt = time.delta_secs();
 
@@ -70,14 +71,14 @@ pub fn handle_gravity_gun(
     state: &mut SpecialtyState,
     weapon_transform: &GlobalTransform,
     spatial_query: &SpatialQuery,
-    rb_query: &mut Query<(&mut ExternalForce, &GlobalTransform)>,
+    rb_query: &mut Query<(&mut LinearVelocity, &GlobalTransform)>,
     player_entity: Entity,
 ) {
     if input.fire_just_pressed {
         if let Some(held_entity) = state.target_entity {
             // Throw
-            if let Ok((mut force, _)) = rb_query.get_mut(held_entity) {
-                force.apply_force(weapon_transform.forward() * settings.throw_force);
+            if let Ok((mut vel, _)) = rb_query.get_mut(held_entity) {
+                vel.0 += *weapon_transform.forward() * settings.throw_force;
             }
             state.target_entity = None;
             state.is_active = false;
@@ -89,7 +90,7 @@ pub fn handle_gravity_gun(
             
             if let Some(hit) = spatial_query.cast_ray(
                 ray_origin,
-                Dir3::new(ray_dir).unwrap_or(Dir3::Y),
+                ray_dir,
                 settings.max_grab_distance,
                 true,
                 &filter,
@@ -101,15 +102,14 @@ pub fn handle_gravity_gun(
             }
         }
     }
-
     if let Some(held_entity) = state.target_entity {
-        if let Ok((mut force, target_transform)) = rb_query.get_mut(held_entity) {
-            let target_pos = weapon_transform.translation() + weapon_transform.forward() * settings.hold_distance;
+        if let Ok((mut vel, target_transform)) = rb_query.get_mut(held_entity) {
+            let target_pos = weapon_transform.translation() + *weapon_transform.forward() * settings.hold_distance;
             let current_pos = target_transform.translation();
             let diff = target_pos - current_pos;
             
-            // Simple P-controller for holding
-            force.apply_force(diff * settings.hold_speed);
+            // Simple P-controller for holding (modifying velocity directly)
+            vel.0 = diff * settings.hold_speed;
             
             // If it gets too far, drop it
             if diff.length() > settings.hold_distance * 2.0 {
@@ -140,7 +140,7 @@ pub fn handle_beam_weapon(
 
     if let Some(hit) = spatial_query.cast_ray(
         ray_origin,
-        Dir3::new(ray_dir).unwrap_or(Dir3::Y),
+        ray_dir,
         settings.range,
         true,
         &filter,

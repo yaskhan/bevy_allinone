@@ -209,7 +209,7 @@ pub struct SniperSight {
     pub active: bool,
 }
 
-#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+#[derive(Component, Debug, Clone, Reflect, Default, PartialEq)]
 pub struct ExplosionSettings {
     pub force: f32,
     pub radius: f32,
@@ -565,8 +565,6 @@ pub struct WeaponListOnPocket {
     pub weapon_list: Vec<Entity>,
 }
 
-    }
-}
 
 /// Specialty weapon behaviors and their configurations
 #[derive(Debug, Clone, Reflect, Default, PartialEq)]
@@ -623,7 +621,7 @@ pub struct SpecialtyState {
 }
 
 /// Homing component for missiles and seeker projectiles
-#[derive(Component, Debug, Reflect, Default)]
+#[derive(Component, Debug, Reflect, Default, Clone)]
 #[reflect(Component)]
 pub struct Homing {
     pub target: Option<Entity>,
@@ -671,7 +669,7 @@ pub struct SwaySettings {
 }
 
 /// Settings for weapon procedural IK positioning
-#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+#[derive(Component, Debug, Clone, Reflect, Default, PartialEq)]
 pub struct WeaponIkSettings {
     pub aim_offset: Transform,
     pub walk_offset: Transform,

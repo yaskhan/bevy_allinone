@@ -86,7 +86,7 @@ impl Plugin for WeaponsPlugin {
             .register_type::<WeaponIkState>()
             .register_type::<ArmorSurface>()
             .register_type::<CapturedProjectile>()
-            .add_event::<ReturnProjectilesEvent>()
+            .init_resource::<ReturnProjectilesQueue>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -94,19 +94,20 @@ impl Plugin for WeaponsPlugin {
                 update_projectiles,
                 update_weapon_aim,
                 handle_weapon_switching,
-                update_accuracy, // New system for dynamic spread
-                update_tracers,  // New system for visual interpolation
-                handle_weapon_manager_input, // New system for Weapon Manager input
-                update_weapon_manager, // New system for Weapon Manager updates
-                // Attachment systems
+                update_accuracy,
+                update_tracers,
+                handle_weapon_manager_input,
+                update_weapon_manager,
+            ))
+            .add_systems(Update, (
                 handle_attachment_editor_toggle,
                 handle_attachment_selection,
                 handle_attachment_removal,
                 update_weapon_stats_from_attachments,
-                // Weapon selection systems
                 handle_weapon_selection_input,
                 update_weapon_selection_ui,
-                // VFX systems
+            ))
+            .add_systems(Update, (
                 handle_muzzle_flash,
                 handle_ejected_shells,
                 initialize_weapon_animation,

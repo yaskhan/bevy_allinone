@@ -22,7 +22,7 @@ pub fn handle_weapon_ik(
              &settings.walk_offset // Use walk offset during reload for now
         } else if input.aim_pressed {
             &settings.aim_offset
-        } else if input.run_pressed {
+        } else if input.sprint_pressed {
             &settings.run_offset
         } else {
             &settings.walk_offset
@@ -38,7 +38,7 @@ pub fn handle_weapon_ik(
         // 3. Procedural Sway
         // Based on mouse movement from InputState
         let sway_speed = settings.sway_settings.lerp_speed;
-        let mouse_delta = input.look_delta;
+        let mouse_delta = input.look;
         
         let target_sway_x = -mouse_delta.x * settings.sway_settings.horizontal_amount;
         let target_sway_y = -mouse_delta.y * settings.sway_settings.vertical_amount;
@@ -53,7 +53,7 @@ pub fn handle_weapon_ik(
 
         // 4. Procedural Bobbing
         // Based on player movement (simplified: use sine wave if moving)
-        if input.move_delta.length() > 0.1 {
+        if input.movement.length() > 0.1 {
             let bob_speed = 10.0;
             state.bob_offset.x = (time.elapsed_secs() * bob_speed).sin() * settings.bob_amount.x;
             state.bob_offset.y = (time.elapsed_secs() * bob_speed * 2.0).cos().abs() * settings.bob_amount.y;

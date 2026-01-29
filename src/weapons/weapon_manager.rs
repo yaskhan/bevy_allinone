@@ -1047,8 +1047,8 @@ impl WeaponManager {
         weapon_query: &mut Query<(&mut Weapon, &mut Visibility)>,
     ) -> Result<(), String> {
         for (index, &weapon_entity) in self.weapons_list.iter().enumerate() {
-            if let Ok(weapon) = weapon_query.get(weapon_entity) {
-                if weapon.weapon_name == name {
+            if let Ok(weapon_data) = weapon_query.get(weapon_entity) {
+                if weapon_data.0.weapon_name == name {
                     return self.select_weapon_by_index(index, commands, weapon_query);
                 }
             }
@@ -1217,9 +1217,19 @@ pub fn handle_weapon_selection_input(
         for (key, slot_number) in keys {
             if keyboard_input.just_pressed(key) {
                 // Check if weapon is assigned to this slot
-                if let Some(weapon_entity) = manager.get_weapon_from_slot(slot_number, &weapon_query) {
+                let mut weapon_entity = None;
+                for &ent in &manager.weapons_list {
+                    if let Ok(weapon_data) = weapon_query.get(ent) {
+                        if weapon_data.0.key_number == slot_number {
+                            weapon_entity = Some(ent);
+                            break;
+                        }
+                    }
+                }
+                
+                if let Some(ent) = weapon_entity {
                     // Find index of this weapon
-                    if let Some(index) = manager.weapons_list.iter().position(|&e| e == weapon_entity) {
+                    if let Some(index) = manager.weapons_list.iter().position(|&e| e == ent) {
                         let result = manager.select_weapon_by_index(index, &mut commands, &mut weapon_query);
                         if let Err(e) = result {
                             info!("Error selecting weapon: {}", e);

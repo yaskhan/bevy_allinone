@@ -8,10 +8,9 @@ pub fn handle_sniper_sight(
     mut manager_query: Query<&WeaponManager>,
     weapon_query: Query<&Weapon>,
     mut camera_query: Query<&mut CameraState>,
-    // mut ui_query: Query<&mut Visibility, With<SniperSightOverlay>>, // Placeholder for actual UI overlay
 ) {
-    for manager in manager_query.iter_mut() {
-        let Ok(mut camera_state) = camera_query.get_single_mut() else { continue };
+    let Some(mut camera_state) = camera_query.iter_mut().next() else { return };
+    for manager in manager_query.iter() {
 
         let mut sight_active = false;
         let mut target_fov = None;
