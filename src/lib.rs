@@ -49,6 +49,7 @@ pub mod player_modes;
 pub mod player_state;
 pub mod player_state_icon;
 pub mod puzzle;
+pub mod ragdoll;
 pub mod quest;
 pub mod save;
 pub mod skills;
@@ -84,6 +85,7 @@ pub mod prelude {
     pub use crate::player_state::*;
     pub use crate::player_state_icon::*;
     pub use crate::puzzle::*;
+    pub use crate::ragdoll::*;
     pub use crate::quest::*;
     pub use crate::save::*;
     pub use crate::skills::*;
@@ -126,6 +128,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(player_state::PlayerStatePlugin)
             .add_plugins(player_state_icon::PlayerStateIconPlugin)
             .add_plugins(puzzle::PuzzlePlugin)
+            .add_plugins(ragdoll::RagdollPlugin)
             .add_plugins(quest::QuestPlugin)
             .add_plugins(save::SavePlugin)
             .add_plugins(skills::SkillsPlugin)
