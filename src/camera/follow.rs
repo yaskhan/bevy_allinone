@@ -6,9 +6,7 @@ use super::types::*;
 
 pub fn update_camera_rotation(
     input: Res<InputState>,
-    time: Res<Time>,
     mut query: Query<(&CameraController, &mut CameraState)>,
-    target_query: Query<&GlobalTransform>,
 ) {
     for (camera, mut state) in query.iter_mut() {
         if camera.mode == CameraMode::Locked { continue; }
@@ -23,21 +21,9 @@ pub fn update_camera_rotation(
         let sens_mult = if state.is_aiming { camera.aim_zoom_sensitivity_mult } else { 1.0 };
         let sensitivity = base_sens * sens_mult;
 
-        // Lock-on logic
-        if let Some(lock_target) = state.lock_on_target {
-            if let Ok(target_gt) = target_query.get(lock_target) {
-                let dir = (target_gt.translation() - state.current_pivot).normalize();
-                let target_yaw = dir.x.atan2(dir.z).to_degrees();
-                let target_pitch = (-dir.y).asin().to_degrees();
-                
-                state.yaw = state.yaw + (target_yaw - state.yaw) * 10.0 * time.delta_secs();
-                state.pitch = state.pitch + (target_pitch - state.pitch) * 10.0 * time.delta_secs();
-            }
-        } else {
-            // Manual rotation
-            state.yaw -= input.look.x * sensitivity;
-            state.pitch -= input.look.y * sensitivity;
-        }
+        // Manual rotation (Only if NOT locked - handled in lock.rs)
+        state.yaw -= input.look.x * sensitivity;
+        state.pitch -= input.look.y * sensitivity;
 
         state.pitch = state.pitch.clamp(camera.min_vertical_angle, camera.max_vertical_angle);
 
@@ -48,7 +34,6 @@ pub fn update_camera_rotation(
 pub fn update_camera_follow(
     time: Res<Time>,
     mut camera_query: Query<(&CameraController, &mut CameraState, &mut Transform)>,
-    target_query: Query<&Transform, Without<CameraController>>,
 ) {
     for (camera, mut state, mut transform) in camera_query.iter_mut() {
         let Some(target_entity) = camera.follow_target else { continue };

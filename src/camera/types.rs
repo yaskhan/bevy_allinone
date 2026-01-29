@@ -65,6 +65,27 @@ pub enum CameraSide {
     Left,
 }
 
+#[derive(Debug, Clone, Reflect)]
+pub struct TargetLockSettings {
+    pub enabled: bool,
+    pub max_distance: f32,
+    pub fov_threshold: f32, // Angle threshold to maintain lock
+    pub scan_radius: f32,   // Radius of the "sticky" area at screen center
+    pub lock_smooth_speed: f32,
+}
+
+impl Default for TargetLockSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_distance: 30.0,
+            fov_threshold: 45.0,
+            scan_radius: 2.0,
+            lock_smooth_speed: 10.0,
+        }
+    }
+}
+
 /// Camera controller component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -113,6 +134,9 @@ pub struct CameraController {
     // Collision
     pub use_collision: bool,
     pub collision_radius: f32,
+
+    // Target Lock
+    pub target_lock: TargetLockSettings,
 }
 
 impl Default for CameraController {
@@ -154,8 +178,19 @@ impl Default for CameraController {
             
             use_collision: true,
             collision_radius: 0.2,
+
+            target_lock: TargetLockSettings::default(),
         }
     }
+}
+
+/// Target state for a camera
+#[derive(Component, Debug, Default, Reflect)]
+#[reflect(Component)]
+pub struct CameraTargetState {
+    pub marked_target: Option<Entity>,
+    pub locked_target: Option<Entity>,
+    pub is_locking: bool,
 }
 
 /// Camera state tracking
@@ -172,7 +207,6 @@ pub struct CameraState {
     pub bob_offset: Vec3,
     pub is_aiming: bool,
     pub is_crouching: bool,
-    pub lock_on_target: Option<Entity>,
     pub fov_override: Option<f32>,
     pub fov_override_speed: Option<f32>,
 }

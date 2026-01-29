@@ -4,8 +4,6 @@
 
 use bevy::prelude::*;
 use std::collections::HashMap;
-// use bevy::ecs::event::EventReader;
-// use bevy::input::mouse::MouseMotion;
 
 pub struct InputPlugin;
 
@@ -21,12 +19,11 @@ impl Plugin for InputPlugin {
                 update_input_state,
                 handle_rebinding,
                 cleanup_input_buffer,
-                player_input_sync_system, // Moved here as per instruction to "fix syncing"
+                player_input_sync_system,
             ).chain())
             .add_systems(Update, (
                 process_movement_input,
                 process_action_input,
-                player_input_sync_system,
             ));
     }
 }
@@ -45,9 +42,6 @@ pub enum InputAction {
     Aim,
     LeanLeft,
     LeanRight,
-    Result, // 'R' key for LockOn or Reload?
-    // LockOn was defined below. Let's add Attack.
-    LockOn,
     Attack,
     Block,
     SwitchCameraMode,
@@ -67,11 +61,12 @@ pub enum InputAction {
     SelectWeapon8,
     SelectWeapon9,
     SelectWeapon0,
-    // Stealth actions
+    // Stealth/Advanced actions
     Hide,
     Peek,
     CornerLean,
     ResetCamera,
+    LockOn,
     ZoomIn,
     ZoomOut,
     SideSwitch,
@@ -104,15 +99,14 @@ impl Default for InputMap {
         bindings.insert(InputAction::Aim, vec![InputBinding::Mouse(MouseButton::Right)]);
         bindings.insert(InputAction::LeanLeft, vec![InputBinding::Key(KeyCode::KeyQ)]);
         bindings.insert(InputAction::LeanRight, vec![InputBinding::Key(KeyCode::KeyE)]);
-        bindings.insert(InputAction::LockOn, vec![InputBinding::Mouse(MouseButton::Middle), InputBinding::Key(KeyCode::KeyR)]);
         bindings.insert(InputAction::Attack, vec![InputBinding::Mouse(MouseButton::Left)]);
         bindings.insert(InputAction::Block, vec![InputBinding::Mouse(MouseButton::Right)]);
         bindings.insert(InputAction::SwitchCameraMode, vec![InputBinding::Key(KeyCode::KeyC)]);
         bindings.insert(InputAction::Fire, vec![InputBinding::Mouse(MouseButton::Left)]);
         bindings.insert(InputAction::Reload, vec![InputBinding::Key(KeyCode::KeyR)]);
-        bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::Digit1)]); // Placeholder
-        bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::Digit2)]); // Placeholder
-        bindings.insert(InputAction::ToggleInventory, vec![InputBinding::Key(KeyCode::KeyI), InputBinding::Key(KeyCode::Tab)]);
+        bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::ArrowRight)]); 
+        bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::ArrowLeft)]); 
+        bindings.insert(InputAction::ToggleInventory, vec![InputBinding::Key(KeyCode::KeyI)]);
 
         // Weapon Selection
         bindings.insert(InputAction::SelectWeapon1, vec![InputBinding::Key(KeyCode::Digit1)]);
@@ -126,14 +120,15 @@ impl Default for InputMap {
         bindings.insert(InputAction::SelectWeapon9, vec![InputBinding::Key(KeyCode::Digit9)]);
         bindings.insert(InputAction::SelectWeapon0, vec![InputBinding::Key(KeyCode::Digit0)]);
 
-        // Stealth actions
+        // Stealth/Utility
         bindings.insert(InputAction::Hide, vec![InputBinding::Key(KeyCode::KeyH)]);
         bindings.insert(InputAction::Peek, vec![InputBinding::Key(KeyCode::KeyP)]);
         bindings.insert(InputAction::CornerLean, vec![InputBinding::Key(KeyCode::KeyC)]);
-        bindings.insert(InputAction::ResetCamera, vec![InputBinding::Key(KeyCode::KeyR)]);
+        bindings.insert(InputAction::ResetCamera, vec![InputBinding::Key(KeyCode::KeyX)]); // Changed from R to avoid conflict with Reload
+        bindings.insert(InputAction::LockOn, vec![InputBinding::Key(KeyCode::Tab), InputBinding::Mouse(MouseButton::Middle)]);
         bindings.insert(InputAction::ZoomIn, vec![InputBinding::Key(KeyCode::NumpadAdd)]);
         bindings.insert(InputAction::ZoomOut, vec![InputBinding::Key(KeyCode::NumpadSubtract)]);
-        bindings.insert(InputAction::SideSwitch, vec![InputBinding::Mouse(MouseButton::Middle), InputBinding::Key(KeyCode::KeyV)]);
+        bindings.insert(InputAction::SideSwitch, vec![InputBinding::Key(KeyCode::KeyV)]);
         Self { bindings }
     }
 }
@@ -190,14 +185,16 @@ pub struct InputState {
     pub next_weapon_pressed: bool,
     pub prev_weapon_pressed: bool,
     pub toggle_inventory_pressed: bool,
-    // Stealth input states
+    pub side_switch_pressed: bool,
+    
+    // Stealth/Utility
     pub hide_pressed: bool,
     pub peek_pressed: bool,
     pub corner_lean_pressed: bool,
     pub reset_camera_pressed: bool,
     pub zoom_in_pressed: bool,
     pub zoom_out_pressed: bool,
-    pub side_switch_pressed: bool,
+    
     pub select_weapon: Option<usize>,
     pub enabled: bool,
 }
@@ -224,13 +221,13 @@ impl Default for InputState {
             next_weapon_pressed: false,
             prev_weapon_pressed: false,
             toggle_inventory_pressed: false,
+            side_switch_pressed: false,
             hide_pressed: false,
             peek_pressed: false,
             corner_lean_pressed: false,
             reset_camera_pressed: false,
             zoom_in_pressed: false,
             zoom_out_pressed: false,
-            side_switch_pressed: false,
             select_weapon: None,
             enabled: true,
         }
@@ -260,24 +257,30 @@ impl InputState {
             self.next_weapon_pressed = false;
             self.prev_weapon_pressed = false;
             self.toggle_inventory_pressed = false;
+            self.side_switch_pressed = false;
             self.hide_pressed = false;
             self.peek_pressed = false;
             self.corner_lean_pressed = false;
             self.reset_camera_pressed = false;
             self.zoom_in_pressed = false;
             self.zoom_out_pressed = false;
-            self.side_switch_pressed = false;
             self.select_weapon = None;
         }
     }
 
-    /// Check if an action was just pressed (not held)
+    /// Check if an action was just pressed (dynamic check)
     pub fn is_action_just_pressed(&self, action: InputAction) -> bool {
         match action {
+            InputAction::Jump => self.jump_pressed,
+            InputAction::Interact => self.interact_pressed,
+            InputAction::LockOn => self.lock_on_pressed,
+            InputAction::Reload => self.reload_pressed,
+            InputAction::ResetCamera => self.reset_camera_pressed,
+            InputAction::SwitchCameraMode => self.switch_camera_mode_pressed,
+            InputAction::SideSwitch => self.side_switch_pressed,
             InputAction::Hide => self.hide_pressed,
             InputAction::Peek => self.peek_pressed,
             InputAction::CornerLean => self.corner_lean_pressed,
-            InputAction::ResetCamera => self.reset_camera_pressed,
             InputAction::ZoomIn => self.zoom_in_pressed,
             InputAction::ZoomOut => self.zoom_out_pressed,
             _ => false,
@@ -301,7 +304,7 @@ pub struct InputConfig {
     pub mouse_sensitivity: f32,
     pub gamepad_sensitivity: f32,
     pub invert_y_axis: bool,
-    pub buffer_ttl: f32, // Time to live for buffered inputs
+    pub buffer_ttl: f32, 
 }
 
 impl Default for InputConfig {
@@ -310,7 +313,7 @@ impl Default for InputConfig {
             mouse_sensitivity: 0.15,
             gamepad_sensitivity: 1.0,
             invert_y_axis: false,
-            buffer_ttl: 0.15, // 150ms buffer
+            buffer_ttl: 0.15, 
         }
     }
 }
@@ -330,7 +333,6 @@ fn update_input_state(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
-    // mut mouse_motion: EventReader<MouseMotion>,
     input_map: Res<InputMap>,
     mut input_state: ResMut<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
@@ -361,7 +363,7 @@ fn update_input_state(
         }
     };
 
-    // Buffer actions that were just pressed
+    // Buffer certain actions
     let actions_to_buffer = [
         InputAction::Jump,
         InputAction::Interact,
@@ -383,31 +385,39 @@ fn update_input_state(
     if check_action(InputAction::MoveBackward) { movement.y -= 1.0; }
     if check_action(InputAction::MoveLeft) { movement.x -= 1.0; }
     if check_action(InputAction::MoveRight) { movement.x += 1.0; }
-    
     input_state.movement = movement.normalize_or_zero();
     
-    // Actions
-    input_state.jump_pressed = check_action_just_pressed(InputAction::Jump);
+    // Continuous Input
     input_state.crouch_pressed = check_action(InputAction::Crouch);
     input_state.sprint_pressed = check_action(InputAction::Sprint);
-    input_state.interact_pressed = check_action_just_pressed(InputAction::Interact);
     input_state.aim_pressed = check_action(InputAction::Aim);
     input_state.lean_left = check_action(InputAction::LeanLeft);
     input_state.lean_right = check_action(InputAction::LeanRight);
+    input_state.block_pressed = check_action(InputAction::Block);
+    input_state.fire_pressed = check_action(InputAction::Fire);
+
+    // Just Pressed Input
+    input_state.jump_pressed = check_action_just_pressed(InputAction::Jump);
+    input_state.interact_pressed = check_action_just_pressed(InputAction::Interact);
     input_state.lock_on_pressed = check_action_just_pressed(InputAction::LockOn);
     input_state.attack_pressed = check_action_just_pressed(InputAction::Attack);
-    input_state.block_pressed = check_action(InputAction::Block);
     input_state.switch_camera_mode_pressed = check_action_just_pressed(InputAction::SwitchCameraMode);
-    
-    input_state.fire_pressed = check_action(InputAction::Fire); // Continuous for auto
     input_state.fire_just_pressed = check_action_just_pressed(InputAction::Fire);
     input_state.reload_pressed = check_action_just_pressed(InputAction::Reload);
+    input_state.reset_camera_pressed = check_action_just_pressed(InputAction::ResetCamera);
     input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
     input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);
     input_state.toggle_inventory_pressed = check_action_just_pressed(InputAction::ToggleInventory);
     input_state.side_switch_pressed = check_action_just_pressed(InputAction::SideSwitch);
+    
+    // Stealth/Advanced
+    input_state.hide_pressed = check_action_just_pressed(InputAction::Hide);
+    input_state.peek_pressed = check_action_just_pressed(InputAction::Peek);
+    input_state.corner_lean_pressed = check_action_just_pressed(InputAction::CornerLean);
+    input_state.zoom_in_pressed = check_action_just_pressed(InputAction::ZoomIn);
+    input_state.zoom_out_pressed = check_action_just_pressed(InputAction::ZoomOut);
 
-    // Weapon selection
+    // Weapon Selection
     input_state.select_weapon = None;
     if check_action_just_pressed(InputAction::SelectWeapon1) { input_state.select_weapon = Some(0); }
     else if check_action_just_pressed(InputAction::SelectWeapon2) { input_state.select_weapon = Some(1); }
@@ -420,12 +430,8 @@ fn update_input_state(
     else if check_action_just_pressed(InputAction::SelectWeapon9) { input_state.select_weapon = Some(8); }
     else if check_action_just_pressed(InputAction::SelectWeapon0) { input_state.select_weapon = Some(9); }
 
-    // Look motion
-    let mut look = Vec2::ZERO;
-    // for event in mouse_motion.read() {
-    //     look += event.delta;
-    // }
-    input_state.look = look;
+    // Look (handled by mouse events typically, but for this system we'll need to re-enable it if needed)
+    // input_state.look = ...
 }
 
 /// System to handle runtime remapping of actions
@@ -437,7 +443,6 @@ fn handle_rebinding(
 ) {
     let Some(action) = rebind_state.action else { return };
 
-    // Find the first key or mouse button just pressed
     let mut new_binding = None;
     if let Some(key) = keyboard.get_just_pressed().next() {
         new_binding = Some(InputBinding::Key(key.clone()));
@@ -446,7 +451,6 @@ fn handle_rebinding(
     }
 
     if let Some(binding) = new_binding {
-        // Update the map (overwrites existing bindings for this action)
         input_map.bindings.insert(action, vec![binding]);
         rebind_state.action = None;
     }

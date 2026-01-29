@@ -9,6 +9,7 @@ mod shake;
 mod bob;
 mod state_offsets;
 mod collision_lean;
+mod lock;
 
 pub use types::*;
 pub use follow::*;
@@ -19,6 +20,7 @@ pub use shake::*;
 pub use bob::*;
 pub use state_offsets::*;
 pub use collision_lean::*;
+pub use lock::*;
 
 pub struct CameraPlugin;
 
@@ -33,8 +35,11 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraWaypointFollower>()
             .register_type::<CameraShakeInstance>()
             .register_type::<CameraBobState>()
+            .register_type::<CameraTargetState>()
             .add_systems(Update, (
                 update_camera_state_offsets,
+                update_target_marking,
+                update_target_lock,
                 update_camera_rotation,
                 update_camera_shake,
                 update_camera_bob,
@@ -63,6 +68,7 @@ pub fn spawn_camera(
             ..default()
         },
         CameraBobState::default(),
+        CameraTargetState::default(),
         Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
         GlobalTransform::default(),
     ))
