@@ -189,6 +189,20 @@ impl Default for RecoilSettings {
     }
 }
 
+/// Bundle containing all components needed for a functional weapon entity
+#[derive(Bundle, Default)]
+pub struct WeaponBundle {
+    pub weapon: Weapon,
+    pub accuracy: Accuracy,
+    pub animation_state: WeaponAnimationState,
+    pub name: Name,
+    pub transform: Transform,
+    pub global_transform: GlobalTransform,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
+}
+
 /// Weapon animation modes corresponding to GKC animator states
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Default)]
 pub enum WeaponAnimationMode {

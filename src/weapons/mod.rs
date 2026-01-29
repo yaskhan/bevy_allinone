@@ -23,6 +23,7 @@ pub mod tracers;
 pub mod attachments;
 pub mod vfx;
 pub mod animation;
+pub mod builder;
 
 use bevy::prelude::*;
 
@@ -36,6 +37,7 @@ pub use tracers::*;
 pub use attachments::*;
 pub use vfx::*;
 pub use animation::*;
+pub use builder::*;
 
 pub struct WeaponsPlugin;
 
