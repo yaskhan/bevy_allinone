@@ -164,6 +164,21 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_gravity_gun(mut self, settings: GravityGunSettings) -> Self {
+        self.weapon.specialty_behavior = SpecialtyBehavior::GravityGun(settings);
+        self
+    }
+
+    pub fn with_beam(mut self, settings: BeamSettings) -> Self {
+        self.weapon.specialty_behavior = SpecialtyBehavior::Beam(settings);
+        self
+    }
+
+    pub fn with_flashlight(mut self, settings: FlashlightSettings) -> Self {
+        self.weapon.specialty_behavior = SpecialtyBehavior::Flashlight(settings);
+        self
+    }
+
     pub fn with_accuracy(mut self, base_spread: f32, max_spread: f32, bloom_per_shot: f32) -> Self {
         self.accuracy.base_spread = base_spread;
         self.accuracy.max_spread = max_spread;
@@ -186,10 +201,15 @@ impl WeaponBuilder {
 
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let attachment_system = self.attachment_system.clone();
+        let specialty_behavior = self.weapon.specialty_behavior.clone();
         let weapon_entity = commands.spawn(self.build()).id();
         
         if let Some(system) = attachment_system {
             commands.entity(weapon_entity).insert(system);
+        }
+
+        if specialty_behavior != SpecialtyBehavior::None {
+            commands.entity(weapon_entity).insert(SpecialtyState::default());
         }
         
         weapon_entity

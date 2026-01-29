@@ -80,6 +80,9 @@ pub struct Weapon {
     // Bow Settings
     pub bow_settings: Option<BowSettings>,
 
+    // Specialty Behaviors
+    pub specialty_behavior: SpecialtyBehavior,
+
     // Transform Settings
     pub transform_info: WeaponTransformInfo,
 }
@@ -149,6 +152,7 @@ impl Default for Weapon {
             show_ammo_text_in_hud: true,
             sniper_sight_settings: None,
             bow_settings: None,
+            specialty_behavior: SpecialtyBehavior::None,
             transform_info: WeaponTransformInfo::default(),
         }
     }
@@ -559,11 +563,59 @@ pub struct WeaponListOnPocket {
     pub weapon_list: Vec<Entity>,
 }
 
-impl Default for WeaponListOnPocket {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            weapon_list: Vec::new(),
-        }
     }
+}
+
+/// Specialty weapon behaviors and their configurations
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub enum SpecialtyBehavior {
+    #[default]
+    None,
+    GravityGun(GravityGunSettings),
+    Beam(BeamSettings),
+    Flashlight(FlashlightSettings),
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct GravityGunSettings {
+    pub hold_distance: f32,
+    pub max_grab_distance: f32,
+    pub hold_speed: f32,
+    pub throw_force: f32,
+    pub rotation_speed: f32,
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub enum BeamType {
+    #[default]
+    Laser,
+    Fire,
+    Heal,
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct BeamSettings {
+    pub beam_type: BeamType,
+    pub range: f32,
+    pub damage_per_second: f32,
+    pub energy_per_second: f32,
+    pub width: f32,
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct FlashlightSettings {
+    pub intensity: f32,
+    pub range: f32,
+    pub color: Color,
+    pub energy_per_second: f32,
+}
+
+/// Runtime state for specialty weapons
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct SpecialtyState {
+    pub is_active: bool,
+    pub target_entity: Option<Entity>,
+    pub secondary_active: bool,
+    pub timer: f32,
 }
