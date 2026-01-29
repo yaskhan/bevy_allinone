@@ -82,6 +82,8 @@ pub enum DamageType {
     Explosion,
     Fall,
     Environmental,
+    Fire,
+    Heal,
 }
 
 /// Melee combat component

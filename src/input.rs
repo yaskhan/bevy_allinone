@@ -56,6 +56,17 @@ pub enum InputAction {
     NextWeapon,
     PrevWeapon,
     ToggleInventory,
+    // Weapon selection keys
+    SelectWeapon1,
+    SelectWeapon2,
+    SelectWeapon3,
+    SelectWeapon4,
+    SelectWeapon5,
+    SelectWeapon6,
+    SelectWeapon7,
+    SelectWeapon8,
+    SelectWeapon9,
+    SelectWeapon0,
     // Stealth actions
     Hide,
     Peek,
@@ -101,6 +112,19 @@ impl Default for InputMap {
         bindings.insert(InputAction::NextWeapon, vec![InputBinding::Key(KeyCode::Digit1)]); // Placeholder
         bindings.insert(InputAction::PrevWeapon, vec![InputBinding::Key(KeyCode::Digit2)]); // Placeholder
         bindings.insert(InputAction::ToggleInventory, vec![InputBinding::Key(KeyCode::KeyI), InputBinding::Key(KeyCode::Tab)]);
+
+        // Weapon Selection
+        bindings.insert(InputAction::SelectWeapon1, vec![InputBinding::Key(KeyCode::Digit1)]);
+        bindings.insert(InputAction::SelectWeapon2, vec![InputBinding::Key(KeyCode::Digit2)]);
+        bindings.insert(InputAction::SelectWeapon3, vec![InputBinding::Key(KeyCode::Digit3)]);
+        bindings.insert(InputAction::SelectWeapon4, vec![InputBinding::Key(KeyCode::Digit4)]);
+        bindings.insert(InputAction::SelectWeapon5, vec![InputBinding::Key(KeyCode::Digit5)]);
+        bindings.insert(InputAction::SelectWeapon6, vec![InputBinding::Key(KeyCode::Digit6)]);
+        bindings.insert(InputAction::SelectWeapon7, vec![InputBinding::Key(KeyCode::Digit7)]);
+        bindings.insert(InputAction::SelectWeapon8, vec![InputBinding::Key(KeyCode::Digit8)]);
+        bindings.insert(InputAction::SelectWeapon9, vec![InputBinding::Key(KeyCode::Digit9)]);
+        bindings.insert(InputAction::SelectWeapon0, vec![InputBinding::Key(KeyCode::Digit0)]);
+
         // Stealth actions
         bindings.insert(InputAction::Hide, vec![InputBinding::Key(KeyCode::KeyH)]);
         bindings.insert(InputAction::Peek, vec![InputBinding::Key(KeyCode::KeyP)]);
@@ -159,6 +183,7 @@ pub struct InputState {
     pub block_pressed: bool,
     pub switch_camera_mode_pressed: bool,
     pub fire_pressed: bool,
+    pub fire_just_pressed: bool,
     pub reload_pressed: bool,
     pub next_weapon_pressed: bool,
     pub prev_weapon_pressed: bool,
@@ -170,6 +195,7 @@ pub struct InputState {
     pub reset_camera_pressed: bool,
     pub zoom_in_pressed: bool,
     pub zoom_out_pressed: bool,
+    pub select_weapon: Option<usize>,
     pub enabled: bool,
 }
 
@@ -190,6 +216,7 @@ impl Default for InputState {
             block_pressed: false,
             switch_camera_mode_pressed: false,
             fire_pressed: false,
+            fire_just_pressed: false,
             reload_pressed: false,
             next_weapon_pressed: false,
             prev_weapon_pressed: false,
@@ -200,6 +227,7 @@ impl Default for InputState {
             reset_camera_pressed: false,
             zoom_in_pressed: false,
             zoom_out_pressed: false,
+            select_weapon: None,
             enabled: true,
         }
     }
@@ -223,6 +251,7 @@ impl InputState {
             self.block_pressed = false;
             self.switch_camera_mode_pressed = false;
             self.fire_pressed = false;
+            self.fire_just_pressed = false;
             self.reload_pressed = false;
             self.next_weapon_pressed = false;
             self.prev_weapon_pressed = false;
@@ -233,6 +262,7 @@ impl InputState {
             self.reset_camera_pressed = false;
             self.zoom_in_pressed = false;
             self.zoom_out_pressed = false;
+            self.select_weapon = None;
         }
     }
 
@@ -365,10 +395,24 @@ fn update_input_state(
     input_state.switch_camera_mode_pressed = check_action_just_pressed(InputAction::SwitchCameraMode);
     
     input_state.fire_pressed = check_action(InputAction::Fire); // Continuous for auto
+    input_state.fire_just_pressed = check_action_just_pressed(InputAction::Fire);
     input_state.reload_pressed = check_action_just_pressed(InputAction::Reload);
     input_state.next_weapon_pressed = check_action_just_pressed(InputAction::NextWeapon);
     input_state.prev_weapon_pressed = check_action_just_pressed(InputAction::PrevWeapon);
     input_state.toggle_inventory_pressed = check_action_just_pressed(InputAction::ToggleInventory);
+
+    // Weapon selection
+    input_state.select_weapon = None;
+    if check_action_just_pressed(InputAction::SelectWeapon1) { input_state.select_weapon = Some(0); }
+    else if check_action_just_pressed(InputAction::SelectWeapon2) { input_state.select_weapon = Some(1); }
+    else if check_action_just_pressed(InputAction::SelectWeapon3) { input_state.select_weapon = Some(2); }
+    else if check_action_just_pressed(InputAction::SelectWeapon4) { input_state.select_weapon = Some(3); }
+    else if check_action_just_pressed(InputAction::SelectWeapon5) { input_state.select_weapon = Some(4); }
+    else if check_action_just_pressed(InputAction::SelectWeapon6) { input_state.select_weapon = Some(5); }
+    else if check_action_just_pressed(InputAction::SelectWeapon7) { input_state.select_weapon = Some(6); }
+    else if check_action_just_pressed(InputAction::SelectWeapon8) { input_state.select_weapon = Some(7); }
+    else if check_action_just_pressed(InputAction::SelectWeapon9) { input_state.select_weapon = Some(8); }
+    else if check_action_just_pressed(InputAction::SelectWeapon0) { input_state.select_weapon = Some(9); }
 
     // Look motion
     let mut look = Vec2::ZERO;

@@ -24,3 +24,6 @@ bevy = { version = "0.18", default-features = true }
 default = ["3d"]
 3d = []
 2d = []
+
+[lib]
+path = "src/lib.rs"
