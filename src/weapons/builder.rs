@@ -121,6 +121,21 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_fp_offset(mut self, pos: Vec3, rot: Quat) -> Self {
+        self.weapon.transform_info.hand_offset_1p = Transform::from_translation(pos).with_rotation(rot);
+        self
+    }
+
+    pub fn with_tp_offset(mut self, pos: Vec3, rot: Quat) -> Self {
+        self.weapon.transform_info.hand_offset_3p = Transform::from_translation(pos).with_rotation(rot);
+        self
+    }
+
+    pub fn with_holster_offset(mut self, pos: Vec3, rot: Quat) -> Self {
+        self.weapon.transform_info.holster_offset = Transform::from_translation(pos).with_rotation(rot);
+        self
+    }
+
     pub fn with_transform(mut self, transform: Transform) -> Self {
         self.transform = transform;
         self

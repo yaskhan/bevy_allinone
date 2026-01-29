@@ -79,6 +79,9 @@ pub struct Weapon {
 
     // Bow Settings
     pub bow_settings: Option<BowSettings>,
+
+    // Transform Settings
+    pub transform_info: WeaponTransformInfo,
 }
 
 impl Default for Weapon {
@@ -146,6 +149,26 @@ impl Default for Weapon {
             show_ammo_text_in_hud: true,
             sniper_sight_settings: None,
             bow_settings: None,
+            transform_info: WeaponTransformInfo::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub struct WeaponTransformInfo {
+    pub hand_offset_1p: Transform,
+    pub hand_offset_3p: Transform,
+    pub holster_offset: Transform,
+    pub lerp_speed: f32,
+}
+
+impl Default for WeaponTransformInfo {
+    fn default() -> Self {
+        Self {
+            hand_offset_1p: Transform::IDENTITY,
+            hand_offset_3p: Transform::IDENTITY,
+            holster_offset: Transform::IDENTITY,
+            lerp_speed: 10.0,
         }
     }
 }
