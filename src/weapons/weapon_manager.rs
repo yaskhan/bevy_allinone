@@ -1,0 +1,563 @@
+//! Weapon manager system
+//!
+//! Manages weapon inventory, switching, pockets, and dual weapons
+
+use bevy::prelude::*;
+use crate::input::InputState;
+use crate::character::Player;
+use super::types::{Weapon, WeaponPocket, WeaponListOnPocket, PocketType};
+use std::collections::HashMap;
+
+/// Weapon manager component
+/// Manages weapon inventory, switching, pockets, and dual weapons
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct WeaponManager {
+    // Core weapon management
+    pub weapons_list: Vec<Entity>,
+    pub current_index: usize,
+    pub weapons_slots_amount: u32,
+    pub weapons_mode_active: bool,
+    pub any_weapon_available: bool,
+    pub weapon_list_count: usize,
+
+    // Dual weapon support
+    pub using_dual_weapon: bool,
+    pub current_right_weapon_index: usize,
+    pub current_left_weapon_index: usize,
+    pub dual_weapons_enabled: bool,
+    pub current_right_weapon_name: String,
+    pub current_left_weapon_name: String,
+
+    // Weapon pockets (organized storage)
+    pub weapon_pockets: Vec<WeaponPocket>,
+    pub weapon_pockets_map: HashMap<String, usize>, // pocket_id -> index in weapon_pockets
+
+    // Weapon state flags
+    pub carrying_weapon_in_third_person: bool,
+    pub carrying_weapon_in_first_person: bool,
+    pub aiming_in_third_person: bool,
+    pub aiming_in_first_person: bool,
+    pub shooting_single_weapon: bool,
+    pub shooting_right_weapon: bool,
+    pub shooting_left_weapon: bool,
+    pub reloading_with_animation: bool,
+    pub refueling_active: bool,
+
+    // Transition states
+    pub changing_weapon: bool,
+    pub keeping_weapon: bool,
+    pub changing_dual_weapon: bool,
+    pub changing_single_weapon: bool,
+
+    // Input settings
+    pub change_weapons_with_keys: bool,
+    pub change_weapons_with_mouse_wheel: bool,
+    pub change_weapons_with_number_keys: bool,
+
+    // Timers and Last Used
+    pub last_time_draw_weapon: f32,
+    pub last_time_reload: f32,
+    pub last_time_used: f32,
+    pub last_time_fired: f32,
+    pub last_time_moved: f32,
+
+    // Selection
+    pub choosed_weapon: usize,
+    pub choose_dual_weapon_index: i32,
+
+    // Aim Assist
+    pub use_aim_assist_in_third_person: bool,
+    pub use_aim_assist_in_first_person: bool,
+    pub aim_assist_look_at_target_speed: f32,
+    pub check_aim_assist_state: bool,
+
+    // Character State integration
+    pub player_on_ground: bool,
+    pub can_move: bool,
+    pub player_is_dead: bool,
+    pub player_currently_busy: bool,
+    pub run_when_aiming_weapon_in_third_person: bool,
+    pub aim_mode_input_pressed: bool,
+    pub reloading_with_animation_active: bool,
+
+    // Inventory & Ammo
+    pub use_ammo_from_inventory: bool,
+    pub change_to_next_weapon_if_ammo_empty: bool,
+
+    // Drop settings
+    pub can_drop_weapons: bool,
+    pub drop_current_weapon_when_die: bool,
+    pub drop_all_weapons_when_die: bool,
+    pub drop_weapons_only_if_using: bool,
+
+    // Draw settings
+    pub draw_weapon_when_picked: bool,
+    pub draw_picked_weapon_only_if_not_previous: bool,
+    pub change_to_next_weapon_when_equipped: bool,
+    pub change_to_next_weapon_when_unequipped: bool,
+    pub change_to_next_weapon_when_drop: bool,
+
+    // Quick draw
+    pub use_quick_draw_weapon: bool,
+    pub keep_weapon_after_delay_third_person: bool,
+    pub keep_weapon_after_delay_first_person: bool,
+    pub keep_weapon_delay: f32,
+
+    // Stats
+    pub damage_multiplier_stat: f32,
+    pub extra_damage_stat: f32,
+    pub spread_multiplier_stat: f32,
+    pub fire_rate_multiplier_stat: f32,
+    pub extra_reload_speed_stat: f32,
+    pub magazine_extra_size_stat: i32,
+
+    // Debug
+    pub show_debug_log: bool,
+}
+
+impl Default for WeaponManager {
+    fn default() -> Self {
+        Self {
+            weapons_list: Vec::new(),
+            current_index: 0,
+            weapons_slots_amount: 10,
+            weapons_mode_active: true,
+            any_weapon_available: false,
+            weapon_list_count: 0,
+            using_dual_weapon: false,
+            current_right_weapon_index: 0,
+            current_left_weapon_index: 0,
+            dual_weapons_enabled: true,
+            current_right_weapon_name: String::new(),
+            current_left_weapon_name: String::new(),
+            weapon_pockets: Vec::new(),
+            weapon_pockets_map: HashMap::new(),
+            carrying_weapon_in_third_person: false,
+            carrying_weapon_in_first_person: false,
+            aiming_in_third_person: false,
+            aiming_in_first_person: false,
+            shooting_single_weapon: false,
+            shooting_right_weapon: false,
+            shooting_left_weapon: false,
+            reloading_with_animation: false,
+            refueling_active: false,
+            changing_weapon: false,
+            keeping_weapon: false,
+            changing_dual_weapon: false,
+            changing_single_weapon: false,
+            change_weapons_with_keys: true,
+            change_weapons_with_mouse_wheel: true,
+            change_weapons_with_number_keys: true,
+            last_time_draw_weapon: 0.0,
+            last_time_reload: 0.0,
+            last_time_used: 0.0,
+            last_time_fired: 0.0,
+            last_time_moved: 0.0,
+            choosed_weapon: 0,
+            choose_dual_weapon_index: -1,
+            use_aim_assist_in_third_person: false,
+            use_aim_assist_in_first_person: false,
+            aim_assist_look_at_target_speed: 4.0,
+            check_aim_assist_state: false,
+            player_on_ground: true,
+            can_move: true,
+            player_is_dead: false,
+            player_currently_busy: false,
+            run_when_aiming_weapon_in_third_person: false,
+            aim_mode_input_pressed: false,
+            reloading_with_animation_active: false,
+            use_ammo_from_inventory: false,
+            change_to_next_weapon_if_ammo_empty: false,
+            can_drop_weapons: true,
+            drop_current_weapon_when_die: true,
+            drop_all_weapons_when_die: false,
+            drop_weapons_only_if_using: true,
+            draw_weapon_when_picked: true,
+            draw_picked_weapon_only_if_not_previous: false,
+            change_to_next_weapon_when_equipped: true,
+            change_to_next_weapon_when_unequipped: true,
+            change_to_next_weapon_when_drop: true,
+            use_quick_draw_weapon: false,
+            keep_weapon_after_delay_third_person: false,
+            keep_weapon_after_delay_first_person: false,
+            keep_weapon_delay: 2.0,
+            damage_multiplier_stat: 1.0,
+            extra_damage_stat: 0.0,
+            spread_multiplier_stat: 1.0,
+            fire_rate_multiplier_stat: 1.0,
+            extra_reload_speed_stat: 1.0,
+            magazine_extra_size_stat: 0,
+            show_debug_log: false,
+        }
+    }
+}
+
+/// Handle weapon switching via input
+/// Ported from GKC's chooseNextWeapon/choosePreviousWeapon methods
+pub fn handle_weapon_switching(
+    time: Res<Time>,
+    mut query: Query<(&InputState, &mut WeaponManager)>,
+) {
+    for (input, mut manager) in query.iter_mut() {
+        // Skip if weapon is moving or reloading
+        if manager.changing_weapon || manager.reloading_with_animation {
+            continue;
+        }
+
+        let mut should_switch = false;
+        let mut switch_direction = 0; // 1 = next, -1 = previous
+
+        // Check for next weapon input
+        if input.next_weapon_pressed {
+            should_switch = true;
+            switch_direction = 1;
+        }
+        // Check for previous weapon input
+        else if input.prev_weapon_pressed {
+            should_switch = true;
+            switch_direction = -1;
+        }
+
+        if should_switch && !manager.weapons_list.is_empty() {
+            // Update current index based on direction
+            if switch_direction == 1 {
+                manager.current_index = (manager.current_index + 1) % manager.weapons_list.len();
+            } else {
+                if manager.current_index == 0 {
+                    manager.current_index = manager.weapons_list.len().saturating_sub(1);
+                } else {
+                    manager.current_index -= 1;
+                }
+            }
+
+            // Update choosed_weapon for compatibility
+            manager.choosed_weapon = manager.current_index;
+
+            // Set changing weapon state
+            if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                manager.changing_weapon = true;
+                manager.keeping_weapon = false;
+            }
+
+            // Log for debug
+            if manager.show_debug_log {
+                info!("Switching to weapon index: {}", manager.current_index);
+            }
+        }
+    }
+}
+
+/// Handle weapon manager input (draw/keep/aim)
+pub fn handle_weapon_manager_input(
+    time: Res<Time>,
+    mut query: Query<(&InputState, &mut WeaponManager), With<Player>>,
+) {
+    for (input, mut manager) in query.iter_mut() {
+        // Skip if weapons mode is not active
+        if !manager.weapons_mode_active {
+            continue;
+        }
+
+        // Draw/Keep weapon input (toggle)
+        if input.fire_pressed && !manager.carrying_weapon_in_third_person && !manager.carrying_weapon_in_first_person {
+            // Draw weapon
+            if manager.use_quick_draw_weapon && !manager.aiming_in_third_person {
+                // Quick draw
+                manager.carrying_weapon_in_third_person = true;
+                manager.changing_weapon = false;
+                manager.keeping_weapon = false;
+            } else {
+                // Normal draw
+                manager.carrying_weapon_in_third_person = true;
+                manager.changing_weapon = true;
+                manager.keeping_weapon = false;
+            }
+            manager.last_time_draw_weapon = time.elapsed_secs();
+        }
+
+        // Aim weapon input
+        if input.aim_pressed {
+            if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                manager.aiming_in_third_person = !manager.aiming_in_third_person;
+                manager.aim_mode_input_pressed = manager.aiming_in_third_person;
+            }
+        }
+
+        // Reload weapon input
+        if input.reload_pressed {
+            manager.reloading_with_animation_active = true;
+            manager.last_time_reload = time.elapsed_secs();
+        }
+
+        // Update last time used
+        if input.fire_pressed || input.aim_pressed || input.reload_pressed {
+            manager.last_time_used = time.elapsed_secs();
+        }
+    }
+}
+
+/// Update weapon manager state
+pub fn update_weapon_manager(
+    time: Res<Time>,
+    mut manager_query: Query<(Entity, &mut WeaponManager)>,
+    mut weapon_query: Query<(&mut Weapon, &mut Visibility)>,
+) {
+    for (player_entity, mut manager) in manager_query.iter_mut() {
+        // Update player on ground state (simplified - would normally come from character controller)
+        manager.player_on_ground = true;
+
+        // Update can move state (simplified - would normally check if player is dead/busy)
+        manager.can_move = !manager.player_is_dead && !manager.player_currently_busy;
+
+        // Handle changing weapon state (entity activation/deactivation)
+        if manager.changing_weapon {
+            if !manager.keeping_weapon {
+                // Keep weapon (hide current)
+                if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                    manager.carrying_weapon_in_third_person = false;
+                    manager.carrying_weapon_in_first_person = false;
+                } else {
+                    // Draw weapon
+                    manager.carrying_weapon_in_third_person = true;
+                }
+                manager.keeping_weapon = true;
+            }
+
+            // Apply visibility changes to weapon entities
+            for (i, &weapon_entity) in manager.weapons_list.iter().enumerate() {
+                if let Ok((mut weapon, mut visibility)) = weapon_query.get_mut(weapon_entity) {
+                    if i == manager.current_index && manager.carrying_weapon_in_third_person {
+                        *visibility = Visibility::Inherited;
+                    } else {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
+            }
+
+            // Check if weapon change is complete
+            if !manager.changing_dual_weapon && !manager.changing_single_weapon {
+                // Single weapon change complete
+                manager.changing_weapon = false;
+                manager.keeping_weapon = false;
+
+                // Update current weapon info
+                if manager.show_debug_log {
+                    info!("Weapon change complete at index {}", manager.current_index);
+                }
+            }
+        }
+
+        // Handle dual weapon changing
+        if manager.changing_dual_weapon {
+            if !manager.keeping_weapon {
+                // Keep dual weapons first
+                manager.carrying_weapon_in_third_person = false;
+                manager.keeping_weapon = true;
+            }
+
+            // Check if both weapons are ready
+            if manager.keeping_weapon {
+                // Draw dual weapons
+                manager.carrying_weapon_in_third_person = true;
+                manager.changing_dual_weapon = false;
+                manager.keeping_weapon = false;
+                manager.using_dual_weapon = true;
+            }
+        }
+
+        // Handle single weapon changing from dual
+        if manager.changing_single_weapon {
+            if !manager.keeping_weapon {
+                // Keep dual weapons
+                manager.carrying_weapon_in_third_person = false;
+                manager.keeping_weapon = true;
+            }
+
+            // Check if ready to switch to single
+            if manager.keeping_weapon {
+                // Switch to single weapon
+                manager.using_dual_weapon = false;
+                manager.changing_single_weapon = false;
+                manager.keeping_weapon = false;
+                manager.carrying_weapon_in_third_person = true;
+                manager.changing_weapon = true;
+            }
+        }
+
+        // Update reload timer for current weapon
+        if manager.reloading_with_animation_active {
+            if let Some(&weapon_entity) = manager.weapons_list.get(manager.current_index) {
+                if let Ok((mut weapon, _)) = weapon_query.get_mut(weapon_entity) {
+                    if time.elapsed_secs() - manager.last_time_reload > weapon.reload_time {
+                        manager.reloading_with_animation_active = false;
+                        weapon.current_ammo = weapon.ammo_capacity;
+                        weapon.is_reloading = false;
+                        if manager.show_debug_log {
+                            info!("Reload complete for {}", weapon.weapon_name);
+                        }
+                    } else {
+                        weapon.is_reloading = true;
+                    }
+                }
+            }
+        }
+
+        // Check if weapon is out of ammo and should switch
+        if manager.change_to_next_weapon_if_ammo_empty && !manager.reloading_with_animation_active {
+             if let Some(&weapon_entity) = manager.weapons_list.get(manager.current_index) {
+                if let Ok((weapon, _)) = weapon_query.get(weapon_entity) {
+                    if weapon.current_ammo <= 0 {
+                        if manager.weapons_list.len() > 1 {
+                            manager.changing_weapon = true;
+                            manager.current_index = (manager.current_index + 1) % manager.weapons_list.len();
+                            if manager.show_debug_log {
+                                info!("Out of ammo, switching to next weapon");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update last time fired
+        if manager.shooting_single_weapon || manager.shooting_right_weapon || manager.shooting_left_weapon {
+            manager.last_time_fired = time.elapsed_secs();
+        }
+
+        // Update aim assist state
+        if manager.use_aim_assist_in_third_person && manager.aiming_in_third_person {
+            manager.check_aim_assist_state = true;
+        } else {
+            manager.check_aim_assist_state = false;
+        }
+
+        // Update any weapon available
+        manager.any_weapon_available = !manager.weapons_list.is_empty();
+
+        // Update weapon list count
+        manager.weapon_list_count = manager.weapons_list.len();
+    }
+}
+
+// ============================================================================
+// Weapon Pocket Management Methods
+// ============================================================================
+
+impl WeaponManager {
+    /// Add a weapon pocket to the manager
+    pub fn add_pocket(&mut self, pocket: WeaponPocket) -> Result<(), String> {
+        if self.weapon_pockets_map.contains_key(&pocket.id) {
+            return Err(format!("Pocket with id '{}' already exists", pocket.id));
+        }
+
+        let index = self.weapon_pockets.len();
+        self.weapon_pockets.push(pocket.clone());
+        self.weapon_pockets_map.insert(pocket.id.clone(), index);
+        Ok(())
+    }
+
+    /// Get a pocket by ID
+    pub fn get_pocket(&self, pocket_id: &str) -> Option<&WeaponPocket> {
+        self.weapon_pockets_map.get(pocket_id)
+            .and_then(|&index| self.weapon_pockets.get(index))
+    }
+
+    /// Get a mutable pocket by ID
+    pub fn get_pocket_mut(&mut self, pocket_id: &str) -> Option<&mut WeaponPocket> {
+        if let Some(&index) = self.weapon_pockets_map.get(pocket_id) {
+            self.weapon_pockets.get_mut(index)
+        } else {
+            None
+        }
+    }
+
+    /// Add a weapon to a pocket
+    pub fn add_weapon_to_pocket(&mut self, weapon_id: &str, pocket_id: &str) -> Result<(), String> {
+        if let Some(pocket) = self.get_pocket_mut(pocket_id) {
+            if !pocket.add_weapon(weapon_id) {
+                return Err(format!(
+                    "Cannot add weapon '{}' to pocket '{}': {}",
+                    weapon_id,
+                    pocket_id,
+                    if !pocket.has_room() {
+                        "pocket is full"
+                    } else {
+                        "weapon already in pocket"
+                    }
+                ));
+            }
+            Ok(())
+        } else {
+            Err(format!("Pocket '{}' not found", pocket_id))
+        }
+    }
+
+    /// Remove a weapon from a pocket
+    pub fn remove_weapon_from_pocket(&mut self, weapon_id: &str, pocket_id: &str) -> Result<(), String> {
+        if let Some(pocket) = self.get_pocket_mut(pocket_id) {
+            if !pocket.remove_weapon(weapon_id) {
+                return Err(format!("Weapon '{}' not found in pocket '{}'", weapon_id, pocket_id));
+            }
+            Ok(())
+        } else {
+            Err(format!("Pocket '{}' not found", pocket_id))
+        }
+    }
+
+    /// Get weapon pocket for a weapon
+    pub fn get_weapon_pocket(&self, weapon_id: &str) -> Option<&WeaponPocket> {
+        for pocket in &self.weapon_pockets {
+            if pocket.contains_weapon(weapon_id) {
+                return Some(pocket);
+            }
+        }
+        None
+    }
+
+    /// Get all weapons in a pocket
+    pub fn get_weapons_in_pocket(&self, pocket_id: &str) -> Vec<String> {
+        if let Some(pocket) = self.get_pocket(pocket_id) {
+            pocket.weapon_ids.clone()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get all pockets
+    pub fn get_all_pockets(&self) -> Vec<&WeaponPocket> {
+        self.weapon_pockets.iter().collect()
+    }
+
+    /// Get pocket by type
+    pub fn get_pocket_by_type(&self, pocket_type: &PocketType) -> Option<&WeaponPocket> {
+        self.weapon_pockets.iter().find(|p| &p.pocket_type == pocket_type)
+    }
+
+    /// Get number of pockets
+    pub fn pocket_count(&self) -> usize {
+        self.weapon_pockets.len()
+    }
+
+    /// Clear all pockets
+    pub fn clear_pockets(&mut self) {
+        self.weapon_pockets.clear();
+        self.weapon_pockets_map.clear();
+    }
+
+    /// Create default pockets
+    pub fn create_default_pockets(&mut self) -> Result<(), String> {
+        let default_pockets = vec![
+            WeaponPocket::new("primary", "Primary Weapons", 3, PocketType::Primary),
+            WeaponPocket::new("secondary", "Secondary Weapons", 3, PocketType::Secondary),
+            WeaponPocket::new("melee", "Melee Weapons", 2, PocketType::Melee),
+            WeaponPocket::new("special", "Special Weapons", 2, PocketType::Special),
+            WeaponPocket::new("grenade", "Grenades", 3, PocketType::Grenade),
+        ];
+
+        for pocket in default_pockets {
+            self.add_pocket(pocket)?;
+        }
+        Ok(())
+    }
+}
