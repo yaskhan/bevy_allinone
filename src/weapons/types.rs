@@ -76,6 +76,9 @@ pub struct Weapon {
     
     // Sniper Sight Settings
     pub sniper_sight_settings: Option<SniperSightSettings>,
+
+    // Bow Settings
+    pub bow_settings: Option<BowSettings>,
 }
 
 impl Default for Weapon {
@@ -142,8 +145,25 @@ impl Default for Weapon {
             show_ammo_slider_in_hud: true,
             show_ammo_text_in_hud: true,
             sniper_sight_settings: None,
+            bow_settings: None,
         }
     }
+}
+
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct BowSettings {
+    pub pull_force_rate: f32,
+    pub max_pull_damage_mult: f32,
+    pub min_time_to_shoot: f32,
+    pub bullet_time_in_air: bool,
+    pub bullet_time_scale: f32,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct BowState {
+    pub pull_timer: f32,
+    pub is_pulling: bool,
 }
 
 #[derive(Debug, Clone, Reflect, Default, PartialEq)]
@@ -261,6 +281,7 @@ pub struct WeaponBundle {
     pub weapon: Weapon,
     pub accuracy: Accuracy,
     pub animation_state: WeaponAnimationState,
+    pub bow_state: BowState,
     pub name: Name,
     pub transform: Transform,
     pub global_transform: GlobalTransform,

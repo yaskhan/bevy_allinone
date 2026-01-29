@@ -110,6 +110,17 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_bow(mut self, pull_rate: f32, max_damage: f32) -> Self {
+        self.weapon.bow_settings = Some(BowSettings {
+            pull_force_rate: pull_rate,
+            max_pull_damage_mult: max_damage,
+            min_time_to_shoot: 0.5,
+            bullet_time_in_air: true,
+            bullet_time_scale: 0.2,
+        });
+        self
+    }
+
     pub fn with_transform(mut self, transform: Transform) -> Self {
         self.transform = transform;
         self
@@ -128,6 +139,7 @@ impl WeaponBuilder {
             weapon: self.weapon,
             accuracy: self.accuracy,
             animation_state: self.animation_state,
+            bow_state: self.bow_state,
             name: Name::new(self.name),
             transform: self.transform,
             ..default()
