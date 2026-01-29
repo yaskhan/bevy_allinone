@@ -54,11 +54,12 @@ pub fn update_camera_zones(
 
 pub fn apply_camera_zone_settings(
     time: Res<Time>,
-    tracker_query: Query<&CameraZoneTracker, With<Player>>,
+    tracker_query: Query<(Entity, &CameraZoneTracker), With<Player>>,
     zone_query: Query<&CameraZone>,
+    player_transform_query: Query<&GlobalTransform, With<Player>>,
     mut camera_query: Query<(&mut CameraController, &mut CameraState)>,
 ) {
-    let tracker = match tracker_query.iter().next() {
+    let (player_entity, tracker) = match tracker_query.iter().next() {
         Some(t) => t,
         None => return,
     };
@@ -68,31 +69,53 @@ pub fn apply_camera_zone_settings(
         None => return,
     };
     
+    let dt = time.delta_secs();
+
     if let Some(current_zone_ent) = tracker.current_zone {
         if let Ok(zone) = zone_query.get(current_zone_ent) {
             let settings = &zone.settings;
-            let dt = time.delta_secs();
             let speed = settings.transition_speed;
+            // Exponential smoothing alpha
+            let alpha = 1.0 - (-speed * dt).exp();
 
             // Apply Mode
             controller.mode = settings.mode;
 
-            // Smoothly transition settings
-            if let Some(dist) = settings.distance {
-                controller.distance = controller.distance + (dist - controller.distance) * speed * dt;
-            }
+            // Transition distance
+            let target_dist = settings.distance.unwrap_or(controller.base_distance);
+            controller.distance = controller.distance + (target_dist - controller.distance) * alpha;
             
-            if let Some(fov) = settings.fov {
-                controller.default_fov = controller.default_fov + (fov - controller.default_fov) * speed * dt;
+            // Transition FOV
+            let target_fov = settings.fov.unwrap_or(controller.base_fov);
+            controller.default_fov = controller.default_fov + (target_fov - controller.default_fov) * alpha;
+
+            // Transition Pivot
+            let target_pivot = settings.pivot_offset.unwrap_or(controller.base_pivot_offset);
+            controller.default_pivot_offset = controller.default_pivot_offset.lerp(target_pivot, alpha);
+
+            // Handle Rotation
+            if settings.look_at_player {
+                if let Ok(_player_xf) = player_transform_query.get(player_entity) {
+                    // Logic for look_at_player can be added here if needed
+                }
             }
 
             if let Some(yaw) = settings.fixed_yaw {
-                state.yaw = state.yaw + (yaw - state.yaw) * speed * dt;
+                state.yaw = state.yaw + (yaw - state.yaw) * alpha;
             }
             
             if let Some(pitch) = settings.fixed_pitch {
-                state.pitch = state.pitch + (pitch - state.pitch) * speed * dt;
+                state.pitch = state.pitch + (pitch - state.pitch) * alpha;
             }
         }
+    } else {
+        // Return to base settings
+        let speed = controller.base_transition_speed;
+        let alpha = 1.0 - (-speed * dt).exp();
+        
+        controller.mode = controller.base_mode;
+        controller.distance = controller.distance + (controller.base_distance - controller.distance) * alpha;
+        controller.default_fov = controller.default_fov + (controller.base_fov - controller.default_fov) * alpha;
+        controller.default_pivot_offset = controller.default_pivot_offset.lerp(controller.base_pivot_offset, alpha);
     }
 }

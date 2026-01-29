@@ -53,10 +53,12 @@ pub fn update_camera_follow(
         // Lean rotation
         let lean_rotation = Quat::from_rotation_z(-state.current_lean * camera.lean_angle.to_radians());
         
-        transform.rotation = transform.rotation.slerp(rotation * lean_rotation, camera.smooth_rotation_speed * time.delta_secs());
+        let rot_alpha = 1.0 - (-camera.smooth_rotation_speed * time.delta_secs()).exp();
+        transform.rotation = transform.rotation.slerp(rotation * lean_rotation, rot_alpha);
 
         // Position
-        state.current_distance = state.current_distance + (camera.distance - state.current_distance) * 5.0 * time.delta_secs();
+        let dist_alpha = 1.0 - (-camera.distance_smooth_speed * time.delta_secs()).exp();
+        state.current_distance = state.current_distance + (camera.distance - state.current_distance) * dist_alpha;
         let direction = transform.back();
         
         // Final position with bobbing
@@ -77,6 +79,7 @@ pub fn handle_camera_mode_switch(
                 CameraMode::SideScroller => CameraMode::TopDown,
                 CameraMode::TopDown => CameraMode::ThirdPerson,
             };
+            camera.base_mode = camera.mode;
             info!("Switched Camera Mode to: {:?}", camera.mode);
         }
     }

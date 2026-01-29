@@ -28,9 +28,11 @@ pub fn update_camera_state_offsets(
             CameraSide::Right => 1.0,
             CameraSide::Left => -1.0,
         };
-        state.current_side_interpolator = state.current_side_interpolator + (target_side_val - state.current_side_interpolator) * 10.0 * dt;
+        let side_alpha = 1.0 - (-10.0 * dt).exp();
+        state.current_side_interpolator = state.current_side_interpolator + (target_side_val - state.current_side_interpolator) * side_alpha;
 
         // 3. Determine Target Pivot Offset based on state
+        // ... (lines 33-52 unchanged) ...
         state.is_aiming = controller.mode == CameraMode::ThirdPerson && input.aim_pressed;
         state.is_crouching = movement.is_crouching;
 
@@ -42,20 +44,17 @@ pub fn update_camera_state_offsets(
         
         if state.is_aiming {
             target_pivot_offset = controller.aim_pivot_offset;
-            // When aiming, the horizontal offset should respect the current side
             target_pivot_offset.x *= target_side_val;
         } else {
-            // Even when not aiming, apply a subtle side offset in 3rd person
             if controller.mode == CameraMode::ThirdPerson {
                 target_pivot_offset.x += controller.side_offset * state.current_side_interpolator;
             }
         }
 
         // 4. Smoothly Update Current Pivot
-        // The pivot is the world position we rotate around.
-        // Usually, it's target_pos + target_rot * target_pivot_offset
         let target_pivot_world = target_transform.translation + target_transform.rotation * target_pivot_offset;
         
-        state.current_pivot = state.current_pivot + (target_pivot_world - state.current_pivot) * controller.pivot_smooth_speed * dt;
+        let pivot_alpha = 1.0 - (-controller.pivot_smooth_speed * dt).exp();
+        state.current_pivot = state.current_pivot.lerp(target_pivot_world, pivot_alpha);
     }
 }

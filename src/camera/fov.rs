@@ -18,8 +18,9 @@ pub fn update_camera_fov(
 
             let target_rad = target_fov.to_radians();
             let speed = state.fov_override_speed.unwrap_or(camera.fov_speed);
+            let alpha = 1.0 - (-speed * time.delta_secs()).exp();
             
-            p.fov = p.fov + (target_rad - p.fov) * speed * time.delta_secs();
+            p.fov = p.fov + (target_rad - p.fov) * alpha;
         }
     }
 }

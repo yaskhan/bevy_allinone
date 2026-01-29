@@ -169,6 +169,7 @@ pub struct CameraController {
     pub smooth_follow_speed: f32,
     pub smooth_rotation_speed: f32,
     pub pivot_smooth_speed: f32,
+    pub distance_smooth_speed: f32,
     
     // Offsets (Dynamic)
     pub side_offset: f32,
@@ -194,6 +195,13 @@ pub struct CameraController {
 
     // Target Lock
     pub target_lock: TargetLockSettings,
+
+    // Baseline settings (for smooth restoration after zones)
+    pub base_mode: CameraMode,
+    pub base_distance: f32,
+    pub base_fov: f32,
+    pub base_pivot_offset: Vec3,
+    pub base_transition_speed: f32,
 }
 
 impl Default for CameraController {
@@ -217,6 +225,7 @@ impl Default for CameraController {
             smooth_follow_speed: 15.0,
             smooth_rotation_speed: 20.0,
             pivot_smooth_speed: 10.0,
+            distance_smooth_speed: 8.0,
             
             side_offset: 0.5,
             default_pivot_offset: Vec3::new(0.0, 1.6, 0.0),
@@ -237,6 +246,12 @@ impl Default for CameraController {
             collision_radius: 0.2,
 
             target_lock: TargetLockSettings::default(),
+
+            base_mode: CameraMode::ThirdPerson,
+            base_distance: 4.0,
+            base_fov: 60.0,
+            base_pivot_offset: Vec3::new(0.0, 1.6, 0.0),
+            base_transition_speed: 5.0,
         }
     }
 }
