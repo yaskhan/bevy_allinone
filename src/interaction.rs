@@ -19,6 +19,7 @@ impl Plugin for InteractionPlugin {
             .add_event::<RemoveDeviceEvent>()
             .add_systems(Update, (
                 detect_interactables,
+                detect_devices_in_proximity,
                 update_device_list,
                 select_closest_device,
                 validate_interactions,
@@ -669,5 +670,37 @@ pub fn select_closest_device(
         }
 
         player_system.current_device_index = best_index;
+    }
+}
+
+/// System to automatically add/remove devices based on proximity
+pub fn detect_devices_in_proximity(
+    player_query: Query<(Entity, &GlobalTransform, &UsingDevicesSystem)>,
+    device_query: Query<(Entity, &GlobalTransform), With<DeviceStringAction>>,
+    mut add_events: EventWriter<AddDeviceEvent>,
+    mut remove_events: EventWriter<RemoveDeviceEvent>,
+) {
+    for (player_entity, player_transform, player_system) in player_query.iter() {
+        let player_pos = player_transform.translation();
+        
+        for (device_entity, device_transform) in device_query.iter() {
+            let dist = player_pos.distance(device_transform.translation());
+            
+            let is_in_list = player_system.device_list.iter().any(|d| d.entity == device_entity);
+            
+            if dist < player_system.raycast_distance {
+                if !is_in_list {
+                    add_events.send(AddDeviceEvent {
+                        player: player_entity,
+                        device: device_entity,
+                    });
+                }
+            } else if is_in_list {
+                remove_events.send(RemoveDeviceEvent {
+                    player: player_entity,
+                    device: device_entity,
+                });
+            }
+        }
     }
 }
