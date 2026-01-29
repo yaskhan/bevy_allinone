@@ -45,6 +45,7 @@ pub mod ladder;
 pub mod map;
 pub mod physics;
 pub mod player_idle;
+pub mod player_modes;
 pub mod player_state;
 pub mod player_state_icon;
 pub mod puzzle;
@@ -79,6 +80,7 @@ pub mod prelude {
     pub use crate::map::*;
     pub use crate::physics::*;
     pub use crate::player_idle::*;
+    pub use crate::player_modes::*;
     pub use crate::player_state::*;
     pub use crate::player_state_icon::*;
     pub use crate::puzzle::*;
@@ -120,6 +122,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(map::MapPlugin)
             .add_plugins(physics::PhysicsPlugin)
             .add_plugins(player_idle::PlayerIdlePlugin)
+            .add_plugins(player_modes::PlayerModesPlugin)
             .add_plugins(player_state::PlayerStatePlugin)
             .add_plugins(player_state_icon::PlayerStateIconPlugin)
             .add_plugins(puzzle::PuzzlePlugin)
