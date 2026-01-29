@@ -640,3 +640,23 @@ pub struct StickToSurface {
     pub parent_entity: Option<Entity>,
     pub relative_transform: Transform,
 }
+
+/// Settings for throwable grenades
+#[derive(Debug, Clone, Reflect, Default, PartialEq)]
+pub struct GrenadeSettings {
+    pub max_throw_force: f32,
+    pub explosion_radius: f32,
+    pub explosion_damage: f32,
+    pub cook_time: f32,
+    pub grenade_type: String, // Identifier for the projectile type
+}
+
+/// Runtime state for player grenade usage
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct GrenadeState {
+    pub grenade_count: i32,
+    pub is_preparing: bool,
+    pub charge_timer: f32,
+    pub settings: GrenadeSettings,
+}
