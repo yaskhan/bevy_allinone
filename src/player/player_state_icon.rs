@@ -3,7 +3,7 @@
 //! Manages UI icons visually representing active character states.
 
 use bevy::prelude::*;
-use crate::player_state::{PlayerStateChangedEvent, PlayerStateChangedQueue};
+use crate::player::player_state::{PlayerStateChangedEvent, PlayerStateChangedQueue};
 
 pub struct PlayerStateIconPlugin;
 

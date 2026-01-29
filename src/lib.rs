@@ -38,28 +38,20 @@ pub mod combat;
 pub mod currency;
 pub mod devices;
 pub mod dialog;
-pub mod extra_movements;
 pub mod input;
 pub mod interaction;
 pub mod inventory;
 pub mod ladder;
 pub mod map;
-pub mod navmesh_override;
 pub mod physics;
-pub mod player_idle;
-pub mod player_modes;
-pub mod player_state;
-pub mod player_state_icon;
+pub mod player;
 pub mod puzzle;
-pub mod ragdoll;
-pub mod sprite_animator;
 pub mod quest;
 pub mod save;
 pub mod skills;
 pub mod stats;
 pub mod stealth;
 pub mod tutorial;
-pub mod upper_body_rotation;
 pub mod utils;
 pub mod vehicles;
 pub mod vendor;
@@ -77,28 +69,20 @@ pub mod prelude {
     pub use crate::currency::*;
     pub use crate::devices::*;
     pub use crate::dialog::*;
-    pub use crate::extra_movements::*;
     pub use crate::input::*;
     pub use crate::interaction::*;
     pub use crate::inventory::*;
     pub use crate::ladder::*;
     pub use crate::map::*;
-    pub use crate::navmesh_override::*;
     pub use crate::physics::*;
-    pub use crate::player_idle::*;
-    pub use crate::player_modes::*;
-    pub use crate::player_state::*;
-    pub use crate::player_state_icon::*;
+    pub use crate::player::*;
     pub use crate::puzzle::*;
-    pub use crate::ragdoll::*;
-    pub use crate::sprite_animator::*;
     pub use crate::quest::*;
     pub use crate::save::*;
     pub use crate::skills::*;
     pub use crate::stats::*;
     pub use crate::stealth::*;
     pub use crate::tutorial::*;
-    pub use crate::upper_body_rotation::*;
     pub use crate::utils::*;
     pub use crate::vehicles::*;
     pub use crate::vendor::*;
@@ -123,28 +107,20 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(currency::CurrencyPlugin)
             .add_plugins(devices::DevicesPlugin)
             .add_plugins(dialog::DialogPlugin)
-            .add_plugins(extra_movements::ExtraMovementsPlugin)
             .add_plugins(input::InputPlugin)
             .add_plugins(interaction::InteractionPlugin)
             .add_plugins(inventory::InventoryPlugin)
             .add_plugins(ladder::LadderPlugin)
             .add_plugins(map::MapPlugin)
-            .add_plugins(navmesh_override::NavMeshOverridePlugin)
             .add_plugins(physics::PhysicsPlugin)
-            .add_plugins(player_idle::PlayerIdlePlugin)
-            .add_plugins(player_modes::PlayerModesPlugin)
-            .add_plugins(player_state::PlayerStatePlugin)
-            .add_plugins(player_state_icon::PlayerStateIconPlugin)
+            .add_plugins(player::PlayerPlugin)
             .add_plugins(puzzle::PuzzlePlugin)
-            .add_plugins(ragdoll::RagdollPlugin)
-            .add_plugins(sprite_animator::SpriteAnimatorPlugin)
             .add_plugins(quest::QuestPlugin)
             .add_plugins(save::SavePlugin)
             .add_plugins(skills::SkillsPlugin)
             .add_plugins(stats::StatsPlugin)
             .add_plugins(stealth::StealthPlugin)
             .add_plugins(tutorial::TutorialPlugin)
-            .add_plugins(upper_body_rotation::UpperBodyRotationPlugin)
             .add_plugins(vehicles::VehiclesPlugin)
             .add_plugins(vendor::VendorPlugin)
             .add_plugins(weapons::WeaponsPlugin)
