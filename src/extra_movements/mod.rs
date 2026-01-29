@@ -4,6 +4,7 @@ pub mod wall_run;
 pub mod swim;
 pub mod paraglider;
 pub mod roll_on_landing;
+pub mod sphere_mode;
 
 use bevy::prelude::*;
 
@@ -16,6 +17,7 @@ impl Plugin for ExtraMovementsPlugin {
            .add_plugins(wall_run::WallRunPlugin)
            .add_plugins(swim::SwimPlugin)
            .add_plugins(paraglider::ParagliderPlugin)
-           .add_plugins(roll_on_landing::RollOnLandingPlugin);
+           .add_plugins(roll_on_landing::RollOnLandingPlugin)
+           .add_plugins(sphere_mode::SphereModePlugin);
     }
 }
