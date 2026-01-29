@@ -14,24 +14,24 @@
 //! - **Visual Tracers**: Bullet tracer visualization
 //! - **Weapon Attachments**: Scopes, silencers, magazines, etc.
 
-pub mod types;
-pub mod accuracy;
-pub mod ballistics;
-pub mod weapon_manager;
-pub mod firing;
-pub mod tracers;
-pub mod attachments;
-pub mod specialty;
-pub mod projectiles;
-pub mod grenades;
-pub mod ik;
-pub mod armor;
-pub mod vfx;
-pub mod animation;
-pub mod builder;
-pub mod sniper_sight;
-pub mod bow;
-pub mod transform_info;
+mod types;
+mod accuracy;
+mod ballistics;
+mod weapon_manager;
+mod firing;
+mod tracers;
+mod attachments;
+mod specialty;
+mod projectiles;
+mod grenades;
+mod ik;
+mod armor;
+mod vfx;
+mod animation;
+mod builder;
+mod sniper_sight;
+mod bow;
+mod transform_info;
 
 use bevy::prelude::*;
 

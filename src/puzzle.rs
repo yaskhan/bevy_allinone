@@ -103,7 +103,6 @@ impl Plugin for PuzzlePlugin {
 // ============================================================================
 
 /// Main puzzle system component for drag & drop puzzles
-/// Reference: `gkit/Scripts/Puzzles/puzzleSystem.cs`
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PuzzleSystem {

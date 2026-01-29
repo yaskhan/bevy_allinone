@@ -67,10 +67,10 @@ pub mod prelude {
     pub use crate::climb::*;
     pub use crate::combat::*;
     pub use crate::currency::*;
-    pub use crate::devices::*;
+    pub use crate::devices;
     pub use crate::dialog::*;
     pub use crate::input::*;
-    pub use crate::interaction::*;
+    pub use crate::interaction;
     pub use crate::inventory::*;
     pub use crate::ladder::*;
     pub use crate::map::*;

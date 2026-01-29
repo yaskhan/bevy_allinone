@@ -1,0 +1,60 @@
+use bevy::prelude::*;
+
+mod types;
+mod follow;
+mod waypoints;
+mod collision;
+mod fov;
+mod shake;
+
+pub use types::*;
+pub use follow::*;
+pub use waypoints::*;
+pub use collision::*;
+pub use fov::*;
+pub use shake::*;
+
+pub struct CameraPlugin;
+
+impl Plugin for CameraPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .init_resource::<ShakeQueue>()
+            .register_type::<CameraController>()
+            .register_type::<CameraState>()
+            .register_type::<CameraWaypoint>()
+            .register_type::<CameraWaypointTrack>()
+            .register_type::<CameraWaypointFollower>()
+            .register_type::<CameraShakeInstance>()
+            .add_systems(Update, (
+                update_camera_state,
+                update_camera_rotation,
+                update_camera_shake,
+                update_camera_follow,
+                update_camera_waypoint_follow,
+                handle_camera_collision,
+                update_camera_fov,
+                handle_camera_mode_switch,
+            ).chain());
+    }
+}
+
+pub fn spawn_camera(
+    commands: &mut Commands,
+    target: Entity,
+) -> Entity {
+    commands.spawn((
+        Camera3d::default(),
+        CameraController {
+            follow_target: Some(target),
+            ..default()
+        },
+        CameraState {
+            current_distance: 4.0,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        GlobalTransform::default(),
+    ))
+    .id()
+}
