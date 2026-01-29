@@ -115,6 +115,10 @@ pub struct WeaponManager {
 
     // Debug
     pub show_debug_log: bool,
+
+    // Selection Menu Support (from weaponListManager.cs)
+    pub selecting_weapon: bool,
+    pub selecting_right_weapon: bool,
 }
 
 impl Default for WeaponManager {
@@ -190,6 +194,9 @@ impl Default for WeaponManager {
             extra_reload_speed_stat: 1.0,
             magazine_extra_size_stat: 0,
             show_debug_log: false,
+
+            selecting_weapon: false,
+            selecting_right_weapon: true, // Default to right hand
         }
     }
 }
@@ -220,17 +227,37 @@ pub fn handle_weapon_switching(
         }
         // Check for direct weapon selection
         else if let Some(target_index) = input.select_weapon {
-            if target_index < manager.weapons_list.len() && target_index != manager.current_index {
-                manager.current_index = target_index;
-                manager.choosed_weapon = manager.current_index;
-                
-                if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
-                    manager.changing_weapon = true;
-                    manager.keeping_weapon = false;
-                }
-                
-                if manager.show_debug_log {
-                    info!("Selecting weapon index: {}", manager.current_index);
+            if target_index < manager.weapons_list.len() {
+                if manager.selecting_weapon {
+                    // Update right/left weapon indices if in selection mode
+                    if manager.selecting_right_weapon {
+                        if target_index != manager.current_right_weapon_index {
+                            manager.current_right_weapon_index = target_index;
+                        }
+                    } else {
+                        if target_index != manager.current_left_weapon_index {
+                            manager.current_left_weapon_index = target_index;
+                        }
+                    }
+                    
+                    if manager.show_debug_log {
+                        info!("Selection Menu: Set {} hand weapon to index {}", 
+                            if manager.selecting_right_weapon { "right" } else { "left" }, 
+                            target_index);
+                    }
+                } else if target_index != manager.current_index {
+                    // Normal weapon switching
+                    manager.current_index = target_index;
+                    manager.choosed_weapon = manager.current_index;
+                    
+                    if manager.carrying_weapon_in_third_person || manager.carrying_weapon_in_first_person {
+                        manager.changing_weapon = true;
+                        manager.keeping_weapon = false;
+                    }
+                    
+                    if manager.show_debug_log {
+                        info!("Selecting weapon index: {}", manager.current_index);
+                    }
                 }
                 continue; // Skip the directional logic below
             }
@@ -563,6 +590,25 @@ impl WeaponManager {
     pub fn clear_pockets(&mut self) {
         self.weapon_pockets.clear();
         self.weapon_pockets_map.clear();
+    }
+
+    /// Set weapon selection menu state
+    pub fn set_selecting_weapon_state(&mut self, state: bool) {
+        self.selecting_weapon = state;
+        if self.show_debug_log {
+            info!("Weapon selection menu: {}", if state { "Opened" } else { "Closed" });
+        }
+    }
+
+    /// Set which hand is being configured in selection menu
+    pub fn set_right_or_left_weapon(&mut self, is_right: bool) {
+        if !self.dual_weapons_enabled {
+            return;
+        }
+        self.selecting_right_weapon = is_right;
+        if self.show_debug_log {
+            info!("Selecting weapon for hand: {}", if is_right { "Right" } else { "Left" });
+        }
     }
 
     /// Create default pockets
