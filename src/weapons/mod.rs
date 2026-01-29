@@ -22,6 +22,7 @@ pub mod firing;
 pub mod tracers;
 pub mod attachments;
 pub mod specialty;
+pub mod projectiles;
 pub mod vfx;
 pub mod animation;
 pub mod builder;
@@ -40,6 +41,7 @@ pub use firing::*;
 pub use tracers::*;
 pub use attachments::*;
 pub use specialty::*;
+pub use projectiles::*;
 pub use vfx::*;
 pub use animation::*;
 pub use builder::*;
@@ -72,6 +74,8 @@ impl Plugin for WeaponsPlugin {
             .register_type::<WeaponTransformInfo>()
             .register_type::<LaserAttachment>()
             .register_type::<SpecialtyState>()
+            .register_type::<Homing>()
+            .register_type::<StickToSurface>()
             .add_systems(Update, (
                 update_weapons,
                 handle_weapon_firing,
@@ -102,6 +106,7 @@ impl Plugin for WeaponsPlugin {
                 handle_laser_attachment,
                 update_attachment_ui_lines,
                 handle_specialty_behaviors,
+                handle_advanced_projectiles,
             ));
     }
 }

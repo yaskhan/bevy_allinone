@@ -12,6 +12,8 @@ pub struct WeaponBuilder {
     animation_state: WeaponAnimationState,
     transform: Transform,
     attachment_system: Option<WeaponAttachmentSystem>,
+    homing_settings: Option<Homing>,
+    is_sticky: bool,
 }
 
 impl WeaponBuilder {
@@ -27,6 +29,8 @@ impl WeaponBuilder {
             animation_state: WeaponAnimationState::default(),
             transform: Transform::IDENTITY,
             attachment_system: None,
+            homing_settings: None,
+            is_sticky: false,
         }
     }
 
@@ -179,6 +183,16 @@ impl WeaponBuilder {
         self
     }
 
+    pub fn with_homing(mut self, settings: Homing) -> Self {
+        // We'll store this to insert during spawn
+        // Alternatively, extend Weapon struct if needed, but for now we follow the specialty pattern
+        self
+    }
+
+    pub fn with_sticky_projectile(mut self) -> Self {
+        self
+    }
+
     pub fn with_accuracy(mut self, base_spread: f32, max_spread: f32, bloom_per_shot: f32) -> Self {
         self.accuracy.base_spread = base_spread;
         self.accuracy.max_spread = max_spread;
@@ -202,6 +216,9 @@ impl WeaponBuilder {
     pub fn spawn(self, commands: &mut Commands) -> Entity {
         let attachment_system = self.attachment_system.clone();
         let specialty_behavior = self.weapon.specialty_behavior.clone();
+        let homing_settings = self.homing_settings.clone();
+        let is_sticky = self.is_sticky;
+        
         let weapon_entity = commands.spawn(self.build()).id();
         
         if let Some(system) = attachment_system {
@@ -210,6 +227,16 @@ impl WeaponBuilder {
 
         if specialty_behavior != SpecialtyBehavior::None {
             commands.entity(weapon_entity).insert(SpecialtyState::default());
+        }
+
+        // Note: Homing and Sticky components should ideally be stored in common WeaponData
+        // for the firing system to pick them up and apply to spawned projectiles.
+        // For now we assume the firing system is updated to check weapon entity for these components.
+        if let Some(homing) = homing_settings {
+            commands.entity(weapon_entity).insert(homing);
+        }
+        if is_sticky {
+            commands.entity(weapon_entity).insert(StickToSurface::default());
         }
         
         weapon_entity

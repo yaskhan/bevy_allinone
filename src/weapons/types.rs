@@ -393,6 +393,8 @@ pub struct Projectile {
     pub drag_coeff: f32,
     pub reference_area: f32,
     pub penetration_power: f32,
+    pub use_gravity: bool,
+    pub rotate_to_velocity: bool,
 }
 
 /// Visual tracer component for interpolation
@@ -618,4 +620,23 @@ pub struct SpecialtyState {
     pub target_entity: Option<Entity>,
     pub secondary_active: bool,
     pub timer: f32,
+}
+
+/// Homing component for missiles and seeker projectiles
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct Homing {
+    pub target: Option<Entity>,
+    pub turn_speed: f32,
+    pub initial_delay: f32,
+    pub search_radius: f32,
+}
+
+/// Component for projectiles that stick to surfaces upon impact
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct StickToSurface {
+    pub is_stuck: bool,
+    pub parent_entity: Option<Entity>,
+    pub relative_transform: Transform,
 }
