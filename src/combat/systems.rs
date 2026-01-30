@@ -35,6 +35,27 @@ pub fn process_damage_events(
             let mut final_damage = event.amount * health.general_damage_multiplier * part_multiplier;
             let mut is_parry = false;
             let mut is_block = false;
+            let is_heal = event.damage_type == DamageType::Heal;
+
+            if is_heal {
+                // Apply Healing
+                health.current = (health.current + event.amount).min(health.maximum);
+                
+                // Show Feedback for Heal
+                commands.spawn((
+                    Text::new(format!("+{}", event.amount as i32)),
+                    TextFont { font_size: 20.0, ..default() },
+                    TextColor(Color::srgb(0.0, 1.0, 0.0)), // Green
+                    Node { position_type: PositionType::Absolute, ..default() },
+                    Transform::from_translation(transform.translation() + Vec3::new(0.0, 2.0, 0.0)),
+                    GlobalTransform::default(),
+                    DamageNumber {
+                        lifetime: 1.0,
+                        velocity: Vec3::new(0.0, 2.0, 0.0),
+                    },
+                ));
+                continue; // Skip damage logic
+            }
 
             // Check blocking/parrying
             if let Some(blocking) = blocking_opt {
