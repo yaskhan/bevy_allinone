@@ -13,6 +13,11 @@ pub struct AiController {
     pub chase_speed_mult: f32,
     pub wait_timer: f32,
     pub wait_time_between_waypoints: f32,
+    pub suspicion_timer: f32,
+    pub max_suspicion_time: f32,
+    pub wander_radius: f32,
+    pub wander_center: Vec3,
+    pub target_last_position: Option<Vec3>,
 }
 
 impl Default for AiController {
@@ -28,8 +33,32 @@ impl Default for AiController {
             chase_speed_mult: 1.0,
             wait_timer: 0.0,
             wait_time_between_waypoints: 2.0,
+            suspicion_timer: 0.0,
+            max_suspicion_time: 5.0,
+            wander_radius: 10.0,
+            wander_center: Vec3::ZERO,
+            target_last_position: None,
         }
     }
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct AiMovement {
+    pub destination: Option<Vec3>,
+    pub speed: f32,
+    pub acceleration: f32,
+    pub stop_distance: f32,
+    pub move_type: AiMovementType,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
+pub enum AiMovementType {
+    #[default]
+    Walk,
+    Run,
+    Sprint,
+    Crouch,
 }
 
 /// AI behavior state
@@ -45,6 +74,8 @@ pub enum AiBehaviorState {
     Combat,
     Turret,
     Dead,
+    Wander,
+    Suspect,
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -70,6 +101,8 @@ impl Default for AiPerception {
 pub struct FriendManager {
     pub friends: Vec<Entity>,
     pub current_command: AiCommand,
+    pub follow_distance: f32,
+    pub stop_distance: f32,
 }
 
 impl Default for FriendManager {
@@ -77,8 +110,16 @@ impl Default for FriendManager {
         Self {
             friends: Vec::new(),
             current_command: AiCommand::Follow,
+            follow_distance: 5.0,
+            stop_distance: 2.0,
         }
     }
+}
+
+#[derive(Resource, Debug, Reflect, Default)]
+#[reflect(Resource)]
+pub struct FriendSystem {
+    pub friend_entities: Vec<Entity>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
@@ -193,5 +234,16 @@ pub struct PatrolPath {
 pub struct AIPerceptionSettings {
     pub fov: f32,
     pub range: f32,
+    pub hearing_range: f32,
     pub layer_mask: u32,
 }
+
+#[derive(Debug, Reflect, Clone)]
+pub struct NoiseEvent {
+    pub position: Vec3,
+    pub volume: f32,
+    pub source: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct NoiseEventQueue(pub Vec<NoiseEvent>);

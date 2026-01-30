@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::app::App;
 
 mod types;
 mod systems;
@@ -9,6 +10,7 @@ mod turret;
 mod combat;
 mod behavior;
 mod hiding;
+mod movement;
 
 pub use types::*;
 pub use systems::*;
@@ -19,6 +21,7 @@ pub use turret::*;
 pub use combat::*;
 pub use behavior::*;
 pub use hiding::*;
+pub use movement::*;
 
 pub struct AiPlugin;
 
@@ -38,12 +41,17 @@ impl Plugin for AiPlugin {
             .register_type::<AiCombatSettings>()
             .register_type::<PatrolPath>()
             .register_type::<AIPerceptionSettings>()
+            .register_type::<AiMovement>()
             .init_resource::<FactionSystem>()
+            .init_resource::<FriendSystem>()
+            .init_resource::<NoiseEventQueue>()
             .add_systems(Update, (
                 update_ai_perception,
+                update_ai_hearing,
                 handle_friend_commands,
                 update_ai_behavior,
                 update_ai_suspicion,
+                update_ai_movement,
                 update_patrol,
                 update_turrets,
                 update_ai_combat,

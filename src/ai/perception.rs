@@ -52,16 +52,41 @@ pub fn update_ai_perception(
 
         if let Some(target) = closest_target {
             ai.target = Some(target);
+            ai.suspicion_timer = ai.max_suspicion_time;
             if min_dist <= ai.attack_range {
                 ai.state = AiBehaviorState::Attack;
             } else {
                 ai.state = AiBehaviorState::Chase;
             }
         } else if ai.state == AiBehaviorState::Chase || ai.state == AiBehaviorState::Attack {
-            ai.target = None;
-            ai.state = AiBehaviorState::Idle;
+            // Target lost, transition to Suspect if we have a target previously
+            if ai.target.is_some() {
+                ai.state = AiBehaviorState::Suspect;
+            } else {
+                ai.state = AiBehaviorState::Idle;
+            }
         }
     }
+}
+
+pub fn update_ai_hearing(
+    mut queue: ResMut<NoiseEventQueue>,
+    mut ai_query: Query<(&GlobalTransform, &mut AiController, &AIPerceptionSettings)>,
+) {
+    for event in queue.0.iter() {
+        for (transform, mut ai, settings) in ai_query.iter_mut() {
+            let dist = transform.translation().distance(event.position);
+            if dist <= settings.hearing_range * event.volume {
+                // Investigate noise
+                if ai.target.is_none() {
+                    ai.state = AiBehaviorState::Suspect;
+                    ai.suspicion_timer = ai.max_suspicion_time;
+                    ai.target_last_position = Some(event.position);
+                }
+            }
+        }
+    }
+    queue.0.clear();
 }
 
 pub fn draw_ai_vision_cones(

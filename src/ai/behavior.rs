@@ -10,6 +10,7 @@ pub fn update_ai_behavior(
         &mut AiController,
         &mut CharacterController,
         &mut InputState,
+        &mut AiMovement,
     )>,
     target_query: Query<&GlobalTransform>,
     player_query: Query<&GlobalTransform, With<crate::character::Player>>,
@@ -17,7 +18,7 @@ pub fn update_ai_behavior(
 ) {
     let delta = time.delta_secs();
 
-    for (transform, mut ai, _controller, mut input) in ai_query.iter_mut() {
+    for (transform, mut ai, _controller, mut input, mut movement) in ai_query.iter_mut() {
         let current_pos = transform.translation();
         
         // Reset input state
@@ -122,6 +123,25 @@ pub fn update_ai_behavior(
                     } else {
                         input.crouch_pressed = true;
                     }
+                }
+            }
+            AiBehaviorState::Suspect => {
+                ai.suspicion_timer -= delta;
+                if ai.suspicion_timer <= 0.0 {
+                    ai.state = AiBehaviorState::Idle;
+                    movement.destination = None;
+                } else if let Some(last_pos) = ai.target_last_position {
+                    movement.destination = Some(last_pos);
+                    movement.move_type = AiMovementType::Run;
+                }
+            }
+            AiBehaviorState::Wander => {
+                if movement.destination.is_none() || movement.destination.unwrap().distance(current_pos) < 1.0 {
+                    // Pick "random" point (simplistic for port)
+                    let angle = (time.elapsed_secs() * 2.0).sin() * std::f32::consts::PI;
+                    let offset = Vec3::new(angle.cos(), 0.0, angle.sin()) * ai.wander_radius;
+                    movement.destination = Some(ai.wander_center + offset);
+                    movement.move_type = AiMovementType::Walk;
                 }
             }
             _ => {}
