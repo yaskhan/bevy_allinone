@@ -24,6 +24,8 @@ pub enum ActiveEffect {
     None,
     Pixel,
     Solid,
+    Overlay, // New: Screen overlay
+    Noise,   // New: Camera grain/noise
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -56,10 +58,43 @@ impl Default for SolidEffectSettings {
     }
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct OverlayEffectSettings {
+    pub texture_path: String,
+    pub opacity: f32,
+    pub color: Color,
+}
+
+impl Default for OverlayEffectSettings {
+    fn default() -> Self {
+        Self {
+            texture_path: "".to_string(),
+            opacity: 0.5,
+            color: Color::WHITE,
+        }
+    }
+}
+
 pub fn update_camera_effects(
     manager: Res<CameraEffectManager>,
-    // This system would typically update post-processing materials
+    // System to drive shader parameters
 ) {
     if !manager.enabled { return; }
-    // Logic to toggle post-process nodes would go here
+    
+    match manager.active_effect {
+        ActiveEffect::None => {},
+        ActiveEffect::Pixel => {
+            // Update pixelation shader
+        },
+        ActiveEffect::Solid => {
+            // Update screen fade shader
+        },
+        ActiveEffect::Overlay => {
+            // Update overlay image/texture
+        },
+        ActiveEffect::Noise => {
+            // Update noise intensity
+        },
+    }
 }

@@ -38,34 +38,36 @@ impl Default for VehicleCameraController {
 
 pub fn update_vehicle_camera(
     time: Res<Time>,
-    mut query: Query<(&mut CameraController, &mut CameraState, &VehicleCameraController)>,
+    mut query: Query<(&mut CameraController, &mut CameraState, &mut VehicleCameraController)>,
     vehicle_query: Query<&GlobalTransform>,
 ) {
     let dt = time.delta_secs();
 
-    for (controller, state, vehicle_cam) in query.iter_mut() {
-        if controller.mode != CameraMode::ThirdPerson && controller.mode != CameraMode::FirstPerson {
-            // Only apply vehicle logic in these modes if intended
-            // Or many vehicle cameras use a specific 'Vehicle' mode?
-            // For now, let's assume it hooks into the existing modes.
-        }
-
+    for (mut controller, mut state, mut vehicle_cam) in query.iter_mut() {
         let Some(vehicle_ent) = vehicle_cam.vehicle_target else { continue };
-        let Ok(_vehicle_xf) = vehicle_query.get(vehicle_ent) else { continue };
+        let Ok(vehicle_gt) = vehicle_query.get(vehicle_ent) else { continue };
 
-        // Vehicle camera logic:
-        // 1. Follow rotation more strictly (Damping)
-        // 2. Adjust distance based on boost
+        // 1. Rotation Damping (Chase camera)
+        // Align camera yaw with vehicle yaw if not manually rotated
+        let vehicle_rot = vehicle_gt.compute_transform().rotation;
+        let (v_yaw, _, _) = vehicle_rot.to_euler(EulerRot::YXZ);
+        let v_yaw_deg = v_yaw.to_degrees();
+
+        let wrap_diff = (v_yaw_deg - state.yaw + 180.0) % 360.0 - 180.0;
+        let rot_alpha = 1.0 - (-vehicle_cam.rotation_damping * dt).exp();
+        state.yaw += wrap_diff * rot_alpha;
+
+        // 2. Boost Distance Offset
+        // Interpolate boost offset
+        let boost_target = if vehicle_cam.current_boost_offset > 0.01 { vehicle_cam.boost_distance_offset } else { 0.0 };
+        vehicle_cam.current_boost_offset = vehicle_cam.current_boost_offset + (boost_target - vehicle_cam.current_boost_offset) * vehicle_cam.boost_fade_speed * dt;
         
-        let _alpha = 1.0 - (-vehicle_cam.rotation_damping * dt).exp();
-        
-        // We want state.yaw/pitch to align with vehicle forward if not manually overridden
-        // But CameraState is usually driven by input.
-        // For vehicles, we often want "Auto-Center"
-        
-        // Placeholder for auto-centering logic
-        // let vehicle_rot = vehicle_xf.compute_transform().rotation;
-        // let (v_yaw, v_pitch, _) = vehicle_rot.to_euler(EulerRot::YXZ);
-        // state.yaw = lerp_angle(state.yaw, v_yaw, alpha);
+        controller.distance = controller.base_distance + vehicle_cam.current_boost_offset;
+
+        // 3. First Person Offset
+        if vehicle_cam.is_first_person {
+            controller.mode = CameraMode::FirstPerson;
+            // Apply fp_offset to pivot in state_offsets or here
+        }
     }
 }
