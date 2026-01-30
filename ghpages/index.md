@@ -12,11 +12,12 @@ Welcome to the documentation for the Bevy All-in-One project. This project is a 
 - [Weapon System](weapon-system.md)
 - [Interaction System](interaction-system.md)
 - [Inventory & Economy](inventory-system.md)
-- [Player & Character](player-system.md)
+- [Player & Character](player_system.md)
 - [Stats & Skills](stats-system.md)
 - [Level & Save](level-system.md)
 - [Quest & Dialog](quest-system.md)
 - [Vehicle System](vehicle-system.md)
+- [Camera System](camera_system.md)
 - [Puzzles & Devices](interaction-puzzle.md)
 
 ## Project Overview

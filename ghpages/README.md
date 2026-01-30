@@ -7,12 +7,17 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 ### Core Systems
  
 - **[Character System](./character_system.md)** - Player character controller with physics and movement states
+- **[Player System](./player_system.md)** - Player-specific logic, managing high-level states, modes, and advanced movement mechanics
+- **[Camera System](./camera_system.md)** - Camera controls and behavior, including peeking, looking around while hidden, and zooming
 - **[AI System](./ai_system.md)** - Comprehensive AI behavior, perception, and faction management
+- **[Weapon System](./weapon_system.md)** - Weapon physics, aiming, and damage systems
 
  
 ### Advanced Systems
 - **[Puzzle System](./puzzle_system.md)** - Logic gates, puzzle elements, and interactive device simulation
 - **[Vehicles System](./vehicles_system.md)** - Complete vehicle physics, seating, weapons, and damage systems
+- **[Stealth System](./stealth_system.md)** - Stealth mechanics, including detection, evasion, and alert systems
+
  
 ## About This Documentation
  
