@@ -101,7 +101,7 @@ pub fn update_door_movement(
                 let open_speed = door.open_speed;
 
                 for door_info in door.doors_info.iter_mut() {
-                    if let Some(door_mesh_entity) = door_info.door_mesh {
+                    if let Some(door_mesh_entity) = door_info.door_mesh_entity {
                         if let Ok(door_mesh_transform) = transform_query.get(door_mesh_entity) {
                             match movement_type {
                                 DoorMovementType::Translate => {
@@ -277,7 +277,7 @@ fn open_doors(
         DoorMovementType::Translate | DoorMovementType::Rotate => {
             let mut rotate_forward = true;
 
-            if let Some(player_entity) = door.current_player_transform {
+            if let Some(player_entity) = door.current_player {
                 // Check rotation direction
                 // In Bevy, we'd get the player transform and calculate dot product
             }
@@ -433,7 +433,7 @@ pub struct DoorActivationEvent {
 impl DoorSystem {
     /// Set current player
     pub fn set_current_player(&mut self, player: Option<Entity>) {
-        self.current_player_transform = player;
+        self.current_player = player;
     }
     
     /// Check if door is opened
@@ -473,7 +473,7 @@ impl DoorSystem {
     
     /// Check if tag can open door
     pub fn check_if_tag_can_open(&self, tag_to_check: &str) -> bool {
-        self.tag_list_to_open.contains(tag_to_check)
+        self.tag_list_to_open.contains(&tag_to_check.to_string())
     }
     
     /// Set disable door open/close action value

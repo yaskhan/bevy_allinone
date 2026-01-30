@@ -241,7 +241,7 @@ pub fn handle_trigger_enter(
 
             // Check if player is already in the list
             if !device.player_found_list.contains(&event.player_entity) {
-                device.player_found_list.insert(event.player_entity);
+                device.player_found_list.push(event.player_entity);
             }
 
             device.current_player = Some(event.player_entity);
@@ -284,7 +284,7 @@ pub fn handle_trigger_exit(
 
             // Check if player is in the list
             if device.player_found_list.contains(&event.player_entity) {
-                device.player_found_list.remove(&event.player_entity);
+                device.player_found_list.retain(|x| *x != event.player_entity);
             }
 
             if device.player_found_list.is_empty() {

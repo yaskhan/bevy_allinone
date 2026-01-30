@@ -598,8 +598,8 @@ pub struct DoorSystem {
     pub disable_door_open_close_action: bool,
     /// Original open speed
     pub original_open_speed: f32,
-    /// Current player transform
-    pub current_player_transform: Option<GlobalTransform>,
+    /// Current player entity
+    pub current_player: Option<Entity>,
 }
 
 impl Default for DoorSystem {
@@ -638,7 +638,7 @@ impl Default for DoorSystem {
             last_time_opened: 0.0,
             disable_door_open_close_action: false,
             original_open_speed: 1.0,
-            current_player_transform: None,
+            current_player: None,
         }
     }
 }
