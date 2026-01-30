@@ -2,9 +2,23 @@ use bevy::prelude::*;
 
 mod types;
 mod systems;
+mod faction;
+mod patrol;
+mod perception;
+mod turret;
+mod combat;
+mod behavior;
+mod hiding;
 
 pub use types::*;
 pub use systems::*;
+pub use faction::*;
+pub use patrol::*;
+pub use perception::*;
+pub use turret::*;
+pub use combat::*;
+pub use behavior::*;
+pub use hiding::*;
 
 pub struct AiPlugin;
 
@@ -20,13 +34,24 @@ impl Plugin for AiPlugin {
             .register_type::<CharacterFaction>()
             .register_type::<HidePosition>()
             .register_type::<FactionRelation>()
+            .register_type::<Turret>()
+            .register_type::<AiCombatSettings>()
+            .register_type::<PatrolPath>()
+            .register_type::<AIPerceptionSettings>()
             .init_resource::<FactionSystem>()
             .add_systems(Update, (
                 update_ai_perception,
                 handle_friend_commands,
                 update_ai_behavior,
+                update_ai_suspicion,
+                update_patrol,
+                update_turrets,
+                update_ai_combat,
+                update_ai_hiding,
                 draw_ai_vision_cones,
                 update_ai_state_visuals,
+                update_faction_relations,
+                alert_faction_members,
             ));
     }
 }

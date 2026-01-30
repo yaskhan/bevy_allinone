@@ -42,6 +42,9 @@ pub enum AiBehaviorState {
     Flee,
     Follow,
     Hide,
+    Combat,
+    Turret,
+    Dead,
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -137,15 +140,31 @@ pub enum FactionRelation {
 #[derive(Resource, Debug, Reflect, Default)]
 #[reflect(Resource)]
 pub struct FactionSystem {
-    pub relations: Vec<(String, String, FactionRelation)>,
+    pub factions: Vec<FactionInfo>,
+    pub relations: Vec<FactionRelationInfo>,
+}
+
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct FactionRelationInfo {
+    pub faction_a: String,
+    pub faction_b: String,
+    pub relation: FactionRelation,
+}
+
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct FactionInfo {
+    pub name: String,
+    pub turn_to_enemy_if_attacked: bool,
+    pub turn_faction_to_enemy: bool,
+    pub friendly_fire_turn_into_enemies: bool,
 }
 
 impl FactionSystem {
     pub fn get_relation(&self, f1: &str, f2: &str) -> FactionRelation {
         if f1 == f2 { return FactionRelation::Friend; }
-        for (a, b, rel) in &self.relations {
-            if (a == f1 && b == f2) || (a == f2 && b == f1) {
-                return *rel;
+        for rel_info in &self.relations {
+            if (rel_info.faction_a == f1 && rel_info.faction_b == f2) || (rel_info.faction_a == f2 && rel_info.faction_b == f1) {
+                return rel_info.relation;
             }
         }
         FactionRelation::Neutral
@@ -161,3 +180,18 @@ pub struct CharacterFaction {
 #[derive(Component, Debug, Reflect, Default)]
 #[reflect(Component)]
 pub struct HidePosition;
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct PatrolPath {
+    pub waypoints: Vec<Vec3>,
+    pub loop_path: bool,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct AIPerceptionSettings {
+    pub fov: f32,
+    pub range: f32,
+    pub layer_mask: u32,
+}
