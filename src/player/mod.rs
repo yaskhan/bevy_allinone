@@ -9,12 +9,14 @@ pub mod player_state_icon;
 pub mod ragdoll;
 pub mod sprite_animator;
 pub mod upper_body_rotation;
+pub mod input;
 
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_systems(Update, input::handle_player_input)
             .add_plugins((
                 extra_movements::ExtraMovementsPlugin,
                 navmesh_override::NavMeshOverridePlugin,

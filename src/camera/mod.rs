@@ -10,6 +10,8 @@ mod state_offsets;
 mod collision_lean;
 mod lock;
 mod zones;
+mod bounds;
+mod waypoints;
 
 // New Submodules
 pub mod effect;
@@ -28,6 +30,8 @@ pub use state_offsets::*;
 pub use collision_lean::*;
 pub use lock::*;
 pub use zones::*;
+pub use bounds::*;
+pub use waypoints::*;
 
 pub struct CameraPlugin;
 
@@ -41,16 +45,19 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraWaypointTrack>()
             .register_type::<CameraWaypointFollower>()
             .register_type::<CameraShakeInstance>()
+            .register_type::<PointShake>()
             .register_type::<CameraBobState>()
             .register_type::<CameraTargetState>()
             .register_type::<CameraZone>()
             .register_type::<CameraZoneTracker>()
+            .register_type::<CameraBounds>()
             .add_plugins((
                 effect::CameraEffectPlugin,
                 captures::CameraCapturesPlugin,
                 cutscene::CameraCutscenePlugin,
                 others::CameraOthersPlugin,
                 vehicles::CameraVehiclesPlugin,
+                bounds::CameraBoundsPlugin,
             ))
             .add_systems(Update, (
                 update_camera_state_offsets,
@@ -67,6 +74,7 @@ impl Plugin for CameraPlugin {
                 update_camera_follow,
                 handle_camera_collision,
                 update_camera_fov,
+                update_camera_waypoint_follow,
                 handle_camera_mode_switch,
             ).chain());
     }

@@ -143,6 +143,49 @@ impl Default for TargetLockSettings {
     }
 }
 
+#[derive(Debug, Clone, Reflect)]
+pub struct CameraStateInfo {
+    pub name: String,
+    pub cam_position_offset: Vec3,
+    pub pivot_position_offset: Vec3,
+    pub pivot_parent_position_offset: Vec3,
+    pub y_limits: Vec2,
+    pub initial_fov: f32,
+    pub fov_transition_speed: f32,
+    pub max_fov: f32,
+    pub min_fov: f32,
+    pub lean_enabled: bool,
+    pub max_lean_angle: f32,
+    pub lean_speed: f32,
+    pub head_track_active: bool,
+    pub look_in_player_direction: bool,
+    pub look_in_player_direction_speed: f32,
+    pub camera_collision_active: bool,
+}
+
+impl Default for CameraStateInfo {
+    fn default() -> Self {
+        Self {
+            name: "Default".to_string(),
+            cam_position_offset: Vec3::ZERO,
+            pivot_position_offset: Vec3::ZERO,
+            pivot_parent_position_offset: Vec3::ZERO,
+            y_limits: Vec2::new(-80.0, 80.0),
+            initial_fov: 60.0,
+            fov_transition_speed: 10.0,
+            max_fov: 90.0,
+            min_fov: 15.0,
+            lean_enabled: true,
+            max_lean_angle: 15.0,
+            lean_speed: 8.0,
+            head_track_active: true,
+            look_in_player_direction: false,
+            look_in_player_direction_speed: 5.0,
+            camera_collision_active: true,
+        }
+    }
+}
+
 /// Camera controller component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -196,12 +239,17 @@ pub struct CameraController {
     // Target Lock
     pub target_lock: TargetLockSettings,
 
+    // States list and current state tracking
+    pub states: Vec<CameraStateInfo>,
+    pub current_state_name: String,
+
     // Baseline settings (for smooth restoration after zones)
     pub base_mode: CameraMode,
     pub base_distance: f32,
     pub base_fov: f32,
     pub base_pivot_offset: Vec3,
     pub base_transition_speed: f32,
+    pub enabled: bool,
 }
 
 impl Default for CameraController {
@@ -236,7 +284,7 @@ impl Default for CameraController {
             lean_angle: 15.0,
             lean_speed: 8.0,
             lean_raycast_dist: 0.8,
-            lean_wall_angle: 5.0, // Subtle angle when hitting a wall
+            lean_wall_angle: 5.0,
             
             default_fov: 60.0,
             aim_fov: 40.0,
@@ -247,11 +295,15 @@ impl Default for CameraController {
 
             target_lock: TargetLockSettings::default(),
 
+            states: Vec::new(),
+            current_state_name: "Third Person".to_string(),
+
             base_mode: CameraMode::ThirdPerson,
             base_distance: 4.0,
             base_fov: 60.0,
             base_pivot_offset: Vec3::new(0.0, 1.6, 0.0),
             base_transition_speed: 5.0,
+            enabled: true,
         }
     }
 }
@@ -281,4 +333,61 @@ pub struct CameraState {
     pub is_crouching: bool,
     pub fov_override: Option<f32>,
     pub fov_override_speed: Option<f32>,
+}
+#[derive(Resource, Reflect, Clone)]
+#[reflect(Resource)]
+pub struct TransparencySettings {
+    pub enabled: bool,
+    pub alpha_target: f32,
+    pub fade_speed: f32,
+    pub ray_radius: f32,
+}
+
+impl Default for TransparencySettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            alpha_target: 0.2,
+            fade_speed: 10.0,
+            ray_radius: 0.2,
+        }
+    }
+}
+
+#[derive(Resource, Reflect, Clone)]
+#[reflect(Resource)]
+pub struct PlayerCullingSettings {
+    pub enabled: bool,
+    pub min_dist: f32,
+    pub fade_speed: f32,
+    pub min_alpha: f32,
+}
+
+impl Default for PlayerCullingSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_dist: 1.0,
+            fade_speed: 8.0,
+            min_alpha: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect, Clone)]
+#[reflect(Component)]
+pub struct TransparentSurface {
+    pub target_alpha: f32,
+    pub current_alpha: f32,
+    pub active_this_frame: bool,
+}
+
+impl Default for TransparentSurface {
+    fn default() -> Self {
+        Self {
+            target_alpha: 1.0,
+            current_alpha: 1.0,
+            active_this_frame: false,
+        }
+    }
 }
