@@ -249,6 +249,7 @@ pub struct CameraController {
     pub base_fov: f32,
     pub base_pivot_offset: Vec3,
     pub base_transition_speed: f32,
+    pub enabled: bool,
 }
 
 impl Default for CameraController {
@@ -302,6 +303,7 @@ impl Default for CameraController {
             base_fov: 60.0,
             base_pivot_offset: Vec3::new(0.0, 1.6, 0.0),
             base_transition_speed: 5.0,
+            enabled: true,
         }
     }
 }
@@ -331,4 +333,61 @@ pub struct CameraState {
     pub is_crouching: bool,
     pub fov_override: Option<f32>,
     pub fov_override_speed: Option<f32>,
+}
+#[derive(Resource, Reflect, Clone)]
+#[reflect(Resource)]
+pub struct TransparencySettings {
+    pub enabled: bool,
+    pub alpha_target: f32,
+    pub fade_speed: f32,
+    pub ray_radius: f32,
+}
+
+impl Default for TransparencySettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            alpha_target: 0.2,
+            fade_speed: 10.0,
+            ray_radius: 0.2,
+        }
+    }
+}
+
+#[derive(Resource, Reflect, Clone)]
+#[reflect(Resource)]
+pub struct PlayerCullingSettings {
+    pub enabled: bool,
+    pub min_dist: f32,
+    pub fade_speed: f32,
+    pub min_alpha: f32,
+}
+
+impl Default for PlayerCullingSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_dist: 1.0,
+            fade_speed: 8.0,
+            min_alpha: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect, Clone)]
+#[reflect(Component)]
+pub struct TransparentSurface {
+    pub target_alpha: f32,
+    pub current_alpha: f32,
+    pub active_this_frame: bool,
+}
+
+impl Default for TransparentSurface {
+    fn default() -> Self {
+        Self {
+            target_alpha: 1.0,
+            current_alpha: 1.0,
+            active_this_frame: false,
+        }
+    }
 }

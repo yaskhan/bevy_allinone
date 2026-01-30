@@ -12,7 +12,7 @@ pub fn update_camera_rotation(
 ) {
     let dt = time.delta_secs();
     for (camera, mut state) in query.iter_mut() {
-        if camera.mode == CameraMode::Locked { continue; }
+        if !camera.enabled || camera.mode == CameraMode::Locked { continue; }
 
         let target_xf = if let Some(target) = camera.follow_target {
             target_query.get(target).ok()
@@ -62,6 +62,7 @@ pub fn update_camera_follow(
     target_query: Query<&GlobalTransform, Without<CameraController>>,
 ) {
     for (camera, mut state, mut transform) in camera_query.iter_mut() {
+        if !camera.enabled { continue; }
         let Some(target_entity) = camera.follow_target else { continue };
         let Ok(_target_transform) = target_query.get(target_entity) else { continue };
 
