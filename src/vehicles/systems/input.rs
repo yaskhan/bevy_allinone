@@ -16,6 +16,12 @@ pub fn vehicle_input_system(
                 v_input.movement = input.movement;
                 v_input.jump_pressed = input.jump_pressed;
                 v_input.interact_pressed = input.interact_pressed;
+                v_input.fire_pressed = input.fire_pressed;
+                v_input.fire_just_pressed = input.fire_just_pressed;
+                v_input.reload_pressed = input.reload_pressed;
+                v_input.next_weapon_pressed = input.next_weapon_pressed;
+                v_input.prev_weapon_pressed = input.prev_weapon_pressed;
+                v_input.select_weapon = input.select_weapon;
                 found_driver = true;
                 break;
             }

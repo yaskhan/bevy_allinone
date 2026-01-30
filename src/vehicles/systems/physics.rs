@@ -261,6 +261,31 @@ pub fn update_vehicles_physics(
                 velocity.0 = Vec3::ZERO;
                 angular_vel.0 = Vec3::ZERO;
             }
+            VehicleType::Hoverboard => {
+                // Hoverboard physics
+                if vehicle.is_turned_on {
+                    // Forward/Backward movement
+                    let throttle = vehicle.motor_input * vehicle.engine_torque * delta;
+                    velocity.0 += *forward * throttle;
+
+                    // Steering (Torque based)
+                    let steer = -vehicle.steer_input * vehicle.steering_angle.to_radians() * 20.0 * delta;
+                    angular_vel.y += steer;
+
+                    // Stability (Apply roll torque during turns)
+                    let target_roll = -vehicle.steer_input * 0.5;
+                    let roll_error = target_roll - transform.rotation.to_euler(EulerRot::YXZ).2;
+                    angular_vel.z += roll_error * vehicle.hover_stability * delta;
+
+                    // Hovering: If not on ground enough, apply extra hover force
+                    if !vehicle.is_on_ground {
+                        velocity.0 += *up * vehicle.hover_engine_force * delta;
+                    }
+                    
+                    // Friction/Drag override
+                    velocity.0 *= 1.0 - (vehicle.hover_damping * delta);
+                }
+            }
             _ => {}
         }
 
@@ -273,5 +298,41 @@ pub fn update_vehicles_physics(
             vehicle.current_rpm = vehicle.min_rpm + (vehicle.max_rpm - vehicle.min_rpm) * speed_ratio;
         }
         vehicle.current_rpm = vehicle.current_rpm.clamp(vehicle.min_rpm, vehicle.max_rpm);
+    }
+}
+
+pub fn update_passenger_stability(
+    time: Res<Time>,
+    vehicle_query: Query<(&Vehicle, &LinearVelocity, &AngularVelocity, Option<&Children>)>,
+    mut stability_query: Query<(&mut VehiclePassengerStability, &mut Transform)>,
+) {
+    let delta = time.delta_secs();
+
+    for (_vehicle, _lin_vel, ang_vel, children) in vehicle_query.iter() {
+        let Some(children) = children else { continue; };
+        // Calculate G-forces based on acceleration (simplified via velocity changes)
+        // We'll use angular velocity and rotation for leaning
+        let local_ang_vel = ang_vel.0; 
+        
+        for child in children.iter() {
+            if let Ok((mut stability, mut transform)) = stability_query.get_mut(child) {
+                if !stability.enabled { continue; }
+
+                // Target lean depends on lateral acceleration and turning
+                let target_lean_x = local_ang_vel.y * stability.lean_amount; // Leaning back/forward
+                let target_lean_z = -local_ang_vel.x * stability.lean_amount; // Leaning side to side
+
+                let target_lean = Vec3::new(target_lean_x, 0.0, target_lean_z);
+                stability.current_lean = stability.current_lean.lerp(target_lean, delta * stability.stability_speed);
+
+                // Apply rotation to the passenger entity (usually child of seat)
+                transform.rotation = Quat::from_euler(
+                    EulerRot::XYZ,
+                    stability.current_lean.x,
+                    stability.current_lean.y,
+                    stability.current_lean.z,
+                );
+            }
+        }
     }
 }

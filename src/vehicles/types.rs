@@ -49,6 +49,12 @@ pub struct Vehicle {
     // Sphere settings
     pub move_speed_multiplier: f32,
 
+    // Hoverboard settings
+    pub hover_engine_force: f32,
+    pub hover_damping: f32,
+    pub hover_max_height: f32,
+    pub hover_stability: f32,
+
     // State
     pub current_gear: usize,
     pub current_speed: f32,
@@ -93,6 +99,7 @@ pub enum VehicleType {
     Flying,
     Sphere,
     Turret,
+    Hoverboard,
 }
 
 impl Default for Vehicle {
@@ -159,6 +166,12 @@ impl Default for Vehicle {
 
             // Sphere Defaults
             move_speed_multiplier: 10.0,
+
+            // Hoverboard Defaults
+            hover_engine_force: 10.0,
+            hover_damping: 2.0,
+            hover_max_height: 1.5,
+            hover_stability: 5.0,
         }
     }
 }
@@ -211,6 +224,14 @@ pub enum PassengerState {
     Driving,
     Passenger,
     Exiting,
+}
+
+#[derive(Component, Debug, Reflect, Clone, Copy, PartialEq, Eq)]
+pub enum VehicleWeaponType {
+    MachineGun,
+    MissileLauncher,
+    Cannon,
+    Laser,
 }
 
 /// Vehicle wheel component
@@ -358,6 +379,7 @@ impl Default for VehicleStats {
 #[derive(Reflect, Clone)]
 pub struct VehicleWeapon {
     pub name: String,
+    pub weapon_type: VehicleWeaponType,
     pub damage: f32,
     pub fire_rate: f32,
     pub ammo_in_clip: u32,
@@ -365,7 +387,6 @@ pub struct VehicleWeapon {
     pub total_ammo: u32,
     pub reload_time: f32,
     pub projectile_speed: f32,
-    pub is_laser: bool,
     pub is_homing: bool,
     pub last_fire_time: f32,
     pub is_reloading: bool,
@@ -376,6 +397,7 @@ impl Default for VehicleWeapon {
     fn default() -> Self {
         Self {
             name: "Machine Gun".into(),
+            weapon_type: VehicleWeaponType::MachineGun,
             damage: 10.0,
             fire_rate: 0.1,
             ammo_in_clip: 30,
@@ -383,7 +405,6 @@ impl Default for VehicleWeapon {
             total_ammo: 300,
             reload_time: 2.0,
             projectile_speed: 200.0,
-            is_laser: false,
             is_homing: false,
             last_fire_time: 0.0,
             is_reloading: false,
@@ -484,4 +505,23 @@ pub struct VehicleAI {
 pub struct WaypointPath {
     pub points: Vec<Vec3>,
     pub loop_path: bool,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleIKTargets {
+    pub left_hand: Option<Vec3>,
+    pub right_hand: Option<Vec3>,
+    pub left_foot: Option<Vec3>,
+    pub right_foot: Option<Vec3>,
+    pub knee_targets: Vec<Vec3>,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehiclePassengerStability {
+    pub enabled: bool,
+    pub lean_amount: f32,
+    pub current_lean: Vec3,
+    pub stability_speed: f32,
 }

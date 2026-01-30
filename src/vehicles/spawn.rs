@@ -48,6 +48,14 @@ impl VehicleConfig {
                 vehicle.engine_torque = 3000.0;
                 vehicle.move_speed_multiplier = 15.0;
             }
+            VehicleType::Hoverboard => {
+                vehicle.max_forward_speed = 35.0;
+                vehicle.engine_torque = 4000.0;
+                vehicle.hover_engine_force = 10.0;
+                vehicle.hover_damping = 2.0;
+                vehicle.hover_stability = 5.0;
+                vehicle.steering_angle = 45.0;
+            }
             _ => {}
         }
 
@@ -186,6 +194,14 @@ pub fn spawn_vehicle(
             config.seats = vec![
                 ("Pilot".to_string(), Vec3::new(0.0, 0.5, 1.0), true),
                 ("Gunner".to_string(), Vec3::new(0.0, 0.5, -1.0), false),
+            ];
+        }
+        VehicleType::Hoverboard => {
+            config.name = "Hoverboard".to_string();
+            config.mesh_size = Vec3::new(1.0, 0.2, 2.5);
+            config.color = Color::from(LinearRgba::new(0.2, 0.8, 0.2, 1.0));
+            config.seats = vec![
+                ("Driver".to_string(), Vec3::new(0.0, 0.2, 0.0), true),
             ];
         }
         _ => {

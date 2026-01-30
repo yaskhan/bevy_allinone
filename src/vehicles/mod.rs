@@ -29,10 +29,13 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleHudHealth>()
             .register_type::<VehicleHudFuel>()
             .register_type::<VehicleHudAmmo>()
+            .register_type::<VehicleIKTargets>()
+            .register_type::<VehiclePassengerStability>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
                 physics::update_vehicles_physics,
+                physics::update_passenger_stability,
                 interaction::handle_vehicle_interaction,
             ))
             .add_systems(Update, (
@@ -43,7 +46,9 @@ impl Plugin for VehiclesPlugin {
             ))
             .add_systems(Update, (
                 weapons::update_vehicle_weapon_aiming,
-                weapons::handle_vehicle_weapon_firing,
+                weapons::update_vehicle_weapon_firing,
+            ))
+            .add_systems(Update, (
                 seating::manage_vehicle_passengers,
                 effects::update_skidmarks,
                 chassis::update_vehicle_chassis,
