@@ -64,6 +64,7 @@ pub mod vendor;
 pub mod weapons;
 pub mod head_track;
 pub mod level_manager;
+pub mod point_and_click;
 
 pub mod prelude {
     //! Commonly used types and traits
@@ -88,6 +89,7 @@ pub mod prelude {
     pub use crate::inventory::*;
     pub use crate::ladder::*;
     pub use crate::map::*;
+    pub use crate::point_and_click::*;
     pub use crate::physics::*;
     pub use crate::player::*;
     pub use crate::puzzle::*;
@@ -147,6 +149,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(weapons::WeaponsPlugin)
             .add_plugins(head_track::HeadTrackPlugin)
             .add_plugins(level_manager::LevelManagerPlugin)
+            .add_plugins(point_and_click::PointAndClickPlugin)
             // Add resources
             .init_resource::<utils::GameTime>()
             // Add startup systems

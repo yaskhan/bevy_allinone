@@ -1,69 +1,10 @@
-//! AI system module
-//!
-//! NPC behavior, pathfinding, and AI controllers.
-
 use bevy::prelude::*;
 use crate::input::InputState;
 use crate::character::CharacterController;
-
-pub struct AiPlugin;
-
-impl Plugin for AiPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .register_type::<AiController>()
-            .register_type::<AiBehaviorState>()
-            .add_systems(Update, (
-                ai_detection_system,
-                update_ai_behavior,
-            ));
-    }
-}
-
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct AiController {
-    pub state: AiBehaviorState,
-    pub target: Option<Entity>,
-    pub patrol_path: Vec<Vec3>,
-    pub current_waypoint_index: usize,
-    pub detection_range: f32,
-    pub attack_range: f32,
-    pub patrol_speed_mult: f32,
-    pub chase_speed_mult: f32,
-    pub wait_timer: f32,
-    pub wait_time_between_waypoints: f32,
-}
-
-impl Default for AiController {
-    fn default() -> Self {
-        Self {
-            state: AiBehaviorState::Idle,
-            target: None,
-            patrol_path: Vec::new(),
-            current_waypoint_index: 0,
-            detection_range: 15.0,
-            attack_range: 2.5,
-            patrol_speed_mult: 0.5,
-            chase_speed_mult: 1.0,
-            wait_timer: 0.0,
-            wait_time_between_waypoints: 2.0,
-        }
-    }
-}
-
-/// AI behavior state
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
-pub enum AiBehaviorState {
-    Idle,
-    Patrol,
-    Chase,
-    Attack,
-    Flee,
-}
+use super::types::*;
 
 /// System to handle AI detection of targets
-fn ai_detection_system(
+pub fn ai_detection_system(
     mut query: Query<(&GlobalTransform, &mut AiController)>,
     target_query: Query<(Entity, &GlobalTransform), (With<CharacterController>, Without<AiController>)>,
 ) {
@@ -102,7 +43,7 @@ fn ai_detection_system(
 }
 
 /// System to handle AI movement and state transitions
-fn update_ai_behavior(
+pub fn update_ai_behavior(
     time: Res<Time>,
     mut ai_query: Query<(
         &GlobalTransform,
