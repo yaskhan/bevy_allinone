@@ -33,6 +33,7 @@ pub mod abilities;
 pub mod actions;
 pub mod events;
 pub mod experience;
+pub mod footsteps;
 pub mod ai;
 pub mod camera;
 pub mod character;
@@ -67,6 +68,7 @@ pub mod prelude {
     pub use crate::actions::*;
     pub use crate::events::*;
     pub use crate::experience::*;
+    pub use crate::footsteps::*;
     pub use crate::ai::*;
     pub use crate::camera::*;
     pub use crate::character::*;
@@ -108,6 +110,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(actions::ActionSystemPlugin)
             .add_plugins(events::EventSystemPlugin)
             .add_plugins(experience::ExperiencePlugin)
+            .add_plugins(footsteps::FootstepPlugin)
             .add_plugins(ai::AiPlugin)
             .add_plugins(camera::CameraPlugin)
             .add_plugins(character::CharacterPlugin)
