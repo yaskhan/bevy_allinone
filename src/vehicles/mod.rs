@@ -22,6 +22,9 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleStats>()
             .register_type::<VehicleWeaponSystem>()
             .register_type::<VehicleDamageReceiver>()
+            .register_type::<VehicleSeatingManager>()
+            .register_type::<SkidManager>()
+            .register_type::<SkidMarkTrail>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -37,6 +40,8 @@ impl Plugin for VehiclesPlugin {
             .add_systems(Update, (
                 weapons::update_vehicle_weapon_aiming,
                 weapons::handle_vehicle_weapon_firing,
+                seating::manage_vehicle_passengers,
+                effects::update_skidmarks,
                 chassis::update_vehicle_chassis,
                 audio::update_vehicle_audio,
             ));

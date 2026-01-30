@@ -91,6 +91,15 @@ pub fn spawn_vehicle(
             ..default()
         },
         VehicleDamageReceiver { damage_multiplier: 1.0 },
+    )).insert((
+        SkidManager {
+            enabled: true,
+            mark_width: 0.3,
+            ground_offset: 0.02,
+            min_distance: 0.1,
+            max_marks: 1000,
+            ..default()
+        },
         Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.0))),
         MeshMaterial3d(materials.add(Color::from(LinearRgba::new(0.8, 0.2, 0.2, 1.0)))),
         Transform::from_translation(position),
@@ -200,6 +209,7 @@ pub fn spawn_vehicle(
             offset: Vec3::new(-0.5, 0.5, 0.0),
             occupied_by: None,
             bounce_on_enter: true,
+            ..default()
         },
         Transform::from_xyz(-0.5, 0.5, 0.0),
         GlobalTransform::default(),
@@ -214,10 +224,20 @@ pub fn spawn_vehicle(
             offset: Vec3::new(0.5, 0.5, 0.0),
             occupied_by: None,
             bounce_on_enter: true,
+            ..default()
         },
         Transform::from_xyz(0.5, 0.5, 0.0),
         GlobalTransform::default(),
     )).id();
+
+    let seats_vec = vec![driver_seat, passenger_seat];
+    
+    commands.entity(vehicle_entity).insert(VehicleSeatingManager {
+        seats: seats_vec,
+        eject_on_destroy: true,
+        eject_force: 15.0,
+        ..default()
+    });
 
     commands.entity(vehicle_entity).add_children(&[
         gear1, gear2, gear3,

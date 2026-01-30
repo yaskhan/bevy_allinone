@@ -148,6 +148,34 @@ pub fn update_vehicles_physics(
             velocity.0 -= velocity_normalized * excess_speed * delta * 2.0;
         }
 
+        // --- Specialized Physics ---
+        match vehicle.vehicle_type {
+            VehicleType::Motorcycle => {
+                // Lean into turns
+                let target_lean = -vehicle.steer_input * 25.0; // Max 25 degrees
+                vehicle.chassis_lean_y = vehicle.chassis_lean_y.lerp(target_lean, delta * 5.0);
+                
+                // Stabilization force for two wheels (simplified)
+                if vehicle.is_on_ground {
+                    let roll_error = angular_vel.x;
+                    angular_vel.x -= roll_error * 5.0 * delta;
+                }
+            }
+            VehicleType::Hovercraft => {
+                // Hovering physics: Apply upward force if close to ground
+                // (Already handled by raycast suspension if configured properly, 
+                // but we can add gliding feel)
+                if vehicle.is_on_ground {
+                    // Reduce friction/drag for gliding
+                    velocity.0 *= 1.0 + 0.005 * delta; 
+                    
+                    // Surface following: Smoothly align with ground normal
+                    // ... implementation ...
+                }
+            }
+            _ => {}
+        }
+
         // Update RPM based on gear and speed
         if powered_wheels_count > 0 {
             let avg_rpm = total_rpm / powered_wheels_count as f32;

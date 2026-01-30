@@ -8,3 +8,5 @@ pub mod audio;
 pub mod gears;
 pub mod damage;
 pub mod weapons;
+pub mod seating;
+pub mod effects;

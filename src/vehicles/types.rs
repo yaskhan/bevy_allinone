@@ -142,6 +142,9 @@ pub struct VehicleSeat {
     pub offset: Vec3,
     pub occupied_by: Option<Entity>,
     pub bounce_on_enter: bool,
+    pub exit_position: Vec3, // Local offset for exiting
+    pub enter_animation: String,
+    pub exit_animation: String,
 }
 
 impl Default for VehicleSeat {
@@ -152,8 +155,29 @@ impl Default for VehicleSeat {
             offset: Vec3::ZERO,
             occupied_by: None,
             bounce_on_enter: true,
+            exit_position: Vec3::new(2.0, 0.0, 0.0),
+            enter_animation: "EnterVehicle".into(),
+            exit_animation: "ExitVehicle".into(),
         }
     }
+}
+
+/// Managing multiple seats and passengers
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleSeatingManager {
+    pub seats: Vec<Entity>, // Entities with VehicleSeat component
+    pub eject_on_destroy: bool,
+    pub eject_force: f32,
+    pub hide_player_weapons: bool,
+    pub auto_door_open: bool,
+}
+
+#[derive(Component, Debug, Reflect, Clone, Copy, PartialEq, Eq)]
+pub enum PassengerState {
+    Driving,
+    Passenger,
+    Exiting,
 }
 
 /// Vehicle wheel component
@@ -351,4 +375,37 @@ pub struct VehicleWeaponSystem {
 #[reflect(Component)]
 pub struct VehicleDamageReceiver {
     pub damage_multiplier: f32,
+}
+
+/// Skidmark effect settings
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct SkidManager {
+    pub enabled: bool,
+    pub mark_width: f32,
+    pub ground_offset: f32,
+    pub min_distance: f32,
+    pub max_marks: usize,
+    pub skid_material: Handle<StandardMaterial>,
+}
+
+/// Marker for skidmark segments or a trail entity
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct SkidMarkTrail {
+    pub wheel_entity: Entity,
+    pub last_index: i32,
+    pub positions: Vec<Vec3>,
+    pub intensities: Vec<f32>,
+}
+
+impl Default for SkidMarkTrail {
+    fn default() -> Self {
+        Self {
+            wheel_entity: Entity::PLACEHOLDER,
+            last_index: -1,
+            positions: Vec::new(),
+            intensities: Vec::new(),
+        }
+    }
 }
