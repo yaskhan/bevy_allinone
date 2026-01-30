@@ -62,6 +62,7 @@ pub mod utils;
 pub mod vehicles;
 pub mod vendor;
 pub mod weapons;
+pub mod head_track;
 
 pub mod prelude {
     //! Commonly used types and traits
@@ -99,6 +100,7 @@ pub mod prelude {
     pub use crate::vehicles::*;
     pub use crate::vendor::*;
     pub use crate::weapons::*;
+    pub use crate::head_track::*;
     pub use crate::GameControllerPlugin;
     pub use bevy::prelude::*;
 }
@@ -142,6 +144,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(vehicles::VehiclesPlugin)
             .add_plugins(vendor::VendorPlugin)
             .add_plugins(weapons::WeaponsPlugin)
+            .add_plugins(head_track::HeadTrackPlugin)
             // Add resources
             .init_resource::<utils::GameTime>()
             // Add startup systems
