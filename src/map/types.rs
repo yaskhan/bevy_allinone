@@ -147,3 +147,21 @@ pub struct MapGlobalState {
     pub current_floor_index: i32,
 }
 
+/// Component for intra-level teleportation station
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct QuickTravelStation {
+    pub destination: Vec3,
+    pub is_active: bool,
+    pub interact_message: String,
+}
+
+/// Component for map objectives (quests)
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct ObjectiveIcon {
+    pub off_screen_arrow: bool,
+    pub icon_type: MapIconType,
+    pub description: String,
+}
+

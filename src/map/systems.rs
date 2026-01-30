@@ -61,6 +61,43 @@ pub fn update_visible_map_elements(
     }
 }
 
+/// System to handle quick travel interaction (Simplified proximity for now)
+pub fn handle_quick_travel(
+    mut player_query: Query<(&mut Transform, &crate::character::Player)>,
+    stations: Query<(&Transform, &QuickTravelStation), (Without<crate::character::Player>)>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
+    let Some((mut player_transform, _)) = player_query.iter_mut().next() else { return };
+
+    // Simple interaction: Press E near station
+    if input.just_pressed(KeyCode::KeyE) {
+        for (station_transform, station) in stations.iter() {
+            if station.is_active && player_transform.translation.distance(station_transform.translation) < 2.0 {
+                info!("Quick Travel to: {}", station.destination);
+                player_transform.translation = station.destination;
+                // Ideally, we'd play an effect or sound here
+                return; // Teleport effectively happens instantly
+            }
+        }
+    }
+}
+
+/// System to connect ObjectiveIcon changes to MapMarkers
+pub fn update_objective_icons(
+    mut commands: Commands,
+    query: Query<(Entity, &ObjectiveIcon), Changed<ObjectiveIcon>>,
+) {
+    for (entity, info) in query.iter() {
+         commands.entity(entity).insert(MapMarker {
+            name: info.description.clone(),
+            icon_type: info.icon_type,
+            // Objectives usually visible everywhere
+            visible_in_minimap: true,
+            visible_in_full_map: true,
+        });
+    }
+}
+
 // Integrated logic into existing (placeholder) check_map_zones
 pub fn check_map_zones(
     player_query: Query<&Transform, With<crate::character::Player>>,
