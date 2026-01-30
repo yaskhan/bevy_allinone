@@ -14,7 +14,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - [Weapon System](./weapon_system.md) - Weapon physics, aiming, and damage systems
 - [Combat System](./combat_system.md) - Health, damage calculations, and impact feedback
 - **[Map System](./map_system.md)** - Minimap, world map, markers, and navigation tools
-
+- **[Interaction System](./interaction_system.md)** - Player-world interactions, including raycasting and device detection
  
 ### Advanced Systems
 - **[Puzzle System](./puzzle_system.md)** - Logic gates, puzzle elements, and interactive device simulation
