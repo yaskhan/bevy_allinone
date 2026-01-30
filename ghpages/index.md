@@ -9,6 +9,7 @@ Welcome to the documentation for the Bevy All-in-One project. This project is a 
 
 ### Systems
 - [AI System](ai-system.md)
+- [Abilities System](abilities_system.md)
 - [Weapon System](weapon-system.md)
 - [Interaction System](interaction-system.md)
 - [Inventory & Economy](inventory-system.md)
@@ -16,7 +17,7 @@ Welcome to the documentation for the Bevy All-in-One project. This project is a 
 - [Stats & Skills](stats-system.md)
 - [Level & Save](level-system.md)
 - [Quest & Dialog](quest-system.md)
-- [Vehicle System](vehicle-system.md)
+- [Vehicle System](vehicle_system.md)
 - [Camera System](camera_system.md)
 - [Puzzles & Devices](interaction-puzzle.md)
 

@@ -5,11 +5,12 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 ## System Documentation
  
 ### Core Systems
- 
-- **[Character System](./character_system.md)** - Player character controller with physics and movement states
+
+- **[Character Controller System](./character_controller_system.md)** - Player character controller with physics and movement states
 - **[Player System](./player_system.md)** - Player-specific logic, managing high-level states, modes, and advanced movement mechanics
 - **[Camera System](./camera_system.md)** - Camera controls and behavior, including peeking, looking around while hidden, and zooming
 - **[AI System](./ai_system.md)** - Comprehensive AI behavior, perception, and faction management
+- **[Abilities System](./abilities_system.md)** - Special abilities with cooldowns, energy management, and multiple input patterns
 - [Weapon System](./weapon_system.md) - Weapon physics, aiming, and damage systems
 - [Combat System](./combat_system.md) - Health, damage calculations, and impact feedback
 - **[Map System](./map_system.md)** - Minimap, world map, markers, and navigation tools
