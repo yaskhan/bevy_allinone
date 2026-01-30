@@ -19,89 +19,13 @@ use std::time::Duration;
 // COMPONENTS
 // ============================================================================
 
-/// Simple switch component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct SimpleSwitch {
-    /// Is the button enabled?
-    pub enabled: bool,
-    
-    /// Sound to play when pressed
-    pub press_sound: Option<Handle<AudioSource>>,
-    
-    /// Send current user to target object
-    pub send_current_user: bool,
-    
-    /// Can't use while animation is playing
-    pub not_usable_while_animation_is_playing: bool,
-    
-    /// Use single switch mode (momentary) or dual mode (toggle)
-    pub use_single_switch: bool,
-    
-    /// Use animation for the switch
-    pub button_uses_animation: bool,
-    
-    /// Animation name to play
-    pub switch_animation_name: String,
-    
-    /// Animation speed
-    pub animation_speed: f32,
-    
-    /// Use Unity-style events
-    pub use_unity_events: bool,
-    
-    /// Target object to activate
-    pub object_to_active: Option<Entity>,
-    
-    /// Function name to call on target
-    pub active_function_name: String,
-    
-    /// Send this button as parameter
-    pub send_this_button: bool,
-    
-    /// Current switch state (for dual mode)
-    pub switch_turned_on: bool,
-    
-    /// First animation play flag
-    pub first_animation_play: bool,
-    
-    /// Animation component reference
-    pub animation: Option<Handle<AnimationClip>>,
-    
-    /// Audio source component reference
-    pub audio_source: Option<Entity>,
-    
-    /// Device string action manager
-    pub device_string_action: Option<Entity>,
-    
-    /// Current player using this switch
-    pub current_player: Option<Entity>,
-}
+use crate::devices::types::{SimpleSwitch, SimpleSwitchEventType};
 
-impl Default for SimpleSwitch {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            press_sound: None,
-            send_current_user: false,
-            not_usable_while_animation_is_playing: true,
-            use_single_switch: true,
-            button_uses_animation: true,
-            switch_animation_name: "simpleSwitch".to_string(),
-            animation_speed: 1.0,
-            use_unity_events: true,
-            object_to_active: None,
-            active_function_name: String::new(),
-            send_this_button: false,
-            switch_turned_on: false,
-            first_animation_play: true,
-            animation: None,
-            audio_source: None,
-            device_string_action: None,
-            current_player: None,
-        }
-    }
-}
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+
+// Structs moved to src/devices/types.rs
 
 // ============================================================================
 // EVENTS
@@ -119,16 +43,6 @@ pub struct SimpleSwitchEvent {
 /// Queue for SimpleSwitchEvent
 #[derive(Resource, Default)]
 pub struct SimpleSwitchEventQueue(pub Vec<SimpleSwitchEvent>);
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum SimpleSwitchEventType {
-    /// Single switch event (momentary)
-    SingleSwitch,
-    /// Turn on event (dual mode)
-    TurnOn,
-    /// Turn off event (dual mode)
-    TurnOff,
-}
 
 // ============================================================================
 // SYSTEM PARAMETERS

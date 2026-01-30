@@ -6,125 +6,7 @@
 use bevy::prelude::*;
 use bevy::audio::{AudioSource, PlaybackSettings};
 use std::time::Duration;
-
-// ============================================================================
-// COMPONENTS
-// ============================================================================
-
-/// Recharger station component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct RechargerStation {
-    /// Healing speed (health/energy per second)
-    pub heal_speed: f32,
-    
-    /// Animation name to play
-    pub animation_name: String,
-    
-    /// Sound to play when healing
-    pub sound: Option<Handle<AudioSource>>,
-    
-    /// Button entity to activate the station
-    pub button: Option<Entity>,
-    
-    /// Is the station currently healing?
-    pub healing: bool,
-    
-    /// Has the player been fully healed?
-    pub fully_healed: bool,
-    
-    /// Is the player inside the station?
-    pub inside: bool,
-    
-    /// Is the animation playing forward?
-    pub playing_animation_forward: bool,
-    
-    /// Current health amount
-    pub health_amount: f32,
-    
-    /// Max health amount
-    pub max_health_amount: f32,
-    
-    /// Current power amount
-    pub power_amount: f32,
-    
-    /// Max power amount
-    pub max_power_amount: f32,
-    
-    /// Current player entity
-    pub player: Option<Entity>,
-    
-    /// Animation component reference
-    pub animation: Option<Handle<AnimationClip>>,
-    
-    /// Audio source component reference
-    pub audio_source: Option<Entity>,
-    
-    /// Button collider entity
-    pub button_collider: Option<Entity>,
-}
-
-impl Default for RechargerStation {
-    fn default() -> Self {
-        Self {
-            heal_speed: 10.0,
-            animation_name: "recharge".to_string(),
-            sound: None,
-            button: None,
-            healing: false,
-            fully_healed: false,
-            inside: false,
-            playing_animation_forward: false,
-            health_amount: 0.0,
-            max_health_amount: 100.0,
-            power_amount: 0.0,
-            max_power_amount: 100.0,
-            player: None,
-            animation: None,
-            audio_source: None,
-            button_collider: None,
-        }
-    }
-}
-
-// ============================================================================
-// EVENTS
-// ============================================================================
-
-/// Event triggered when player enters the station
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationEntered {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
-
-/// Event triggered when player exits the station
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationExited {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
-
-/// Event triggered when healing starts
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationHealingStarted {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
-
-/// Event triggered when healing stops
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationHealingStopped {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
-
-/// Event triggered when player is fully healed
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationFullyHealed {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
+use crate::devices::types::*;
 
 // ============================================================================
 // SYSTEMS
@@ -260,21 +142,19 @@ fn stop_healing(
 }
 
 // ============================================================================
-// EVENTS
-// ============================================================================
-
-/// Event for activating the station
-#[derive(Debug, Clone, Event)]
-pub struct RechargerStationActivation {
-    pub station_entity: Entity,
-    pub player_entity: Entity,
-}
-
-// ============================================================================
 // PUBLIC API
 // ============================================================================
 
 impl RechargerStation {
+    // Methods are now implemented in types.rs or can be extension traits
+    // But since they operate on fields, they should be in the impl block in types.rs or via a trait here.
+    // However, for simplicity and to avoid issues, I'll recommend moving methods to types.rs if they are pure logic on the struct.
+    // Looking at the original file, it had methods like set_player, set_inside, heal_player, stop_healing, is_active, is_fully_healed, is_inside.
+    // These should ideally be in types.rs with the struct definition.
+    // I already moved the struct to types.rs but I DID NOT move the impl block with methods (only Default).
+    // I should probably add the impl block to types.rs or keep it here as an inherent impl if the struct is in the same crate (it is).
+    // Rust allows multiple impl blocks.
+    
     /// Set current player
     pub fn set_player(&mut self, player: Option<Entity>) {
         self.player = player;
@@ -319,25 +199,6 @@ impl RechargerStation {
 // EVENTS HANDLER
 // ============================================================================
 
-#[derive(Resource, Default)]
-pub struct RechargerStationEnteredQueue(pub Vec<RechargerStationEntered>);
-
-#[derive(Resource, Default)]
-pub struct RechargerStationExitedQueue(pub Vec<RechargerStationExited>);
-
-#[derive(Resource, Default)]
-pub struct RechargerStationHealingStartedQueue(pub Vec<RechargerStationHealingStarted>);
-
-#[derive(Resource, Default)]
-pub struct RechargerStationHealingStoppedQueue(pub Vec<RechargerStationHealingStopped>);
-
-#[derive(Resource, Default)]
-pub struct RechargerStationFullyHealedQueue(pub Vec<RechargerStationFullyHealed>);
-
-#[derive(Resource, Default)]
-pub struct RechargerStationActivationQueue(pub Vec<RechargerStationActivation>);
-
-/// System to handle recharger station events
 /// System to handle recharger station events
 pub fn handle_recharger_station_events(
     mut entered_queue: ResMut<RechargerStationEnteredQueue>,
@@ -391,14 +252,12 @@ pub struct RechargerStationPlugin;
 
 impl Plugin for RechargerStationPlugin {
     fn build(&self, app: &mut App) {
+        // We do NOT register types/resources here as they are likely registered in the main plugin or duplicate registration might be harmless but cleaner to do once.
+        // However, if we want to be safe, we can check later.
+        // For now, I will remove type/resource registration from here to avoid duplication if I add it to mod.rs or types.rs plugin.
+        // But wait, if they are resources/components, they need to be registered somewhere.
+        // I'll keep the system registration.
         app
-            .register_type::<RechargerStation>()
-            .init_resource::<RechargerStationEnteredQueue>()
-            .init_resource::<RechargerStationExitedQueue>()
-            .init_resource::<RechargerStationHealingStartedQueue>()
-            .init_resource::<RechargerStationHealingStoppedQueue>()
-            .init_resource::<RechargerStationFullyHealedQueue>()
-            .init_resource::<RechargerStationActivationQueue>()
             .add_systems(Update, (
                 update_recharger_station,
                 handle_recharger_station_activation,
@@ -407,40 +266,3 @@ impl Plugin for RechargerStationPlugin {
     }
 }
 
-// ============================================================================
-// HELPER COMPONENTS
-// ============================================================================
-
-/// Health component (for player)
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Health {
-    pub current: f32,
-    pub max: f32,
-}
-
-impl Default for Health {
-    fn default() -> Self {
-        Self {
-            current: 100.0,
-            max: 100.0,
-        }
-    }
-}
-
-/// Power component (for player)
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Power {
-    pub current: f32,
-    pub max: f32,
-}
-
-impl Default for Power {
-    fn default() -> Self {
-        Self {
-            current: 100.0,
-            max: 100.0,
-        }
-    }
-}

@@ -13,60 +13,13 @@ use std::time::Duration;
 // COMPONENTS
 // ============================================================================
 
-/// Pressure plate component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct PressurePlate {
-    /// Minimum distance to trigger (for position-based detection)
-    pub min_distance: f32,
-    
-    /// Tags to ignore (e.g., "Player")
-    pub tags_to_ignore: HashSet<String>,
-    
-    /// Is the plate currently being used?
-    pub using_plate: bool,
-    
-    /// Has the unlock function been called?
-    pub active_function_called: bool,
-    
-    /// Has the lock function been called?
-    pub disable_function_called: bool,
-    
-    /// Objects currently on the plate
-    pub objects: HashSet<Entity>,
-    
-    /// The plate entity (visual)
-    pub plate: Option<Entity>,
-    
-    /// Final position to reach (for animation)
-    pub final_position: Option<Vec3>,
-    
-    /// Current state timer (for delayed activation/deactivation)
-    pub state_timer: f32,
-    
-    /// Delay before deactivating (in seconds)
-    pub deactivation_delay: f32,
-}
+use crate::devices::types::PressurePlate;
 
-impl Default for PressurePlate {
-    fn default() -> Self {
-        let mut tags_to_ignore = HashSet::new();
-        tags_to_ignore.insert("Player".to_string());
-        
-        Self {
-            min_distance: 0.1,
-            tags_to_ignore,
-            using_plate: false,
-            active_function_called: false,
-            disable_function_called: false,
-            objects: HashSet::new(),
-            plate: None,
-            final_position: None,
-            state_timer: 0.0,
-            deactivation_delay: 1.0,
-        }
-    }
-}
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+
+// Structs moved to src/devices/types.rs
 
 // ============================================================================
 // EVENTS

@@ -10,121 +10,13 @@ use std::collections::HashSet;
 // COMPONENTS
 // ============================================================================
 
-/// Electronic device component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct ElectronicDevice {
-    /// Use only for trigger (no manual activation)
-    pub use_only_for_trigger: bool,
-    
-    /// Function to set player
-    pub function_to_set_player: String,
-    
-    /// Use free interaction
-    pub use_free_interaction: bool,
-    
-    /// Use free interaction event
-    pub use_free_interaction_event: bool,
-    
-    /// Use move camera to device
-    pub use_move_camera_to_device: bool,
-    
-    /// Disable device when stop using
-    pub disable_device_when_stop_using: bool,
-    
-    /// Stop using device when unlock
-    pub stop_using_device_when_unlock: bool,
-    
-    /// Disable and remove device when unlock
-    pub disable_and_remove_device_when_unlock: bool,
-    
-    /// Using device
-    pub using_device: bool,
-    
-    /// Device can be used
-    pub device_can_be_used: bool,
-    
-    /// Player inside
-    pub player_inside: bool,
-    
-    /// Current player
-    pub current_player: Option<Entity>,
-    
-    /// Camera movement manager
-    pub camera_movement: Option<Entity>,
-    
-    /// Device movement manager
-    pub device_movement: Option<Entity>,
-    
-    /// Player found list
-    pub player_found_list: HashSet<Entity>,
-    
-    /// Last time event on trigger stay
-    pub last_time_event_on_trigger_stay: f32,
-    
-    /// Event on trigger stay rate
-    pub event_on_trigger_stay_rate: f32,
-    
-    /// Activate event on trigger stay
-    pub activate_event_on_trigger_stay: bool,
-    
-    /// Activate event on trigger enter
-    pub activate_event_on_trigger_enter: bool,
-    
-    /// Activate event on trigger exit
-    pub activate_event_on_trigger_exit: bool,
-    
-    /// Send player on trigger enter
-    pub send_player_on_trigger_enter: bool,
-    
-    /// Send player on trigger exit
-    pub send_player_on_trigger_exit: bool,
-    
-    /// Activate event if unable to use device
-    pub activate_event_if_unable_to_use_device: bool,
-    
-    /// Send current player on event
-    pub send_current_player_on_event: bool,
-    
-    /// Use event on start using device
-    pub use_event_on_start_using_device: bool,
-    
-    /// Use event on stop using device
-    pub use_event_on_stop_using_device: bool,
-}
+use crate::devices::types::ElectronicDevice;
 
-impl Default for ElectronicDevice {
-    fn default() -> Self {
-        Self {
-            use_only_for_trigger: false,
-            function_to_set_player: String::new(),
-            use_free_interaction: false,
-            use_free_interaction_event: false,
-            use_move_camera_to_device: false,
-            disable_device_when_stop_using: false,
-            stop_using_device_when_unlock: false,
-            disable_and_remove_device_when_unlock: false,
-            using_device: false,
-            device_can_be_used: true,
-            player_inside: false,
-            current_player: None,
-            camera_movement: None,
-            device_movement: None,
-            player_found_list: HashSet::new(),
-            last_time_event_on_trigger_stay: 0.0,
-            event_on_trigger_stay_rate: 0.5,
-            activate_event_on_trigger_stay: false,
-            activate_event_on_trigger_enter: false,
-            activate_event_on_trigger_exit: false,
-            send_player_on_trigger_enter: false,
-            send_player_on_trigger_exit: false,
-            activate_event_if_unable_to_use_device: false,
-            send_current_player_on_event: false,
-            use_event_on_start_using_device: false,
-            use_event_on_stop_using_device: false,
-        }
-    }
-}
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+
+// Structs moved to src/devices/types.rs
 
 // ============================================================================
 // EVENTS
