@@ -3,7 +3,87 @@ use crate::input::InputState;
 use crate::character::CharacterController;
 use super::types::*;
 
-/// System to handle AI detection of targets
+use avian3d::prelude::*;
+
+/// System to handle AI detection of targets with Perception checks
+pub fn update_ai_perception(
+    mut ai_query: Query<(Entity, &GlobalTransform, &mut AiController, &AiPerception)>,
+    target_query: Query<(Entity, &GlobalTransform), (With<CharacterController>, Without<AiController>)>,
+    spatial_query: SpatialQuery,
+) {
+    for (entity, transform, mut ai, perception) in ai_query.iter_mut() {
+        if ai.state == AiBehaviorState::Flee { continue; }
+
+        let mut closest_target = None;
+        let mut min_dist = perception.vision_range;
+        let current_pos = transform.translation();
+        let forward = transform.forward();
+
+        for (target_entity, target_transform) in target_query.iter() {
+            let target_pos = target_transform.translation();
+            let to_target = target_pos - current_pos;
+            let dist = to_target.length();
+
+            if dist > perception.vision_range {
+                continue;
+            }
+
+            // check FOV
+            let dir_to_target = to_target.normalize();
+            let angle = forward.angle_between(dir_to_target).to_degrees();
+            
+            if angle > perception.fov / 2.0 {
+                continue;
+            }
+
+            // Raycast check for line of sight
+            // Cast from slightly up (eye level) to target slightly up
+            let origin = current_pos + Vec3::Y * 1.5; 
+            let target_eye = target_pos + Vec3::Y * 1.5;
+            let direction_vec = (target_eye - origin).normalize();
+            let distance = (target_eye - origin).length();
+            
+            let Ok(direction) = Dir3::new(direction_vec) else { continue };
+
+            let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+            
+            if let Some(hit) = spatial_query.cast_ray(origin, direction, distance, true, &filter) {
+                // If we hit something closer than the target, visibility is blocked
+                // Assuming target has a collider. If the hit entity IS the target, or very close to it.
+                if hit.entity != target_entity {
+                     // blocked
+                     continue;
+                }
+            }
+
+            // Visible
+            if dist < min_dist {
+                min_dist = dist;
+                closest_target = Some(target_entity);
+            }
+        }
+
+        if let Some(target) = closest_target {
+            ai.target = Some(target);
+            if min_dist <= ai.attack_range {
+                ai.state = AiBehaviorState::Attack;
+            } else {
+                ai.state = AiBehaviorState::Chase;
+            }
+        } else {
+             // If we lost target or no target
+             // Only reset if we were Chasing/Attacking and lost vision? 
+             // Simple logic: if no target seen, go back to patrol/idle
+             // A better system would have "memory" (last seen position)
+             ai.target = None;
+             if ai.state == AiBehaviorState::Chase || ai.state == AiBehaviorState::Attack {
+                 ai.state = AiBehaviorState::Idle; 
+             }
+        }
+    }
+}
+
+/// Old simple detection system (deprecated or fallback)
 pub fn ai_detection_system(
     mut query: Query<(&GlobalTransform, &mut AiController)>,
     target_query: Query<(Entity, &GlobalTransform), (With<CharacterController>, Without<AiController>)>,
@@ -42,6 +122,34 @@ pub fn ai_detection_system(
     }
 }
 
+
+/// System to handle commands from FriendManager
+pub fn handle_friend_commands(
+    mut friend_query: Query<(&GlobalTransform, &mut AiController, &FriendManager)>,
+    player_query: Query<&GlobalTransform, With<crate::character::Player>>, 
+) {
+    let Ok(player_xf) = player_query.iter().next().ok_or(()) else { return };
+    let player_pos = player_xf.translation();
+
+    for (transform, mut ai, friend_mgr) in friend_query.iter_mut() {
+        match friend_mgr.current_command {
+            AiCommand::Follow => {
+                ai.state = AiBehaviorState::Follow;
+            }
+            AiCommand::Wait => {
+                ai.state = AiBehaviorState::Idle;
+                ai.target = None;
+            }
+            AiCommand::Attack => {
+                // Allow normal AI logic to find and attack enemies
+            }
+            AiCommand::Hide => {
+                 // Implement Hide logic
+            }
+        }
+    }
+}
+
 /// System to handle AI movement and state transitions
 pub fn update_ai_behavior(
     time: Res<Time>,
@@ -52,6 +160,7 @@ pub fn update_ai_behavior(
         &mut InputState,
     )>,
     target_query: Query<&GlobalTransform>,
+    player_query: Query<&GlobalTransform, With<crate::character::Player>>,
 ) {
     let delta = time.delta_secs();
 
@@ -143,6 +252,20 @@ pub fn update_ai_behavior(
             }
             AiBehaviorState::Flee => {
                 // Implement flee logic if needed
+            }
+            AiBehaviorState::Follow => {
+                if let Some(player_xf) = player_query.iter().next() {
+                    let player_pos = player_xf.translation();
+                    let current_pos = transform.translation();
+                    let dist = current_pos.distance(player_pos);
+                    
+                    if dist > 3.0 { // Follow distance
+                        let to_player = player_pos - current_pos;
+                        let move_dir = to_player.normalize_or_zero();
+                        input.movement = Vec2::new(move_dir.x, move_dir.z);
+                        input.sprint_pressed = dist > 10.0;
+                    }
+                }
             }
         }
     }
