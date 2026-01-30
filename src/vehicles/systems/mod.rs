@@ -10,3 +10,4 @@ pub mod damage;
 pub mod weapons;
 pub mod seating;
 pub mod effects;
+pub mod hud;

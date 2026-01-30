@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::app::App;
+use crate::vehicles::types::{VehicleAI, WaypointPath};
 
 mod types;
 mod systems;
@@ -11,6 +12,7 @@ mod combat;
 mod behavior;
 mod hiding;
 mod movement;
+mod vehicle_ai;
 
 pub use types::*;
 pub use systems::*;
@@ -22,6 +24,7 @@ pub use combat::*;
 pub use behavior::*;
 pub use hiding::*;
 pub use movement::*;
+pub use vehicle_ai::*;
 
 pub struct AiPlugin;
 
@@ -42,6 +45,8 @@ impl Plugin for AiPlugin {
             .register_type::<PatrolPath>()
             .register_type::<AIPerceptionSettings>()
             .register_type::<AiMovement>()
+            .register_type::<VehicleAI>()
+            .register_type::<WaypointPath>()
             .init_resource::<FactionSystem>()
             .init_resource::<FriendSystem>()
             .init_resource::<NoiseEventQueue>()
@@ -60,6 +65,7 @@ impl Plugin for AiPlugin {
                 update_ai_state_visuals,
                 update_faction_relations,
                 alert_faction_members,
+                update_vehicle_ai,
             ));
     }
 }

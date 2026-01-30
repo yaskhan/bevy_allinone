@@ -35,6 +35,20 @@ pub struct Vehicle {
     pub anti_roll: f32,
     pub preserve_direction_in_air: bool,
 
+    // Aircraft & Flying settings
+    pub lift_amount: f32,
+    pub pitch_force: f32,
+    pub yaw_force: f32,
+    pub roll_force: f32,
+    pub aero_dynamic_force: f32,
+    pub banking_force: f32,
+    pub hover_force: f32,
+    pub roll_rotation_speed: f32,
+    pub stability_force: f32,
+
+    // Sphere settings
+    pub move_speed_multiplier: f32,
+
     // State
     pub current_gear: usize,
     pub current_speed: f32,
@@ -66,14 +80,19 @@ pub struct Vehicle {
     pub using_gravity_control: bool,
 }
 
-#[derive(Debug, Clone, Reflect)]
+#[derive(Debug, Clone, Reflect, Default)]
 pub enum VehicleType {
+    #[default]
     Car,
     Truck,
     Motorcycle,
     Boat,
     Plane,
     Hovercraft,
+    Aircraft,
+    Flying,
+    Sphere,
+    Turret,
 }
 
 impl Default for Vehicle {
@@ -126,6 +145,20 @@ impl Default for Vehicle {
             time_to_stabilize: 0.0,
             reset_timer: 0.0,
             using_gravity_control: false,
+
+            // Aircraft Defaults
+            lift_amount: 0.002,
+            pitch_force: 1.0,
+            yaw_force: 1.0,
+            roll_force: 1.0,
+            aero_dynamic_force: 0.02,
+            banking_force: 0.5,
+            hover_force: 5.0,
+            roll_rotation_speed: 5.0,
+            stability_force: 2.0,
+
+            // Sphere Defaults
+            move_speed_multiplier: 10.0,
         }
     }
 }
@@ -399,6 +432,7 @@ pub struct SkidMarkTrail {
     pub intensities: Vec<f32>,
 }
 
+
 impl Default for SkidMarkTrail {
     fn default() -> Self {
         Self {
@@ -408,4 +442,46 @@ impl Default for SkidMarkTrail {
             intensities: Vec::new(),
         }
     }
+}
+
+/// Marker for Speed UI
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleHudSpeed;
+
+/// Marker for Health UI
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleHudHealth;
+
+/// Marker for Fuel UI
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleHudFuel;
+
+/// Marker for Ammo UI
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleHudAmmo;
+
+/// Vehicle AI controller
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct VehicleAI {
+    pub enabled: bool,
+    pub target_entity: Option<Entity>,
+    pub current_waypoint_index: usize,
+    pub waypoints: Vec<Vec3>,
+    pub waypoint_threshold: f32,
+    pub loop_waypoints: bool,
+    pub max_steering: f32,
+    pub brake_distance: f32,
+}
+
+/// Helper for following paths
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct WaypointPath {
+    pub points: Vec<Vec3>,
+    pub loop_path: bool,
 }

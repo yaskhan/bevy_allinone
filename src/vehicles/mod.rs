@@ -25,6 +25,10 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleSeatingManager>()
             .register_type::<SkidManager>()
             .register_type::<SkidMarkTrail>()
+            .register_type::<VehicleHudSpeed>()
+            .register_type::<VehicleHudHealth>()
+            .register_type::<VehicleHudFuel>()
+            .register_type::<VehicleHudAmmo>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -44,6 +48,7 @@ impl Plugin for VehiclesPlugin {
                 effects::update_skidmarks,
                 chassis::update_vehicle_chassis,
                 audio::update_vehicle_audio,
+                hud::update_vehicle_hud,
             ));
     }
 }

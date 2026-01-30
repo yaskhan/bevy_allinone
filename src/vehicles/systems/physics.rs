@@ -88,9 +88,12 @@ pub fn update_vehicles_physics(
         let steer_torque = -vehicle.steer_input * steer_angle.to_radians() * steer_effectiveness;
 
         if vehicle.is_turned_on && vehicle.is_on_ground {
-            angular_vel.y += steer_torque * delta * 2.0;
-            // Extra torque for better handling
-            angular_vel.y += -vehicle.steer_input * 2.0 * delta;
+            // Only apply standard steering if it's a ground vehicle
+            if matches!(vehicle.vehicle_type, VehicleType::Car | VehicleType::Truck | VehicleType::Motorcycle | VehicleType::Hovercraft) {
+                angular_vel.y += steer_torque * delta * 2.0;
+                // Extra torque for better handling
+                angular_vel.y += -vehicle.steer_input * 2.0 * delta;
+            }
         }
 
         // Apply jump force
@@ -172,6 +175,91 @@ pub fn update_vehicles_physics(
                     // Surface following: Smoothly align with ground normal
                     // ... implementation ...
                 }
+            }
+            VehicleType::Aircraft => {
+                // Fixed-wing aircraft physics
+                if vehicle.is_turned_on {
+                    let forward_speed = velocity.dot(*forward).max(0.0);
+                    let local_velocity = transform.to_matrix().inverse().transform_point3((*velocity).0);
+                    
+                    // Throttle & Engine Power
+                    let throttle = vehicle.motor_input.clamp(0.0, 1.0);
+                    let engine_power = throttle * vehicle.engine_torque + (if vehicle.is_boosting { vehicle.boost_multiplier * 50.0 } else { 0.0 });
+                    velocity.0 += *forward * engine_power * delta;
+
+                    // Aerodynamics: align velocity with forward direction
+                    if velocity.length() > 1.0 {
+                        let aero_factor = forward.dot(velocity.normalize()).powi(2);
+                        let target_vel = *forward * forward_speed;
+                        velocity.0 = velocity.0.lerp(target_vel, aero_factor * forward_speed * vehicle.aero_dynamic_force * delta);
+                        
+                        // Stall logic: rotate downward if speed is low
+                        let stall_rotation = Quat::from_rotation_arc(*forward, velocity.normalize());
+                        angular_vel.0 = angular_vel.0.lerp(stall_rotation.to_scaled_axis(), vehicle.aero_dynamic_force * delta);
+                    }
+
+                    // Lift
+                    let lift_direction = velocity.cross(*right).normalize();
+                    let zero_lift_factor = (1.0 - (forward_speed / 300.0)).clamp(0.0, 1.0);
+                    let lift_power = forward_speed * forward_speed * vehicle.lift_amount * zero_lift_factor;
+                    velocity.0 += lift_direction * lift_power * delta * 100.0; // Scaled for physics
+
+                    // Control Torque (Pitch, Yaw, Roll)
+                    let pitch = -vehicle.steer_input_speed * vehicle.pitch_force; // Using stick vertical or separate vertical axis if needed
+                    let yaw = vehicle.steer_input * vehicle.yaw_force;
+                    let roll = -vehicle.steer_input * vehicle.roll_force; // Simplified mapping for now
+
+                    let mut torque = Vec3::ZERO;
+                    torque += *right * (vehicle.motor_input * vehicle.pitch_force); // Pitch
+                    torque += *up * (vehicle.steer_input * vehicle.yaw_force); // Yaw
+                    torque += *forward * (vehicle.boost_input * vehicle.roll_force); // Roll (placeholder mapping)
+
+                    angular_vel.0 += torque * forward_speed * 0.01 * delta;
+                    
+                    // Stability: level out if no input
+                    if vehicle.steer_input.abs() < 0.1 {
+                        let roll_error = up.dot(*right); // Sin of roll angle
+                        angular_vel.0 -= *forward * roll_error * vehicle.stability_force * delta;
+                    }
+                }
+            }
+            VehicleType::Flying => {
+                // VTOL / Drone logic
+                if vehicle.is_turned_on {
+                    let mut target_vel = *forward * (vehicle.motor_input * vehicle.max_forward_speed) + 
+                                       *right * (vehicle.steer_input * 15.0);
+                    
+                    // Hover force
+                    let hover = *up * vehicle.hover_force;
+                    target_vel += hover;
+
+                    if vehicle.is_boosting { target_vel *= vehicle.boost_multiplier; }
+
+                    velocity.0 = velocity.0.lerp(target_vel, delta * 2.0);
+
+                    // Stability
+                    let torque_vector = up.cross(Vec3::Y);
+                    angular_vel.0 += torque_vector * vehicle.stability_force * delta;
+                    
+                    // Rotation
+                    angular_vel.y += -vehicle.steer_input * vehicle.roll_rotation_speed * delta;
+                }
+            }
+            VehicleType::Sphere => {
+                // Sphere rolling physics
+                if vehicle.is_turned_on {
+                    let move_input = *forward * vehicle.motor_input + *right * vehicle.steer_input;
+                    let force = move_input * vehicle.engine_torque * vehicle.move_speed_multiplier;
+                    
+                    if velocity.length() < vehicle.max_forward_speed {
+                        velocity.0 += force * delta;
+                    }
+                }
+            }
+            VehicleType::Turret => {
+                // Turret stabilization (base shouldn't move much)
+                velocity.0 = Vec3::ZERO;
+                angular_vel.0 = Vec3::ZERO;
             }
             _ => {}
         }
