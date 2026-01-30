@@ -18,6 +18,8 @@ impl Plugin for MapPlugin {
             .register_type::<MapIconType>()
             .register_type::<MapObjectInformation>()
             .register_type::<MapZone>()
+            .register_type::<MapBuilding>()
+            .register_type::<MapFloor>()
             .register_type::<MapSettings>()
             .register_type::<MapGlobalState>()
             .register_type::<CompassUI>()
@@ -33,6 +35,7 @@ impl Plugin for MapPlugin {
                 update_minimap_positions,
                 update_compass,
                 update_map_object_information,
+                update_visible_map_elements,
                 check_map_zones,
                 handle_map_system_input,
                 update_map_visibility,

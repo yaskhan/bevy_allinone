@@ -118,10 +118,32 @@ impl Default for MapSettings {
     }
 }
 
+/// Component for a building in the map system
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct MapBuilding {
+    pub name: String,
+    pub index: i32,
+    pub floors: Vec<Entity>, // Entities with MapFloor component
+}
+
+/// Component for a specific floor in a building
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct MapFloor {
+    pub name: String,
+    pub floor_number: i32,
+    pub floor_index: i32, // Index in the building's floor list
+    pub is_active: bool,
+}
+
 /// Tracks discovered zones and map status.
 #[derive(Resource, Default, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct MapGlobalState {
     pub discovered_zones: Vec<i32>, // IDs of discovered zones
     pub map_menu_opened: bool,
+    pub current_building_index: i32,
+    pub current_floor_index: i32,
 }
+

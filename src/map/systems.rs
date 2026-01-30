@@ -38,23 +38,51 @@ pub fn update_map_object_information(
     }
 }
 
-/// System to check for map zone discovery
+/// System to update visible map elements based on building and floor
+pub fn update_visible_map_elements(
+    mut icons: Query<(&mut Node, &MapMarkerIcon)>,
+    markers: Query<&MapObjectInformation>,
+    global_state: Res<MapGlobalState>,
+) {
+    for (mut node, icon) in icons.iter_mut() {
+        if let Ok(info) = markers.get(icon.marker_entity) {
+            // Check if object belongs to current hierarchy context
+            let same_building = info.building_index == global_state.current_building_index;
+            let same_floor = info.floor_index == global_state.current_floor_index;
+            
+            // Allow global objects (index -1) or specific matches
+            let is_visible = info.building_index == -1 || (same_building && same_floor);
+            
+            if !is_visible {
+                node.display = Display::None;
+            } 
+            // If visible, we don't interfere; update_minimap_positions handles placement
+        }
+    }
+}
+
+// Integrated logic into existing (placeholder) check_map_zones
 pub fn check_map_zones(
     player_query: Query<&Transform, With<crate::character::Player>>,
-    mut zones: Query<&mut MapZone>,
+    mut zones: Query<(&Transform, &mut MapZone)>,
     mut global_state: ResMut<MapGlobalState>,
 ) {
     let Some(player_transform) = player_query.iter().next() else { return };
     let player_pos = player_transform.translation;
 
-    for mut zone in zones.iter_mut() {
+    for (transform, mut zone) in zones.iter_mut() {
         if zone.is_discovered {
             continue;
         }
 
-        // Logic to discovery (e.g., distance or volumes)
-        // Placeholder for now
-        // if player_pos.distance(zone_center) < radius { ... }
+        // Simple distance check (e.g. 10 units)
+        if player_pos.distance(transform.translation) < 10.0 {
+            zone.is_discovered = true;
+            if !global_state.discovered_zones.contains(&zone.zone_id) {
+                global_state.discovered_zones.push(zone.zone_id);
+                info!("Map Zone Discovered: {}", zone.zone_name);
+            }
+        }
     }
 }
 
