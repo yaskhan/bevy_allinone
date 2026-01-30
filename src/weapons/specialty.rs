@@ -146,6 +146,7 @@ pub fn handle_beam_weapon(
         &filter,
     ) {
         // Apply damage/heal over time
+        let hit_pos = ray_origin + *ray_dir * hit.distance;
         damage_events.0.push(DamageEvent {
             amount: settings.damage_per_second * dt,
             damage_type: match settings.beam_type {
@@ -155,6 +156,9 @@ pub fn handle_beam_weapon(
             },
             source: Some(player_entity),
             target: hit.entity,
+            position: Some(hit_pos),
+            direction: Some(*ray_dir),
+            ignore_shield: false,
         });
 
         // Visual feedback would be spawned here (particles, smoke)

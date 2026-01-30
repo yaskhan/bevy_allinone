@@ -215,14 +215,16 @@ pub fn fire_weapon(
                 &filter
             ) {
                  info!("Hit entity {:?} with {}", hit.entity, weapon.weapon_name);
-                damage_events.0.push(DamageEvent {
+                 let hit_point = ray_origin + Vec3::Y * 1.5 + final_dir * hit.distance;
+                 damage_events.0.push(DamageEvent {
                     amount: weapon.damage,
                     damage_type: DamageType::Ranged,
                     source: Some(source_entity),
                     target: hit.entity,
+                    position: Some(hit_point),
+                    direction: Some(final_dir),
+                    ignore_shield: false,
                 });
-
-                 let hit_point = ray_origin + Vec3::Y * 1.5 + final_dir * hit.distance;
                  commands.spawn((
                     Transform::from_translation(hit_point),
                     GlobalTransform::default(),

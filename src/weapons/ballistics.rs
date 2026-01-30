@@ -119,6 +119,9 @@ pub fn update_projectiles(
                         damage_type: DamageType::Ranged,
                         source: Some(projectile.owner),
                         target: hit.entity,
+                        position: Some(hit_point),
+                        direction: Some(ray_dir),
+                        ignore_shield: false,
                     });
 
                     spawn_impact_effect(&mut commands, hit_point, "Impact".to_string());
