@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use crate::character::types::*;
 use crate::input::InputState;
 
-pub fn handle_character_input(
+pub fn handle_player_input(
     time: Res<Time>,
     mut query: Query<(&CharacterController, &InputState, &mut CharacterMovementState)>,
 ) {

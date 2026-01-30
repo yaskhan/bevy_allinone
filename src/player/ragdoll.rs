@@ -1,6 +1,6 @@
 //! Ragdoll System
 //!
-//! Manages physics-based character deaths and falls (ragdolling).
+//! Manages physics-based player deaths and falls (ragdolling).
 
 use bevy::prelude::*;
 
@@ -29,7 +29,7 @@ pub enum RagdollState {
     BlendToAnim,
 }
 
-/// Component to manage ragdoll physics on a character
+/// Component to manage ragdoll physics on a player
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct Ragdoll {

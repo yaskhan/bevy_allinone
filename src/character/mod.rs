@@ -19,7 +19,6 @@ impl Plugin for CharacterPlugin {
             .register_type::<CharacterMovementState>()
             .register_type::<CharacterAnimationState>()
             .add_systems(Update, (
-                input::handle_character_input,
                 movement::update_character_movement,
                 rotation::update_character_rotation,
                 animation::update_character_animation,

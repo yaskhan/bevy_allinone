@@ -1,6 +1,6 @@
 //! Upper Body Rotation System
 //!
-//! Handles procedural rotation of the character's upper body (spine, chest) to face a target.
+//! Handles procedural rotation of the player's upper body (spine, chest) to face a target.
 
 use bevy::prelude::*;
 
@@ -66,7 +66,7 @@ pub fn update_upper_body_rotation(
     global_transforms: Query<&GlobalTransform>,
     time: Res<Time>,
 ) {
-    for (rotation_config, target, char_global_transform) in query.iter_mut() {
+    for (rotation_config, target, player_global_transform) in query.iter_mut() {
         if !rotation_config.enabled {
             continue;
         }
@@ -88,8 +88,8 @@ pub fn update_upper_body_rotation(
         };
 
         // Calculate Look Direction
-        let char_pos = char_global_transform.translation();
-        let look_dir_world = (target_pos - char_pos).normalize();
+        let player_pos = player_global_transform.translation();
+        let look_dir_world = (target_pos - player_pos).normalize();
 
         // Apply rotation to bones
         // Note: Real implementation would need more complex IK math to handle hierarchy and constraints properly
@@ -98,7 +98,7 @@ pub fn update_upper_body_rotation(
         // Helper to rotate a bone
         let mut rotate_bone = |bone_entity: Entity| {
             if let Ok(mut transform) = transforms.get_mut(bone_entity) {
-                // Get bone global rotation (simplified assumption: bone is child of character)
+                // Get bone global rotation (simplified assumption: bone is child of player)
                 // In a real scenario we'd need to calculate local rotation required to achieve global look dir
                 
                 // Simplified: Rotate towards target in local space or just look at

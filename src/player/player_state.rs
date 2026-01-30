@@ -1,6 +1,6 @@
 //! Player State System
 //!
-//! Manages character states with priorities and durations.
+//! Manages player states with priorities and durations.
 
 use bevy::prelude::*;
 

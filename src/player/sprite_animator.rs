@@ -1,6 +1,6 @@
 //! Sprite Animator System
 //!
-//! Manages sprite sheet animation states and logic for 2.5D/2D characters.
+//! Manages sprite sheet animation states and logic for 2.5D/2D players.
 
 use bevy::prelude::*;
 use crate::input::InputState; // Assuming InputState is available

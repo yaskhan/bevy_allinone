@@ -1,6 +1,6 @@
 //! Player State Icon System
 //!
-//! Manages UI icons visually representing active character states.
+//! Manages UI icons visually representing active player states.
 
 use bevy::prelude::*;
 use crate::player::player_state::{PlayerStateChangedEvent, PlayerStateChangedQueue};
