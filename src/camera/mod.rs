@@ -41,6 +41,7 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraWaypointTrack>()
             .register_type::<CameraWaypointFollower>()
             .register_type::<CameraShakeInstance>()
+            .register_type::<PointShake>()
             .register_type::<CameraBobState>()
             .register_type::<CameraTargetState>()
             .register_type::<CameraZone>()
