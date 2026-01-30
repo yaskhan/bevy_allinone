@@ -22,6 +22,8 @@ impl Plugin for MapPlugin {
             .register_type::<MapFloor>()
             .register_type::<QuickTravelStation>()
             .register_type::<ObjectiveIcon>()
+            .register_type::<MapGlossary>()
+            .register_type::<MapOrientation>()
             .register_type::<MapSettings>()
             .register_type::<MapGlobalState>()
             .register_type::<CompassUI>()
@@ -34,10 +36,10 @@ impl Plugin for MapPlugin {
             // Systems
             .add_systems(Startup, setup_map_ui)
             .add_systems(Update, (
-                update_minimap_positions,
-                update_compass,
                 update_map_object_information,
-                update_visible_map_elements,
+                // Ensure visibility is checked BEFORE positioning
+                (update_visible_map_elements, update_minimap_positions).chain(),
+                update_compass,
                 handle_quick_travel,
                 update_objective_icons,
                 check_map_zones,

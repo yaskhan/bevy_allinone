@@ -93,29 +93,46 @@ pub struct MapMarkerIcon {
 // RESOURCES
 // ============================================================================
 
-/// Settings for the map system.
-#[derive(Resource, Debug, Reflect)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+pub enum MapOrientation {
+    XY,
+    #[default]
+    XZ,
+    YZ,
+}
+
+/// Main configuration for the Map System
+#[derive(Resource, Debug, Clone, Reflect)]
 #[reflect(Resource)]
 pub struct MapSettings {
+    pub show_minimap: bool,
+    pub show_full_map: bool,
     pub minimap_zoom: f32,
     pub full_map_zoom: f32,
-    pub follow_player_rotation: bool,
-    pub compass_enabled: bool,
-    pub minimap_enabled: bool,
     pub full_map_enabled: bool,
+    pub orientation: MapOrientation,
 }
 
 impl Default for MapSettings {
     fn default() -> Self {
         Self {
+            show_minimap: true,
+            show_full_map: false,
             minimap_zoom: 1.0,
-            full_map_zoom: 1.0,
-            follow_player_rotation: true,
-            compass_enabled: true,
-            minimap_enabled: true,
+            full_map_zoom: 0.5,
             full_map_enabled: false,
+            orientation: MapOrientation::XZ,
         }
     }
+}
+
+/// Component for lore/glossary entries linked to map markers
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct MapGlossary {
+    pub title: String,
+    pub content: String,
+    pub unlocked: bool,
 }
 
 /// Component for a building in the map system

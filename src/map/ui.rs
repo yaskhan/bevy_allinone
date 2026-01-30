@@ -67,20 +67,15 @@ pub fn update_minimap_positions(
     markers: Query<(Entity, &GlobalTransform, &MapMarker)>,
     mut icons: Query<(&mut Node, &MapMarkerIcon)>,
     settings: Res<MapSettings>,
-    // Need a way to spawn icons if they don't exist -> usually handled by a separate "sync" system or OnAdd
-    // For now, assuming icons are manually added or we add auto-spawn logic here if needed
 ) {
     let Some(player_transform) = player_query.iter().next() else { return };
     let player_pos = player_transform.translation;
 
     for (mut node, icon) in icons.iter_mut() {
         if let Ok((_entity, marker_transform, marker)) = markers.get(icon.marker_entity) {
-            if !marker.visible_in_minimap || unsafe { !settings.minimap_enabled } { // unsafe just to access field? No, normal field.
-                 // Wait, accessing field is fine. Check settings.
-                 if !settings.minimap_enabled {
-                     node.display = Display::None;
-                     continue;
-                 }
+            if !settings.show_minimap {
+                 node.display = Display::None;
+                 continue;
             }
 
             if !marker.visible_in_minimap {
@@ -88,22 +83,45 @@ pub fn update_minimap_positions(
                 continue;
             }
             
+            // Check if hierarchy system hid it (display none)
+            // If we set Flex here, we override the hierarchy system.
+            // But this system runs *after*? Queries are random. 
+            // We should respect existing Display::None if it was set by hierarchy system?
+            // Actually, let's trust the hierarchy system to set it to None. 
+            // If it is None, we shouldn't show it unless we are sure it's visible.
+            // Problem: If hierarchy hides it, but this system sets it to Flex, it flickers or stays visible.
+            
+            // BETTER ARCHITECTURE:
+            // add `is_visible` bool to `MapMarkerIcon`? Or check `display` state?
+            // Checking display state is fragile.
+            // Let's rely on `update_visible_map_elements` to set the BASE visibility.
+            // If that set it to hidden, we skip projection.
+            
+            if node.display == Display::None {
+                continue; 
+            }
+            
+            // Ensure flex if not hidden
             node.display = Display::Flex;
             
             let marker_pos = marker_transform.translation();
             let delta = marker_pos - player_pos;
             
-            // Project 3D world delta to 2D UI space (XZ plane to XY plane)
-            // Apply zoom and settings here
-            let ui_x = delta.x * settings.minimap_zoom * 10.0;
-            let ui_y = -delta.z * settings.minimap_zoom * 10.0;
+            // Project 3D world delta to 2D UI space
+            let (x, y) = match settings.orientation {
+                MapOrientation::XZ => (delta.x, -delta.z), // Top Down (3D)
+                MapOrientation::XY => (delta.x, delta.y),  // Side Scroller (2D)
+                MapOrientation::YZ => (delta.z, delta.y),  // Side (ZY)
+            };
             
-            // Clamping to minimap bounds would go here
+            let ui_x = x * settings.minimap_zoom * 10.0;
+            let ui_y = y * settings.minimap_zoom * 10.0;
+            
+            // Clamp functionality could go here
             
             node.left = Val::Px(ui_x);
             node.top = Val::Px(ui_y);
         } else {
-             // Marker destroyed?
              node.display = Display::None; 
         }
     }
