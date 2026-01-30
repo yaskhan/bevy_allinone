@@ -10,6 +10,7 @@ mod state_offsets;
 mod collision_lean;
 mod lock;
 mod zones;
+mod bounds;
 
 // New Submodules
 pub mod effect;
@@ -28,6 +29,7 @@ pub use state_offsets::*;
 pub use collision_lean::*;
 pub use lock::*;
 pub use zones::*;
+pub use bounds::*;
 
 pub struct CameraPlugin;
 
@@ -46,12 +48,14 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraTargetState>()
             .register_type::<CameraZone>()
             .register_type::<CameraZoneTracker>()
+            .register_type::<CameraBounds>()
             .add_plugins((
                 effect::CameraEffectPlugin,
                 captures::CameraCapturesPlugin,
                 cutscene::CameraCutscenePlugin,
                 others::CameraOthersPlugin,
                 vehicles::CameraVehiclesPlugin,
+                bounds::CameraBoundsPlugin,
             ))
             .add_systems(Update, (
                 update_camera_state_offsets,

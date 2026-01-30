@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+pub mod photo_mode;
 
 pub struct CameraEffectPlugin;
 
@@ -7,6 +8,7 @@ impl Plugin for CameraEffectPlugin {
         app.init_resource::<CameraEffectManager>()
            .register_type::<PixelEffectSettings>()
            .register_type::<SolidEffectSettings>()
+           .add_plugins(photo_mode::PhotoModePlugin)
            .add_systems(Update, update_camera_effects);
     }
 }
