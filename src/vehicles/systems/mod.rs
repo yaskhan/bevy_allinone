@@ -5,3 +5,4 @@ pub mod interaction;
 pub mod wheels;
 pub mod chassis;
 pub mod audio;
+pub mod gears;

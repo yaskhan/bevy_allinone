@@ -39,6 +39,9 @@ pub struct Vehicle {
     pub current_gear: usize,
     pub current_speed: f32,
     pub current_rpm: f32,
+    pub min_rpm: f32,
+    pub max_rpm: f32,
+    pub gear_shift_rate: f32,
     pub is_turned_on: bool,
     pub is_driving: bool,
     pub is_reversing: bool,
@@ -46,10 +49,12 @@ pub struct Vehicle {
     pub is_on_ground: bool,
     pub is_boosting: bool,
     pub is_jumping: bool,
+    pub changing_gear: bool,
 
     // Input
     pub motor_input: f32,
     pub steer_input: f32,
+    pub steer_input_speed: f32,
     pub boost_input: f32,
 
     // Internal
@@ -57,6 +62,8 @@ pub struct Vehicle {
     pub chassis_lean_x: f32,
     pub chassis_lean_y: f32,
     pub time_to_stabilize: f32,
+    pub reset_timer: f32,
+    pub using_gravity_control: bool,
 }
 
 #[derive(Debug, Clone, Reflect)]
@@ -98,20 +105,27 @@ impl Default for Vehicle {
             current_gear: 0,
             current_speed: 0.0,
             current_rpm: 0.0,
-            is_turned_on: true, // Turned on by default for now
+            min_rpm: 1000.0,
+            max_rpm: 6000.0,
+            gear_shift_rate: 10.0,
+            is_turned_on: true,
             is_driving: false,
             is_reversing: false,
             is_braking: false,
             is_on_ground: true,
             is_boosting: false,
             is_jumping: false,
+            changing_gear: false,
             motor_input: 0.0,
             steer_input: 0.0,
+            steer_input_speed: 5.0,
             boost_input: 1.0,
             current_steering: 0.0,
             chassis_lean_x: 0.0,
             chassis_lean_y: 0.0,
             time_to_stabilize: 0.0,
+            reset_timer: 0.0,
+            using_gravity_control: false,
         }
     }
 }
@@ -166,6 +180,9 @@ pub struct VehicleWheel {
     pub wheel_mesh: Option<Entity>,
     pub mudguard: Option<Entity>,
     pub suspension: Option<Entity>,
+
+    pub mudguard_offset: Vec3,
+    pub suspension_offset: Vec3,
 }
 
 impl Default for VehicleWheel {
@@ -187,6 +204,8 @@ impl Default for VehicleWheel {
             wheel_mesh: None,
             mudguard: None,
             suspension: None,
+            mudguard_offset: Vec3::ZERO,
+            suspension_offset: Vec3::ZERO,
         }
     }
 }

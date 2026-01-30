@@ -92,6 +92,96 @@ pub fn spawn_vehicle(
         AngularVelocity::default(),
     )).id();
 
+    // Gears
+    let gear1 = commands.spawn(VehicleGear {
+        gear_name: "Gear 1".to_string(),
+        gear_speed: 15.0,
+        ..default()
+    }).id();
+    let gear2 = commands.spawn(VehicleGear {
+        gear_name: "Gear 2".to_string(),
+        gear_speed: 30.0,
+        ..default()
+    }).id();
+    let gear3 = commands.spawn(VehicleGear {
+        gear_name: "Gear 3".to_string(),
+        gear_speed: 60.0,
+        ..default()
+    }).id();
+
+    // Wheels (Simplified for car)
+    let fl_wheel = commands.spawn((
+        Name::new("Front Left Wheel"),
+        VehicleWheel {
+            wheel_name: "FL".to_string(),
+            is_steerable: true,
+            is_left_side: true,
+            ..default()
+        },
+        Transform::from_xyz(-1.0, -0.5, 1.5),
+        GlobalTransform::default(),
+    )).with_children(|p| {
+        p.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.3, 0.2))),
+            MeshMaterial3d(materials.add(Color::BLACK)),
+            Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+        ));
+    }).id();
+
+    let fr_wheel = commands.spawn((
+        Name::new("Front Right Wheel"),
+        VehicleWheel {
+            wheel_name: "FR".to_string(),
+            is_steerable: true,
+            is_right_side: true,
+            ..default()
+        },
+        Transform::from_xyz(1.0, -0.5, 1.5),
+        GlobalTransform::default(),
+    )).with_children(|p| {
+        p.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.3, 0.2))),
+            MeshMaterial3d(materials.add(Color::BLACK)),
+            Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+        ));
+    }).id();
+
+    let rl_wheel = commands.spawn((
+        Name::new("Rear Left Wheel"),
+        VehicleWheel {
+            wheel_name: "RL".to_string(),
+            is_powered: true,
+            is_left_side: true,
+            ..default()
+        },
+        Transform::from_xyz(-1.0, -0.5, -1.5),
+        GlobalTransform::default(),
+    )).with_children(|p| {
+        p.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.3, 0.2))),
+            MeshMaterial3d(materials.add(Color::BLACK)),
+            Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+        ));
+    }).id();
+
+    let rr_wheel = commands.spawn((
+        Name::new("Rear Right Wheel"),
+        VehicleWheel {
+            wheel_name: "RR".to_string(),
+            is_powered: true,
+            is_right_side: true,
+            ..default()
+        },
+        Transform::from_xyz(1.0, -0.5, -1.5),
+        GlobalTransform::default(),
+    )).with_children(|p| {
+        p.spawn((
+            Mesh3d(meshes.add(Cylinder::new(0.3, 0.2))),
+            MeshMaterial3d(materials.add(Color::BLACK)),
+            Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
+        ));
+    }).id();
+
     // Driver Seat
     let driver_seat = commands.spawn((
         Name::new("Driver Seat"),
@@ -120,7 +210,11 @@ pub fn spawn_vehicle(
         GlobalTransform::default(),
     )).id();
 
-    commands.entity(vehicle_entity).add_children(&[driver_seat, passenger_seat]);
+    commands.entity(vehicle_entity).add_children(&[
+        gear1, gear2, gear3,
+        fl_wheel, fr_wheel, rl_wheel, rr_wheel,
+        driver_seat, passenger_seat
+    ]);
 
     vehicle_entity
 }

@@ -4,23 +4,41 @@ use avian3d::prelude::*;
 
 pub fn update_vehicles_physics(
     time: Res<Time>,
-    mut query: Query<(&mut Vehicle, &mut LinearVelocity, &mut AngularVelocity, &Transform)>,
+    mut query: Query<(Entity, &mut Vehicle, &mut LinearVelocity, &mut AngularVelocity, &Transform, &Children)>,
+    wheel_query: Query<&VehicleWheel>,
     spatial_query: SpatialQuery,
 ) {
     let delta = time.delta_secs();
 
-    for (mut vehicle, mut velocity, mut angular_vel, transform) in query.iter_mut() {
+    for (entity, mut vehicle, mut velocity, mut angular_vel, transform, children) in query.iter_mut() {
         let forward = transform.forward();
         let right = transform.right();
         let up = transform.up();
 
-        // Check if vehicle is on ground
-        let ray_origin = transform.translation + up * 0.5;
-        let ray_direction = Dir3::NEG_Y;
-        let ray_distance = 1.0;
+        // Check if any wheel is on ground
+        let mut any_on_ground = false;
+        let mut total_travel_left = 0.0;
+        let mut total_travel_right = 0.0;
+        let mut powered_wheels_count = 0;
+        let mut total_rpm = 0.0;
 
-        let hit = spatial_query.cast_ray(ray_origin, ray_direction, ray_distance, false, &SpatialQueryFilter::default());
-        vehicle.is_on_ground = hit.is_some();
+        for child in children.iter() {
+            if let Ok(wheel) = wheel_query.get(child.clone()) {
+                if wheel.suspension_spring_pos > -wheel.suspension_distance {
+                    any_on_ground = true;
+                }
+                
+                let travel = (wheel.suspension_spring_pos + wheel.suspension_distance) / wheel.suspension_distance;
+                if wheel.is_left_side { total_travel_left += travel; }
+                if wheel.is_right_side { total_travel_right += travel; }
+
+                if wheel.is_powered {
+                    total_rpm += wheel.current_rpm;
+                    powered_wheels_count += 1;
+                }
+            }
+        }
+        vehicle.is_on_ground = any_on_ground;
 
         // Calculate current speed
         let current_forward_speed = velocity.dot(*forward);
@@ -46,7 +64,7 @@ pub fn update_vehicles_physics(
         };
 
         // Apply motor torque
-        if vehicle.is_turned_on && !vehicle.is_braking {
+        if vehicle.is_turned_on && !vehicle.is_braking && !vehicle.changing_gear {
             let motor_torque = speed_diff.abs() * acceleration;
             velocity.0 += *forward * motor_torque * speed_diff.signum();
         }
@@ -71,6 +89,8 @@ pub fn update_vehicles_physics(
 
         if vehicle.is_turned_on && vehicle.is_on_ground {
             angular_vel.y += steer_torque * delta * 2.0;
+            // Extra torque for better handling
+            angular_vel.y += -vehicle.steer_input * 2.0 * delta;
         }
 
         // Apply jump force
@@ -79,34 +99,32 @@ pub fn update_vehicles_physics(
             vehicle.is_jumping = false;
         }
 
-        // Apply impulse (if holding jump)
-        if vehicle.can_impulse && vehicle.is_boosting && vehicle.is_turned_on {
-            velocity.0 += *up * vehicle.impulse_force * delta;
-        }
-
-        // Anti-roll system
+        // Anti-roll system (Advanced)
         if vehicle.is_on_ground && vehicle.anti_roll > 0.0 {
-            let roll = angular_vel.x * vehicle.anti_roll * delta;
-            velocity.0 += *up * roll;
+            let travel_diff = total_travel_left - total_travel_right;
+            let anti_roll_force = travel_diff * vehicle.anti_roll * delta;
+            angular_vel.x += anti_roll_force * 0.1; // Apply roll torque
+            velocity.0 += *up * anti_roll_force; // Apply vertical stability
         }
 
-        // Chassis lean
-        let lean_amount = vehicle.chassis_lean.x * current_right_speed.abs() * 0.1;
+        // Chassis lean (Visual sync with physics)
+        let lean_amount = vehicle.chassis_lean.x * current_right_speed * 0.05;
         vehicle.chassis_lean_x = vehicle.chassis_lean_x.lerp(lean_amount, delta * 3.0);
         vehicle.chassis_lean_x = vehicle.chassis_lean_x.clamp(-vehicle.chassis_lean_limit, vehicle.chassis_lean_limit);
 
-        // Preserve direction in air
+        // Preserve direction in air (Advanced)
         if !vehicle.is_on_ground && vehicle.preserve_direction_in_air && vehicle.current_speed > 5.0 {
             vehicle.time_to_stabilize += delta;
             if vehicle.time_to_stabilize > 0.6 {
                 if velocity.length() > 0.1 {
                     let target_forward = velocity.normalize();
                     let current_forward = *forward;
-                    let rotation_axis = current_forward.cross(target_forward).normalize();
-                    let angle = current_forward.angle_between(target_forward);
-
-                    if angle > 0.01 {
-                        let stabilization_torque = rotation_axis * angle * 10.0 * delta;
+                    let cross = current_forward.cross(target_forward);
+                    
+                    if cross.length_squared() > 0.0001 {
+                        let rotation_axis = cross.normalize();
+                        let angle = current_forward.angle_between(target_forward);
+                        let stabilization_torque = rotation_axis * angle * 5.0 * delta;
                         angular_vel.0 += stabilization_torque;
                     }
                 }
@@ -123,17 +141,21 @@ pub fn update_vehicles_physics(
         angular_vel.0 *= 0.95;
 
         // Limit max speed
-        if vehicle.current_speed > vehicle.max_forward_speed * vehicle.boost_multiplier {
-            let excess_speed = vehicle.current_speed - vehicle.max_forward_speed * vehicle.boost_multiplier;
+        let max_speed = vehicle.max_forward_speed * vehicle.boost_input;
+        if vehicle.current_speed > max_speed {
+            let excess_speed = vehicle.current_speed - max_speed;
             let velocity_normalized = velocity.normalize();
-            velocity.0 -= velocity_normalized * excess_speed * delta;
+            velocity.0 -= velocity_normalized * excess_speed * delta * 2.0;
         }
 
-        // Update RPM based on speed and gear
-        let base_rpm = 1000.0;
-        let max_rpm = 6000.0;
-        let speed_ratio = vehicle.current_speed / vehicle.max_forward_speed;
-        vehicle.current_rpm = base_rpm + (max_rpm - base_rpm) * speed_ratio;
-        vehicle.current_rpm = vehicle.current_rpm.clamp(base_rpm, max_rpm);
+        // Update RPM based on gear and speed
+        if powered_wheels_count > 0 {
+            let avg_rpm = total_rpm / powered_wheels_count as f32;
+            vehicle.current_rpm = (avg_rpm * vehicle.gear_shift_rate + vehicle.min_rpm) / (vehicle.current_gear as f32 + 1.0);
+        } else {
+            let speed_ratio = vehicle.current_speed / vehicle.max_forward_speed;
+            vehicle.current_rpm = vehicle.min_rpm + (vehicle.max_rpm - vehicle.min_rpm) * speed_ratio;
+        }
+        vehicle.current_rpm = vehicle.current_rpm.clamp(vehicle.min_rpm, vehicle.max_rpm);
     }
 }

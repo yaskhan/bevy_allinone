@@ -25,6 +25,7 @@ impl Plugin for VehiclesPlugin {
                 physics::update_vehicles_physics,
                 interaction::handle_vehicle_interaction,
                 wheels::update_vehicle_wheels,
+                gears::update_vehicle_gears,
                 chassis::update_vehicle_chassis,
                 audio::update_vehicle_audio,
             ));
