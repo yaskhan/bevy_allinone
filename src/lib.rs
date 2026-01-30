@@ -34,6 +34,7 @@ pub mod actions;
 pub mod events;
 pub mod experience;
 pub mod footsteps;
+pub mod grab;
 pub mod game_manager;
 pub mod ai;
 pub mod camera;
@@ -70,6 +71,7 @@ pub mod prelude {
     pub use crate::events::*;
     pub use crate::experience::*;
     pub use crate::footsteps::*;
+    pub use crate::grab::*;
     pub use crate::game_manager::*;
     pub use crate::ai::*;
     pub use crate::camera::*;
@@ -113,6 +115,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(events::EventSystemPlugin)
             .add_plugins(experience::ExperiencePlugin)
             .add_plugins(footsteps::FootstepPlugin)
+            .add_plugins(grab::GrabPlugin)
             .add_plugins(game_manager::GameManagerPlugin)
             .add_plugins(ai::AiPlugin)
             .add_plugins(camera::CameraPlugin)

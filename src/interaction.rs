@@ -516,6 +516,7 @@ fn process_interactions(
     mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>, Option<&mut UsableDevice>)>,
     mut player_query: Query<(Entity, &mut UsingDevicesSystem), With<InteractionDetector>>,
     mut electronic_device_activation_queue: ResMut<crate::devices::electronic_device::ElectronicDeviceActivationEventQueue>,
+    mut grab_queue: ResMut<crate::grab::GrabEventQueue>,
 ) {
     if !input.interact_pressed && !input_buffer.is_buffered(InputAction::Interact) {
         return;
@@ -583,6 +584,11 @@ fn process_interactions(
                     device_entity: entity,
                     player_entity: source_entity,
                 });
+
+                // Specifically trigger Grab if applicable
+                if interactable.interaction_type == InteractionType::Grab {
+                    grab_queue.0.push(crate::grab::GrabEvent::Grab(source_entity, entity));
+                }
             }
         }
     }
