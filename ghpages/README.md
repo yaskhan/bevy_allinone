@@ -20,6 +20,22 @@ The core movement system providing comprehensive 3D/2.5D character control.
 - Animation system support
 - Multiple control schemes
 
+### 🤖 AI System
+
+Comprehensive AI framework for intelligent NPC behaviors.
+
+**Detailed Documentation:**
+- [Complete System Guide](ai_system.md) - Full technical documentation
+- [Quick Start Guide](ai_quickstart.md) - Practical getting started guide
+
+**Key Features:**
+- State machine with multiple behavior states
+- Advanced perception (vision, hearing)
+- Faction system with relationship management
+- Patrol, chase, attack, and hide behaviors
+- Turret and combat systems
+- Debug visualization tools
+
 ## Documentation Structure
 
 This documentation is organized by system, with each system having:
@@ -42,8 +58,9 @@ This documentation is organized by system, with each system having:
 New to the plugin? Start with:
 1. Read the main [README.md](/README.md) in the project root
 2. Check out the [Character Controller Quick Start](character_controller_quickstart.md)
-3. Explore the examples in the `/examples` directory
-4. Dive into the [Complete Character Controller Documentation](character_controller_system.md)
+3. Explore the [AI System Quick Start](ai_quickstart.md)
+4. Browse the examples in the `/examples` directory
+5. Dive into the [Complete Character Controller Documentation](character_controller_system.md) or [Complete AI System Documentation](ai_system.md)
 
 ## Contributing to Documentation
 
