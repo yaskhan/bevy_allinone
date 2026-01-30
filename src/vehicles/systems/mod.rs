@@ -6,3 +6,5 @@ pub mod wheels;
 pub mod chassis;
 pub mod audio;
 pub mod gears;
+pub mod damage;
+pub mod weapons;

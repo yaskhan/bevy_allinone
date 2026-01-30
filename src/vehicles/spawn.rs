@@ -82,6 +82,15 @@ pub fn spawn_vehicle(
         vehicle,
         InputState::default(),
         VehicleAudio::default(),
+        VehicleStats::default(),
+        VehicleWeaponSystem {
+            weapons: vec![VehicleWeapon::default()],
+            aiming_enabled: true,
+            weapons_activated: true,
+            rotation_speed: 10.0,
+            ..default()
+        },
+        VehicleDamageReceiver { damage_multiplier: 1.0 },
         Mesh3d(meshes.add(Cuboid::new(2.0, 1.0, 4.0))),
         MeshMaterial3d(materials.add(Color::from(LinearRgba::new(0.8, 0.2, 0.2, 1.0)))),
         Transform::from_translation(position),

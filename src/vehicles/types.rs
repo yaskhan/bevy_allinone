@@ -251,3 +251,104 @@ impl Default for VehicleAudio {
         }
     }
 }
+#[derive(Component, Reflect, Clone)]
+#[reflect(Component)]
+pub struct VehicleStats {
+    pub health: f32,
+    pub max_health: f32,
+    pub health_regen_enabled: bool,
+    pub health_regen_speed: f32,
+    
+    pub booster: f32,
+    pub max_booster: f32,
+    pub booster_regen_enabled: bool,
+    pub booster_regen_speed: f32,
+    
+    pub fuel: f32,
+    pub max_fuel: f32,
+    pub fuel_regen_enabled: bool,
+    pub fuel_regen_speed: f32,
+    pub use_fuel: bool,
+
+    pub invincible: bool,
+    pub last_damage_time: f32,
+    pub regen_delay: f32,
+}
+
+impl Default for VehicleStats {
+    fn default() -> Self {
+        Self {
+            health: 100.0,
+            max_health: 100.0,
+            health_regen_enabled: true,
+            health_regen_speed: 1.0,
+            booster: 100.0,
+            max_booster: 100.0,
+            booster_regen_enabled: true,
+            booster_regen_speed: 5.0,
+            fuel: 100.0,
+            max_fuel: 100.0,
+            fuel_regen_enabled: false,
+            fuel_regen_speed: 0.1,
+            use_fuel: true,
+            invincible: false,
+            last_damage_time: 0.0,
+            regen_delay: 3.0,
+        }
+    }
+}
+
+#[derive(Reflect, Clone)]
+pub struct VehicleWeapon {
+    pub name: String,
+    pub damage: f32,
+    pub fire_rate: f32,
+    pub ammo_in_clip: u32,
+    pub clip_size: u32,
+    pub total_ammo: u32,
+    pub reload_time: f32,
+    pub projectile_speed: f32,
+    pub is_laser: bool,
+    pub is_homing: bool,
+    pub last_fire_time: f32,
+    pub is_reloading: bool,
+    pub reload_timer: f32,
+}
+
+impl Default for VehicleWeapon {
+    fn default() -> Self {
+        Self {
+            name: "Machine Gun".into(),
+            damage: 10.0,
+            fire_rate: 0.1,
+            ammo_in_clip: 30,
+            clip_size: 30,
+            total_ammo: 300,
+            reload_time: 2.0,
+            projectile_speed: 200.0,
+            is_laser: false,
+            is_homing: false,
+            last_fire_time: 0.0,
+            is_reloading: false,
+            reload_timer: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Reflect, Clone, Default)]
+#[reflect(Component)]
+pub struct VehicleWeaponSystem {
+    pub weapons: Vec<VehicleWeapon>,
+    pub current_weapon_index: usize,
+    pub aiming_enabled: bool,
+    pub weapons_activated: bool,
+    pub base_x_entity: Option<Entity>, // For horizontal rotation
+    pub base_y_entity: Option<Entity>, // For vertical rotation
+    pub rotation_speed: f32,
+}
+
+#[derive(Component, Reflect, Clone, Default)]
+#[reflect(Component)]
+pub struct VehicleDamageReceiver {
+    pub damage_multiplier: f32,
+}
