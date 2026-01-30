@@ -36,6 +36,21 @@ Comprehensive AI framework for intelligent NPC behaviors.
 - Turret and combat systems
 - Debug visualization tools
 
+### 🎯 Puzzle System
+
+Comprehensive puzzle framework for interactive environmental challenges.
+
+**Detailed Documentation:**
+- [Complete System Guide](puzzle_system.md) - Full technical documentation
+
+**Key Features:**
+- Multiple puzzle types (buttons, levers, pressure plates, sequences, locks, and more)
+- State management for puzzle progress and completion
+- Event-driven architecture for inter-system communication
+- Visual and audio feedback
+- Debug tools for puzzle development
+- Integration with other systems (interaction, inventory, audio)
+
 ## Documentation Structure
 
 This documentation is organized by system, with each system having:
