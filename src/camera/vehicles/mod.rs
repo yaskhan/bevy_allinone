@@ -43,7 +43,7 @@ pub fn update_vehicle_camera(
 ) {
     let dt = time.delta_secs();
 
-    for (mut controller, mut state, vehicle_cam) in query.iter_mut() {
+    for (controller, state, vehicle_cam) in query.iter_mut() {
         if controller.mode != CameraMode::ThirdPerson && controller.mode != CameraMode::FirstPerson {
             // Only apply vehicle logic in these modes if intended
             // Or many vehicle cameras use a specific 'Vehicle' mode?
@@ -51,13 +51,13 @@ pub fn update_vehicle_camera(
         }
 
         let Some(vehicle_ent) = vehicle_cam.vehicle_target else { continue };
-        let Ok(vehicle_xf) = vehicle_query.get(vehicle_ent) else { continue };
+        let Ok(_vehicle_xf) = vehicle_query.get(vehicle_ent) else { continue };
 
         // Vehicle camera logic:
         // 1. Follow rotation more strictly (Damping)
         // 2. Adjust distance based on boost
         
-        let alpha = 1.0 - (-vehicle_cam.rotation_damping * dt).exp();
+        let _alpha = 1.0 - (-vehicle_cam.rotation_damping * dt).exp();
         
         // We want state.yaw/pitch to align with vehicle forward if not manually overridden
         // But CameraState is usually driven by input.

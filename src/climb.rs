@@ -34,11 +34,10 @@
 //! ```
 
 use bevy::prelude::*;
-use avian3d::prelude::*;
-use crate::physics::{GroundDetection, GroundDetectionSettings};
+// use avian3d::prelude::Rotation;
+use crate::physics::GroundDetection;
 use crate::character::{CharacterController, Player};
-use crate::input::{InputState, InputAction};
-use crate::interaction::InteractionEventQueue;
+use crate::input::InputState;
 
 /// Force mode for applying forces to rigidbodies
 #[derive(Debug, Clone, Copy, PartialEq, Reflect, Default)]
@@ -595,10 +594,10 @@ pub fn handle_climb_input(
     for (
         mut climb_system,
         mut state_tracker,
-        mut auto_hang,
-        mut grab_surface,
+        mut _auto_hang,
+        mut _grab_surface,
         character,
-        transform,
+        _transform,
     ) in query.iter_mut() {
         if !climb_system.climb_ledge_active || !climb_system.can_use_climb_ledge {
             continue;
@@ -659,8 +658,8 @@ pub fn update_climb_state(
         mut state_tracker,
         mut ledge_detection,
         mut auto_hang,
-        character,
-        transform,
+        _character,
+        _transform,
     ) in query.iter_mut() {
         if !climb_system.climb_ledge_active {
             continue;
@@ -726,7 +725,7 @@ pub fn update_climb_visuals(
         &Transform,
     ), With<Player>>,
 ) {
-    for (mut climb_system, mut auto_hang, transform) in query.iter_mut() {
+    for (climb_system, _auto_hang, _transform) in query.iter_mut() {
         if !climb_system.climb_ledge_active {
             continue;
         }
@@ -760,7 +759,7 @@ pub fn detect_ledge(
         mut ledge_detection,
         mut state_tracker,
         character,
-        transform,
+        _transform,
     ) in query.iter_mut() {
         if !climb_system.climb_ledge_active ||
            !climb_system.can_use_climb_ledge ||
@@ -825,8 +824,8 @@ pub fn detect_ledge_below(
         mut climb_system,
         mut ledge_detection,
         mut auto_hang,
-        character,
-        transform,
+        _character,
+        _transform,
     ) in query.iter_mut() {
         if !climb_system.climb_ledge_active ||
            !climb_system.check_for_hang_from_ledge_on_ground ||
@@ -885,9 +884,9 @@ pub fn update_climb_movement(
     ), With<Player>>,
 ) {
     for (
-        mut climb_system,
+        climb_system,
         mut state_tracker,
-        mut climb_movement,
+        climb_movement,
         mut transform,
         mut character,
     ) in query.iter_mut() {
@@ -934,7 +933,7 @@ pub fn handle_auto_hang(
         mut auto_hang,
         mut transform,
         mut character,
-        input_state,
+        _input_state,
     ) in query.iter_mut() {
         if !auto_hang.active || !auto_hang.moving_toward_ledge {
             continue;
@@ -980,7 +979,7 @@ pub fn handle_ledge_jump(
         mut state_tracker,
         mut ledge_jump,
         mut transform,
-        mut character,
+        mut _character,
     ) in query.iter_mut() {
         if !ledge_jump.can_jump || !ledge_jump.is_jumping {
             continue;
@@ -1029,8 +1028,8 @@ pub fn handle_grab_surface_on_air(
         mut grab_surface,
         mut ledge_detection,
         mut state_tracker,
-        character,
-        transform,
+        _character,
+        _transform,
     ) in query.iter_mut() {
         if !grab_surface.can_grab || !grab_surface.is_grabbing {
             continue;
@@ -1085,9 +1084,9 @@ pub fn handle_grab_surface_on_air(
 
 /// System to handle ledge zone triggers
 pub fn handle_ledge_zone_trigger(
-    mut commands: Commands,
-    mut ledge_zone_query: Query<(&LedgeZone, &Transform)>,
-    mut player_query: Query<(&mut ClimbLedgeSystem, &Transform), With<Player>>,
+    _commands: Commands,
+    _ledge_zone_query: Query<(&LedgeZone, &Transform)>,
+    _player_query: Query<(&mut ClimbLedgeSystem, &Transform), With<Player>>,
 ) {
     // TODO: Implement collision detection logic
     // This would involve using avian3d's collision events

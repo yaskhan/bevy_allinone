@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
-use crate::interaction::InteractionEventQueue;
+// use crate::interaction::InteractionEventQueue;
 use crate::input::{InputState, InputAction, InputBuffer};
 
 
@@ -550,7 +550,7 @@ fn handle_crouch_sliding(
     time: Res<Time>,
     mut query: Query<(&CharacterController, &mut CharacterMovementState)>,
 ) {
-    for (controller, mut state) in query.iter_mut() {
+    for (_controller, mut state) in query.iter_mut() {
         if state.crouch_sliding_active {
             state.crouch_sliding_timer -= time.delta_secs();
             if state.crouch_sliding_timer <= 0.0 || !state.is_crouching {

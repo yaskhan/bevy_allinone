@@ -660,7 +660,7 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Releases the current ability
-    pub fn input_press_up_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool) {
+    pub fn input_press_up_use_current_ability(&mut self, ability: &mut AbilityInfo, _is_on_ground: bool) {
         if !self.enabled {
             return;
         }

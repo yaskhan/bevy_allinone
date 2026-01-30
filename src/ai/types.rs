@@ -41,6 +41,7 @@ pub enum AiBehaviorState {
     Attack,
     Flee,
     Follow,
+    Hide,
 }
 
 #[derive(Component, Debug, Reflect)]
@@ -85,3 +86,78 @@ pub enum AiCommand {
     Attack, // Target implies closest enemy for now
     Hide,
 }
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiVisionVisualizer {
+    pub active: bool,
+    pub normal_color: Color,
+    pub alert_color: Color,
+}
+
+impl Default for AiVisionVisualizer {
+    fn default() -> Self {
+        Self {
+            active: true,
+            normal_color: Color::WHITE,
+            alert_color: Color::srgb(1.0, 0.0, 0.0),
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiStateVisuals {
+    pub show_state_icons: bool,
+    pub icon_offset: Vec3,
+    // Timers for spawning icons could go here or be stateless based on events
+    pub last_icon_spawn_time: f32,
+    pub icon_spawn_interval: f32,
+}
+
+impl Default for AiStateVisuals {
+    fn default() -> Self {
+        Self {
+            show_state_icons: true,
+            icon_offset: Vec3::new(0.0, 2.0, 0.0),
+            last_icon_spawn_time: 0.0,
+            icon_spawn_interval: 1.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
+pub enum FactionRelation {
+    #[default]
+    Neutral,
+    Friend,
+    Enemy,
+}
+
+#[derive(Resource, Debug, Reflect, Default)]
+#[reflect(Resource)]
+pub struct FactionSystem {
+    pub relations: Vec<(String, String, FactionRelation)>,
+}
+
+impl FactionSystem {
+    pub fn get_relation(&self, f1: &str, f2: &str) -> FactionRelation {
+        if f1 == f2 { return FactionRelation::Friend; }
+        for (a, b, rel) in &self.relations {
+            if (a == f1 && b == f2) || (a == f2 && b == f1) {
+                return *rel;
+            }
+        }
+        FactionRelation::Neutral
+    }
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct CharacterFaction {
+    pub name: String,
+}
+
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct HidePosition;

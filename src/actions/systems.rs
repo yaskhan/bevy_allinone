@@ -13,7 +13,7 @@ pub fn update_action_system(
 ) {
     // 1. Handle Start Action
     for event in start_action_queue.0.drain(..) {
-        if let Ok((player_entity, mut player_action, _)) = player_query.get_mut(event.player_entity) {
+        if let Ok((_player_entity, mut player_action, _)) = player_query.get_mut(event.player_entity) {
             if let Ok((action_entity, action, _action_transform)) = action_query.get_mut(event.action_entity) {
                 // Set Player State
                 player_action.current_action = Some(action_entity);
