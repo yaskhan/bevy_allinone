@@ -3,10 +3,12 @@ use bevy::prelude::*;
 pub mod types;
 pub mod systems;
 pub mod damage_over_time;
+pub mod destroyable;
 
 pub use types::*;
 pub use systems::*;
 pub use damage_over_time::*;
+pub use destroyable::*;
 
 pub struct CombatPlugin;
 
@@ -21,6 +23,7 @@ impl Plugin for CombatPlugin {
             .register_type::<MeleeCombat>()
             .register_type::<Blocking>()
             .register_type::<DamageOverTime>()
+            .register_type::<DestroyableObject>()
             .add_systems(Update, (
                 systems::update_timers,
                 systems::regenerate_health,
@@ -30,6 +33,7 @@ impl Plugin for CombatPlugin {
                 systems::process_damage_events,
                 systems::update_damage_numbers,
                 damage_over_time::update_damage_over_time,
+                destroyable::handle_destroyable_death,
             ).chain());
     }
 }

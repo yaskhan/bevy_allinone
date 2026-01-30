@@ -86,6 +86,47 @@ impl Default for DamageReceiver {
     }
 }
 
+/// Component for objects that can be destroyed and potentially explode.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct DestroyableObject {
+    pub explosion_enabled: bool,
+    pub explosion_settings: ExplosionSettings,
+    pub debris_spawned: bool,
+}
+
+impl Default for DestroyableObject {
+    fn default() -> Self {
+        Self {
+            explosion_enabled: true,
+            explosion_settings: ExplosionSettings::default(),
+            debris_spawned: false,
+        }
+    }
+}
+
+/// Settings for explosions triggered by destroyable objects or projectiles.
+#[derive(Debug, Clone, Reflect)]
+pub struct ExplosionSettings {
+    pub radius: f32,
+    pub damage: f32,
+    pub force: f32,
+    pub ignore_shield: bool,
+    pub damage_type: DamageType,
+}
+
+impl Default for ExplosionSettings {
+    fn default() -> Self {
+        Self {
+            radius: 5.0,
+            damage: 50.0,
+            force: 10.0,
+            ignore_shield: false,
+            damage_type: DamageType::Explosion,
+        }
+    }
+}
+
 /// Damage event data.
 #[derive(Debug, Clone, Copy)]
 pub struct DamageEvent {
