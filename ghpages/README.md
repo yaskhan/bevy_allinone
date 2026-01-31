@@ -11,12 +11,22 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Camera System](./camera_system.md)** - Camera controls and behavior, including peeking, looking around while hidden, and zooming
 - **[AI System](./ai_system.md)** - Comprehensive AI behavior, perception, and faction management
 - **[Abilities System](./abilities_system.md)** - Special abilities with cooldowns, energy management, and multiple input patterns
-- [Weapon System](./weapon_system.md) - Weapon physics, aiming, and damage systems
-- [Combat System](./combat_system.md) - Health, damage calculations, and impact feedback
+- **[Weapon System](./weapon_system.md)** - Weapon physics, aiming, and damage systems
+- **[Combat System](./combat_system.md)** - Health, damage calculations, and impact feedback
 - **[Map System](./map_system.md)** - Minimap, world map, markers, and navigation tools
 - **[Interaction System](./interaction_system.md)** - Player-world interactions, including raycasting and device detection
- 
+- **[Dialog System](./dialog_system.md)** - Dialogues and conversations
+- **[Stats System](./stats-system.md)** - Character attributes, modifiers, and derived stats logic
+- **[Skills System](./skills_system.md)** - Skill trees, progression, leveling, and ability unlocks
+- **[Save System](./save_system.md)** - Core persistence, serialization, auto-save, and slot management
+- **[Climb System](./climb_system.md)** - Parkour mechanics, ledge detection, wall running, and vertical traversal
+- **[Ladder System](./ladder_system.md)** - Structured ladder interaction, mounting, and constrained climbing
+- **[Inventory System](./inventory_system.md)** - Logic for managing items, equipment, currency, and trading with vendors
+
+
+
 ### Advanced Systems
+- **[Quest System](./quest_system.md)** - Branching quest lines, objectives tracking, and quest givers
 - **[Puzzle System](./puzzle_system.md)** - Logic gates, puzzle elements, and interactive device simulation
 - **[Devices System](./devices_system.md)** - Interaction framework for doors, switches, and examine objects
 - **[Vehicles System](./vehicles_system.md)** - Complete vehicle physics, seating, weapons, and damage systems
