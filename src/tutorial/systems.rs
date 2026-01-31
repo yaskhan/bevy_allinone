@@ -1,92 +1,11 @@
 use bevy::prelude::*;
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
-
-/// A single panel in a tutorial sequence.
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
-pub struct TutorialPanel {
-    pub name: String,
-    pub title: String,
-    pub description: String,
-    pub image_path: Option<String>,
-}
-
-/// A tutorial consisting of one or more sequential panels.
-#[derive(Debug, Clone, Serialize, Deserialize, Reflect)]
-pub struct Tutorial {
-    pub id: u32,
-    pub name: String,
-    pub panels: Vec<TutorialPanel>,
-    /// If true, the tutorial will only be shown once per player.
-    pub play_only_once: bool,
-    /// If true, unlocks the cursor when the tutorial is active.
-    pub unlock_cursor: bool,
-    /// If true, pauses standard gameplay input when the tutorial is active.
-    pub pause_input: bool,
-    /// If true, sets a custom time scale (e.g., slow motion or pause) when active.
-    pub set_custom_time_scale: bool,
-    pub custom_time_scale: f32,
-}
-
-/// Component that tracks which tutorials a player has already seen.
-#[derive(Component, Debug, Default, Clone, Serialize, Deserialize, Reflect)]
-#[reflect(Component)]
-pub struct TutorialLog {
-    pub played_tutorials: HashSet<u32>,
-}
-
-/// Resource that stores all defined tutorials and the current active tutorial state.
-#[derive(Resource, Default)]
-pub struct TutorialManager {
-    pub tutorials: HashMap<u32, Tutorial>,
-    pub active_tutorial_id: Option<u32>,
-    pub current_panel_index: usize,
-    pub previous_time_scale: f32,
-}
-
-/// Events for controlling the tutorial system.
-#[derive(Event, Debug, Clone, Serialize, Deserialize, Reflect)]
-pub enum TutorialEvent {
-    Open(u32),
-    NextPanel,
-    PreviousPanel,
-    Close,
-}
-
-/// Custom queue for tutorial events (Workaround for Bevy 0.18 EventReader issues)
-#[derive(Resource, Default)]
-pub struct TutorialEventQueue(pub Vec<TutorialEvent>);
-
-#[derive(Component)]
-pub struct TutorialRoot;
-
-#[derive(Component)]
-pub struct TutorialTitleText;
-
-#[derive(Component)]
-pub struct TutorialDescriptionText;
-
-#[derive(Component)]
-pub struct TutorialPanelImage;
-
-pub struct TutorialPlugin;
-
-impl Plugin for TutorialPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<TutorialManager>()
-            .init_resource::<TutorialEventQueue>()
-            .register_type::<TutorialLog>()
-            .add_systems(Update, (
-                handle_tutorial_events,
-                update_tutorial_ui,
-                handle_tutorial_buttons,
-                manage_tutorial_game_state,
-            ));
-    }
-}
+use super::components::*;
+use super::events::{TutorialEvent, TutorialEventQueue};
+use super::resources::TutorialManager;
+use super::types::TutorialPanel;
 
 /// System to handle tutorial-related events.
-fn handle_tutorial_events(
+pub fn handle_tutorial_events(
     mut events: ResMut<TutorialEventQueue>,
     mut manager: ResMut<TutorialManager>,
     mut tutorials_log: Query<&mut TutorialLog>,
@@ -148,7 +67,7 @@ fn handle_tutorial_events(
 }
 
 /// System to update the tutorial UI based on the manager's state.
-fn update_tutorial_ui(
+pub fn update_tutorial_ui(
     mut commands: Commands,
     manager: Res<TutorialManager>,
     asset_server: Res<AssetServer>,
@@ -291,11 +210,8 @@ fn spawn_button(parent: &mut ChildSpawnerCommands, label: &str, event: TutorialE
         });
 }
 
-#[derive(Component)]
-struct TutorialButton(TutorialEvent);
-
 /// System to handle tutorial button clicks.
-fn handle_tutorial_buttons(
+pub fn handle_tutorial_buttons(
     mut interaction_query: Query<
         (&Interaction, &TutorialButton, &mut BackgroundColor),
         (Changed<Interaction>, With<Button>),
@@ -319,7 +235,7 @@ fn handle_tutorial_buttons(
 }
 
 /// System to manage game state (input, time scale) when tutorial is active.
-fn manage_tutorial_game_state(
+pub fn manage_tutorial_game_state(
     manager: Res<TutorialManager>,
     mut time: ResMut<Time<Virtual>>,
     mut input_state: Option<ResMut<crate::input::InputState>>,
