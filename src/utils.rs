@@ -15,17 +15,32 @@ pub struct GameTime {
 pub mod math {
     use bevy::prelude::*;
     
-    /// Smooth damp for vector interpolation
-    /// TODO: Implement smooth damping
+    /// Smooth damp for vector interpolation.
+    /// Based on Game Programming Gems 4 Chapter 1.10.
     pub fn smooth_damp(
         current: Vec3,
         target: Vec3,
-        _velocity: &mut Vec3,
+        current_velocity: &mut Vec3,
         smooth_time: f32,
         delta_time: f32,
     ) -> Vec3 {
-        // TODO: Implement smooth damp algorithm
-        current.lerp(target, delta_time / smooth_time)
+        let smooth_time = smooth_time.max(0.0001);
+        let omega = 2.0 / smooth_time;
+
+        let x = omega * delta_time;
+        let exp = 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x);
+        
+        let change = current - target;
+        let temp = (*current_velocity + change * omega) * delta_time;
+        
+        *current_velocity = (*current_velocity - temp * omega) * exp;
+        
+        let output = target + (change + temp) * exp;
+        
+        // Prevent overshooting if delta_time is too high relative to smooth_time?
+        // The approximation above is stable for reasonable values.
+        
+        output
     }
 }
 
