@@ -1,33 +1,10 @@
-//! Save system module
-//!
-//! Game state persistence and save/load functionality.
-//!
-//! This module provides a comprehensive save/load system inspired by GKC's saveGameSystem.
-//! It supports:
-//! - Multiple save slots
-//! - Checkpoint saves
-//! - Auto-save functionality
-//! - Save data serialization/deserialization
-//! - Camera capture for save thumbnails
-//! - Play time tracking
-//! - Save date tracking
-
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use chrono::{DateTime, Utc};
-
-pub struct SavePlugin;
-
-impl Plugin for SavePlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<SaveManager>()
-            .add_systems(Update, auto_save_system);
-    }
-}
+use super::types::{SaveData, SaveSlotInfo, EquipmentData, GameProgress};
 
 /// Save manager resource
 /// Manages save slots, auto-save settings, and save operations
@@ -71,98 +48,6 @@ impl Default for SaveManager {
             save_slots_cache: HashMap::new(),
         }
     }
-}
-
-/// Save data structure
-/// Contains all game state information that needs to be persisted
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SaveData {
-    /// Player position in the world
-    pub player_position: Vec3,
-    /// Player rotation
-    pub player_rotation: Quat,
-    /// Player health
-    pub player_health: f32,
-    /// Player stamina
-    pub player_stamina: f32,
-    /// Player inventory items
-    pub inventory_items: Vec<SavedInventoryItem>,
-    /// Player equipment
-    pub equipment: EquipmentData,
-    /// Game progress (chapter, quest progress, etc.)
-    pub game_progress: GameProgress,
-    /// Current scene/level index
-    pub scene_index: u32,
-    /// Play time in seconds
-    pub play_time: f32,
-    /// Save date and time
-    pub save_date: DateTime<Utc>,
-    /// Save slot number
-    pub save_slot: usize,
-    /// Whether this is a checkpoint save
-    pub is_checkpoint: bool,
-    /// Checkpoint ID (if checkpoint save)
-    pub checkpoint_id: Option<u32>,
-    /// Camera orientation when saved
-    pub camera_orientation: Option<CameraOrientation>,
-    /// Player driving state
-    pub is_driving: bool,
-    /// Current vehicle name (if driving)
-    pub current_vehicle: Option<String>,
-    /// Custom data for extensibility
-    pub custom_data: HashMap<String, serde_json::Value>,
-}
-
-/// Inventory item data for saving
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SavedInventoryItem {
-    pub id: String,
-    pub name: String,
-    pub quantity: u32,
-    pub durability: Option<f32>,
-    pub custom_data: HashMap<String, serde_json::Value>,
-}
-
-/// Equipment data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EquipmentData {
-    pub weapon: Option<String>,
-    pub armor: Option<String>,
-    pub accessory: Option<String>,
-    pub custom_slots: HashMap<String, String>,
-}
-
-/// Game progress tracking
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GameProgress {
-    pub chapter: u32,
-    pub quest_progress: HashMap<String, u32>,
-    pub unlocked_abilities: Vec<String>,
-    pub discovered_areas: Vec<String>,
-    pub custom_progress: HashMap<String, serde_json::Value>,
-}
-
-/// Camera orientation data
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CameraOrientation {
-    pub yaw: f32,
-    pub pitch: f32,
-    pub pivot_pitch: Option<f32>,
-}
-
-/// Save slot information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SaveSlotInfo {
-    pub slot_number: usize,
-    pub save_date: DateTime<Utc>,
-    pub play_time: f32,
-    pub scene_index: u32,
-    pub is_checkpoint: bool,
-    pub checkpoint_id: Option<u32>,
-    pub thumbnail_path: Option<PathBuf>,
-    pub chapter_info: String,
-    pub is_autosave: bool,
-    pub is_valid: bool,
 }
 
 impl SaveManager {
@@ -438,86 +323,4 @@ impl SaveManager {
             data.play_time += delta_time;
         }
     }
-}
-
-/// Auto-save system that runs periodically
-pub fn auto_save_system(
-    time: Res<Time>,
-    mut save_manager: ResMut<SaveManager>,
-    query: Query<(&Transform, &SavePlaceholderHealth, &SavePlaceholderInventory)>,
-) {
-    if !save_manager.auto_save_enabled {
-        return;
-    }
-
-    save_manager.time_since_last_save += time.delta_secs();
-
-    if save_manager.time_since_last_save >= save_manager.auto_save_interval {
-        save_manager.time_since_last_save = 0.0;
-
-        // Collect current game state
-        if let Some((transform, health, inventory)) = query.iter().next() {
-            let data = SaveData {
-                player_position: transform.translation,
-                player_rotation: transform.rotation,
-                player_health: health.current,
-                player_stamina: health.stamina,
-                inventory_items: inventory.items.iter().map(|item| SavedInventoryItem {
-                    id: item.id.clone(),
-                    name: item.name.clone(),
-                    quantity: item.quantity,
-                    durability: item.durability,
-                    custom_data: HashMap::new(),
-                }).collect(),
-                equipment: EquipmentData {
-                    weapon: None,
-                    armor: None,
-                    accessory: None,
-                    custom_slots: HashMap::new(),
-                },
-                game_progress: GameProgress {
-                    chapter: 1,
-                    quest_progress: HashMap::new(),
-                    unlocked_abilities: Vec::new(),
-                    discovered_areas: Vec::new(),
-                    custom_progress: HashMap::new(),
-                },
-                scene_index: 0,
-                play_time: save_manager.current_save_data.as_ref().map(|d| d.play_time).unwrap_or(0.0),
-                save_date: Utc::now(),
-                save_slot: save_manager.current_save_slot,
-                is_checkpoint: false,
-                checkpoint_id: None,
-                camera_orientation: None,
-                is_driving: false,
-                current_vehicle: None,
-                custom_data: HashMap::new(),
-            };
-
-            if let Err(e) = save_manager.auto_save(data) {
-                eprintln!("Auto-save failed: {}", e);
-            }
-        }
-    }
-}
-
-// Placeholder components for auto-save system
-// These should be integrated with actual game components
-#[derive(Component, Debug)]
-pub struct SavePlaceholderHealth {
-    pub current: f32,
-    pub stamina: f32,
-}
-
-#[derive(Component, Debug)]
-pub struct SavePlaceholderInventory {
-    pub items: Vec<InventoryItemData>,
-}
-
-#[derive(Debug)]
-pub struct InventoryItemData {
-    pub id: String,
-    pub name: String,
-    pub quantity: u32,
-    pub durability: Option<f32>,
 }
