@@ -9,6 +9,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Character Controller System](./character_controller_system.md)** - Player character controller with physics and movement states
 - **[Player System](./player_system.md)** - Player-specific logic, managing high-level states, modes, and advanced movement mechanics
 - **[Camera System](./camera_system.md)** - Camera controls and behavior, including peeking, looking around while hidden, and zooming
+- **[Input System](./input_system.md)** - Action mapping, buffering, and runtime rebinding framework
 - **[AI System](./ai_system.md)** - Comprehensive AI behavior, perception, and faction management
 - **[Abilities System](./abilities_system.md)** - Special abilities with cooldowns, energy management, and multiple input patterns
 - **[Weapon System](./weapon_system.md)** - Weapon physics, aiming, and damage systems
@@ -22,6 +23,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Climb System](./climb_system.md)** - Parkour mechanics, ledge detection, wall running, and vertical traversal
 - **[Ladder System](./ladder_system.md)** - Structured ladder interaction, mounting, and constrained climbing
 - **[Inventory System](./inventory_system.md)** - Logic for managing items, equipment, currency, and trading with vendors
+- **[Tutorial System](./tutorial_system.md)** - Comprehensive tutorial framework with UI, state management, and event handling
 
 
 
@@ -30,6 +32,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Puzzle System](./puzzle_system.md)** - Logic gates, puzzle elements, and interactive device simulation
 - **[Devices System](./devices_system.md)** - Interaction framework for doors, switches, and examine objects
 - **[Vehicles System](./vehicles_system.md)** - Complete vehicle physics, seating, weapons, and damage systems
+- **[Climb System](./climb_system.md)** - Parkour, wall running, and ledge hanging
 - **[Stealth System](./stealth_system.md)** - Stealth mechanics, including detection, evasion, and alert systems
 
  
