@@ -4,7 +4,7 @@ use super::types::*;
 /// Trigger for a camera shake effect
 #[derive(Debug, Clone, Reflect)]
 pub struct ShakeRequest {
-    /// Name of the shake preset (matches GKit names often)
+    /// Name of the shake preset
     pub name: String,
     /// Multiplier for intensity
     pub intensity: f32,

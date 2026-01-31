@@ -15,7 +15,7 @@ pub fn update_ai_state_visuals(
             AiBehaviorState::Patrol => { gizmos.sphere(pos, 0.1, Color::srgb(0.0, 1.0, 0.0)); }
             AiBehaviorState::Follow => { gizmos.sphere(pos, 0.15, Color::srgb(0.0, 1.0, 1.0)); }
             AiBehaviorState::Idle => {
-                // If we want to show 'sleeping' or 'zzzz' as in sleepingStateIconSystem.cs
+                // If we want to show 'sleeping' or 'zzzz'
                 // We'll use a specific color or simple gizmo for now
                 gizmos.sphere(pos, 0.1, Color::srgb(0.3, 0.3, 1.0));
             }

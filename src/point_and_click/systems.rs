@@ -70,7 +70,6 @@ pub fn move_agent(
 
         let current_pos = transform.translation;
         // Ignore Y for distance check (2D plane movement logic usually)
-        // specific to GKit commonly being 3D or 2.5D.
         
         let delta = target - current_pos;
         let distance = delta.length();

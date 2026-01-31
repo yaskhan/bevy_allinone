@@ -38,7 +38,7 @@ impl Default for MapMarker {
     }
 }
 
-/// Detailed Map Object Information (Porting GKit MapObjectInformation)
+/// Detailed Map Object Information
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
 pub struct MapObjectInformation {

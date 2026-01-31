@@ -110,7 +110,7 @@ pub fn update_head_track(
             let target_dir = (best_target_pos - char_pos).normalize_or_zero();
             
             // Calculate relative rotation to character forward
-            // This is a simplification; a full GKit port would handle local range constraints properly
+            // This is a simplification; would handle local range constraints properly
             let look_at_quat = Quat::from_rotation_arc(*char_forward, target_dir);
             
             // Apply weight

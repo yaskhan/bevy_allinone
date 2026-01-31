@@ -105,7 +105,7 @@ pub fn update_upper_body_rotation(
                 // For now, let's assume we want to construct a rotation that faces the target
                 // constrained by max limits.
                 
-                // TODO: Implement full IK math similar to original C# reference
+                // TODO: Implement full IK math
                 // (AngleAroundAxis, projection on planes, clamping)
                 
                  let target_rot = transform.looking_at(target_pos, Vec3::Y).rotation;

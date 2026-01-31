@@ -8,7 +8,7 @@ pub struct DialogContent {
     /// Unique identifier for this dialog content
     pub id: u32,
     
-    /// Scene identifier (for multi-scene support)
+    /// Scene identifier
     pub scene_id: u32,
     
     /// List of complete dialogs

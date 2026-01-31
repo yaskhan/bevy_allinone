@@ -6,8 +6,6 @@ use super::types::{CoreAttribute, DerivedStat, ModifierType, StatModifier, StatE
 ///
 /// This component stores both core attributes and derived stats,
 /// as well as active modifiers.
-///
-/// Reference: `gkit/Scripts/Stats System/playerStatsSystem.cs`
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct StatsSystem {

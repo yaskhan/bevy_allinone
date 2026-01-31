@@ -31,7 +31,7 @@ pub fn update_target_marking(
         for (entity, target_gt, health, name) in target_query.iter() {
             if health.current <= 0.0 { continue; }
             
-            // Optional: Filter by tag/name if implemented in GKit
+            // Optional: Filter by tag/name
             // For now, let's assume we filter by distance and angle
             
             let target_pos = target_gt.translation();

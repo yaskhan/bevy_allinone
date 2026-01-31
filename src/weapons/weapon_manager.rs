@@ -116,7 +116,7 @@ pub struct WeaponManager {
     // Debug
     pub show_debug_log: bool,
 
-    // Selection Menu Support (from weaponListManager.cs)
+    // Selection Menu Support
     pub selecting_weapon: bool,
     pub selecting_right_weapon: bool,
 }
