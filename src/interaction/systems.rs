@@ -1,273 +1,13 @@
-//! Interaction system module
-//!
-//! Object interaction, pickups, and usable devices.
-
 use bevy::prelude::*;
-
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction, InputBuffer};
-
-pub struct InteractionPlugin;
-
-impl Plugin for InteractionPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .init_resource::<InteractionEventQueue>()
-            .init_resource::<CurrentInteractable>()
-            .init_resource::<InteractionDebugSettings>()
-            .init_resource::<AddDeviceQueue>()
-            .init_resource::<RemoveDeviceQueue>()
-            .add_systems(Update, (
-                detect_interactables,
-                detect_devices_in_proximity,
-                update_device_list,
-                select_closest_device,
-                validate_interactions,
-                process_interactions,
-                update_interaction_ui,
-                debug_draw_interaction_rays,
-            ).chain())
-            .add_systems(Startup, setup_interaction_ui);
-    }
-}
-
-/// Event to add a device to the player's list
-#[derive(Debug, Clone, Copy)]
-pub struct AddDeviceEvent {
-    pub player: Entity,
-    pub device: Entity,
-}
-
-#[derive(Resource, Default)]
-pub struct AddDeviceQueue(pub Vec<AddDeviceEvent>);
-
-/// Event to remove a device from the player's list
-#[derive(Debug, Clone, Copy)]
-pub struct RemoveDeviceEvent {
-    pub player: Entity,
-    pub device: Entity,
-}
-
-#[derive(Resource, Default)]
-pub struct RemoveDeviceQueue(pub Vec<RemoveDeviceEvent>);
-
-/// Component for entities that can detect and interact with objects
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct InteractionDetector {
-    /// Maximum distance for interaction detection
-    pub max_distance: f32,
-    /// Ray offset from entity position (usually forward from camera/eyes)
-    pub ray_offset: Vec3,
-    /// How often to update detection (in seconds, 0 = every frame)
-    pub update_interval: f32,
-    /// Time since last update
-    pub time_since_update: f32,
-    /// Layer mask for raycasting
-    pub interaction_layers: u32,
-}
-
-impl Default for InteractionDetector {
-    fn default() -> Self {
-        Self {
-            max_distance: 3.0,
-            ray_offset: Vec3::ZERO,
-            update_interval: 0.1, // Update 10 times per second
-            time_since_update: 0.0,
-            interaction_layers: 0xFFFFFFFF, // All layers by default
-        }
-    }
-}
-
-/// Resource tracking the currently detected interactable
-#[derive(Resource, Debug, Default)]
-pub struct CurrentInteractable {
-    pub entity: Option<Entity>,
-    pub distance: f32,
-    pub interaction_point: Vec3,
-    pub is_in_range: bool,
-}
-
-/// Settings for debug visualization
-#[derive(Resource, Debug)]
-pub struct InteractionDebugSettings {
-    pub enabled: bool,
-    pub ray_color: Color,
-    pub hit_color: Color,
-    pub miss_color: Color,
-}
-
-impl Default for InteractionDebugSettings {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            ray_color: Color::srgb(0.0, 1.0, 0.0),
-            hit_color: Color::srgb(1.0, 0.5, 0.0),
-            miss_color: Color::srgb(0.5, 0.5, 0.5),
-        }
-    }
-}
-
-/// Interactable component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Interactable {
-    pub interaction_text: String,
-    pub interaction_distance: f32,
-    pub can_interact: bool,
-    pub interaction_type: InteractionType,
-}
-
-impl Default for Interactable {
-    fn default() -> Self {
-        Self {
-            interaction_text: "Interact".to_string(),
-            interaction_distance: 3.0,
-            can_interact: true,
-            interaction_type: InteractionType::Use,
-        }
-    }
-}
-
-/// Interaction type
-#[derive(Debug, Clone, Copy, Reflect, PartialEq, Eq)]
-pub enum InteractionType {
-    Pickup,
-    Use,
-    Talk,
-    Open,
-    Activate,
-    Examine,
-    Toggle,
-    Grab,
-    Device,
-}
-
-/// Information about a detected device, matching the original project structure.
-#[derive(Debug, Clone, Reflect)]
-pub struct DeviceInfo {
-    pub name: String,
-    pub entity: Entity,
-    pub action_offset: f32,
-    pub use_local_offset: bool,
-    pub use_custom_min_distance: bool,
-    pub custom_min_distance: f32,
-    pub use_custom_min_angle: bool,
-    pub custom_min_angle: f32,
-    pub use_relative_direction: bool,
-    pub ignore_use_only_if_visible: bool,
-    pub check_if_obstacle: bool,
-}
-
-impl Default for DeviceInfo {
-    fn default() -> Self {
-        Self {
-            name: String::new(),
-            entity: Entity::PLACEHOLDER,
-            action_offset: 1.0,
-            use_local_offset: true,
-            use_custom_min_distance: false,
-            custom_min_distance: 0.0,
-            use_custom_min_angle: false,
-            custom_min_angle: 0.0,
-            use_relative_direction: false,
-            ignore_use_only_if_visible: false,
-            check_if_obstacle: false,
-        }
-    }
-}
-
-/// Component for the player to manage nearby devices.
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct UsingDevicesSystem {
-    pub can_use_devices: bool,
-    pub device_list: Vec<DeviceInfo>,
-    pub current_device_index: i32,
-    pub use_device_action_name: String,
-    pub raycast_distance: f32,
-    pub layer_mask: u32,
-    pub searching_devices_with_raycast: bool,
-    pub show_use_device_icon_enabled: bool,
-    pub use_min_distance_to_use_devices: bool,
-    pub min_distance_to_use_devices: f32,
-    pub use_only_device_if_visible_on_camera: bool,
-    pub driving: bool,
-}
-
-impl Default for UsingDevicesSystem {
-    fn default() -> Self {
-        Self {
-            can_use_devices: true,
-            device_list: Vec::new(),
-            current_device_index: -1,
-            use_device_action_name: "Activate Device".to_string(),
-            raycast_distance: 5.0,
-            layer_mask: 0xFFFFFFFF,
-            searching_devices_with_raycast: false,
-            show_use_device_icon_enabled: true,
-            use_min_distance_to_use_devices: true,
-            min_distance_to_use_devices: 4.0,
-            use_only_device_if_visible_on_camera: false,
-            driving: false,
-        }
-    }
-}
-
-/// Component for metadata about device interaction, matching the original project's architecture.
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct DeviceStringAction {
-    pub device_name: String,
-    pub device_action: String,
-    pub secondary_device_action: String,
-    pub show_icon: bool,
-    pub action_offset: f32,
-    pub use_local_offset: bool,
-    pub use_custom_min_distance: bool,
-    pub custom_min_distance: f32,
-    pub use_custom_min_angle: bool,
-    pub custom_min_angle: f32,
-    pub use_relative_direction: bool,
-    pub ignore_use_only_if_visible: bool,
-    pub check_if_obstacle: bool,
-    pub icon_enabled: bool,
-}
-
-impl Default for DeviceStringAction {
-    fn default() -> Self {
-        Self {
-            device_name: "Device".to_string(),
-            device_action: "Activate".to_string(),
-            secondary_device_action: String::new(),
-            show_icon: true,
-            action_offset: 1.0,
-            use_local_offset: true,
-            use_custom_min_distance: false,
-            custom_min_distance: 0.0,
-            use_custom_min_angle: false,
-            custom_min_angle: 0.0,
-            use_relative_direction: false,
-            ignore_use_only_if_visible: false,
-            check_if_obstacle: true,
-            icon_enabled: true,
-        }
-    }
-}
-
-/// Component for the interaction UI prompt text
-#[derive(Component)]
-pub struct InteractionPrompt;
-
-/// Resource to manage interaction UI state
-#[derive(Resource, Default)]
-pub struct InteractionUIState {
-    pub is_visible: bool,
-    pub current_text: String,
-}
+use super::types::*;
+use super::components::*;
+use super::events::*;
+use super::resources::*;
 
 /// System to setup the interaction UI
-fn setup_interaction_ui(mut commands: Commands) {
+pub fn setup_interaction_ui(mut commands: Commands) {
     let text_style = TextFont {
         font_size: 24.0,
         ..default()
@@ -300,7 +40,7 @@ fn setup_interaction_ui(mut commands: Commands) {
 }
 
 /// System to update the interaction UI based on current detection
-fn update_interaction_ui(
+pub fn update_interaction_ui(
     current_interactable: Res<CurrentInteractable>,
     interactables: Query<&Interactable>,
     player_query: Query<&UsingDevicesSystem>,
@@ -372,70 +112,8 @@ fn update_interaction_ui(
     }
 }
 
-/// Data specific to the interaction
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct InteractionData {
-    /// Duration for the interaction (0.0 for instant)
-    pub duration: f32,
-    /// Cooldown after interaction
-    pub cooldown: f32,
-    /// Current cooldown timer
-    pub cooldown_timer: f32,
-    /// Whether the interaction triggers automatically when in range
-    pub auto_trigger: bool,
-    /// Custom data string (e.g., item ID, door key, dialogue ID)
-    pub data: String,
-}
-
-impl Default for InteractionData {
-    fn default() -> Self {
-        Self {
-            duration: 0.0,
-            cooldown: 0.5,
-            cooldown_timer: 0.0,
-            auto_trigger: false,
-            data: String::new(),
-        }
-    }
-}
-
-/// Component for usable devices (doors, switches, etc.)
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct UsableDevice {
-    pub is_active: bool,
-    pub requires_key: bool,
-    pub key_id: String,
-    pub active_text: String,
-    pub inactive_text: String,
-}
-
-impl Default for UsableDevice {
-    fn default() -> Self {
-        Self {
-            is_active: false,
-            requires_key: false,
-            key_id: String::new(),
-            active_text: "Turn Off".to_string(),
-            inactive_text: "Turn On".to_string(),
-        }
-    }
-}
-
-/// Event triggered when a valid interaction occurs
-pub struct InteractionEvent {
-    pub source: Entity,
-    pub target: Entity,
-    pub interaction_type: InteractionType,
-}
-
-/// Custom queue for interaction events
-#[derive(Resource, Default)]
-pub struct InteractionEventQueue(pub Vec<InteractionEvent>);
-
 /// System to validate interactions (cooldowns, states)
-fn validate_interactions(
+pub fn validate_interactions(
     time: Res<Time>,
     mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>)>,
 ) {
@@ -455,7 +133,7 @@ fn validate_interactions(
 }
 
 /// System to detect interactables using raycasting
-fn detect_interactables(
+pub fn detect_interactables(
     time: Res<Time>,
     spatial_query: SpatialQuery,
     mut current_interactable: ResMut<CurrentInteractable>,
@@ -508,7 +186,7 @@ fn detect_interactables(
 }
 
 /// System to process interaction inputs
-fn process_interactions(
+pub fn process_interactions(
     input: Res<InputState>,
     mut input_buffer: ResMut<InputBuffer>,
     current_interactable: Res<CurrentInteractable>,
@@ -595,7 +273,7 @@ fn process_interactions(
 }
 
 /// Debug system to visualize interaction rays
-fn debug_draw_interaction_rays(
+pub fn debug_draw_interaction_rays(
     debug_settings: Res<InteractionDebugSettings>,
     current_interactable: Res<CurrentInteractable>,
     detectors: Query<(&GlobalTransform, &InteractionDetector)>,
