@@ -1,162 +1,15 @@
-//! Inventory system module
-//!
-//! Item management, equipment, and inventory UI.
-
 use bevy::prelude::*;
+use crate::interaction::{InteractionEvent, InteractionEventQueue, InteractionType, InteractionDetector};
+use crate::input::InputState;
+use super::components::*;
+use super::types::{InventoryItem, ItemType};
 
-use crate::interaction::{InteractionEvent, InteractionEventQueue, InteractionType, InteractionDetector}; // Import events
-use crate::input::{InputState, InputAction, InputBuffer};
-
-pub struct InventoryPlugin;
-
-impl Plugin for InventoryPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            update_inventory,
-            handle_pickup_events,
-            toggle_inventory_ui,
-            update_inventory_ui,
-        ))
-        .add_systems(Startup, setup_inventory_ui);
-    }
-}
-
-
-
-/// Inventory component
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct Inventory {
-    pub items: Vec<Option<InventoryItem>>,
-    pub max_slots: usize,
-    pub weight_limit: f32,
-    pub current_weight: f32,
-}
-
-impl Default for Inventory {
-    fn default() -> Self {
-        Self {
-            items: vec![None; 24], // Default 24 slots
-            max_slots: 24,
-            weight_limit: 100.0,
-            current_weight: 0.0,
-        }
-    }
-}
-
-impl Inventory {
-    pub fn add_item(&mut self, item: InventoryItem) -> Option<InventoryItem> {
-        // 1. Try to stack
-        if item.max_stack > 1 {
-            for slot in self.items.iter_mut() {
-                if let Some(existing) = slot {
-                    if existing.item_id == item.item_id && existing.quantity < existing.max_stack {
-                        let space = existing.max_stack - existing.quantity;
-                        if space >= item.quantity {
-                            existing.quantity += item.quantity;
-                            self.recalculate_weight();
-                            return None; // Fully added
-                        } else {
-                            existing.quantity += space;
-                            let mut remaining = item.clone();
-                            remaining.quantity -= space;
-                            // COntinue trying to add remaining... recursive call? 
-                            // Or just loop? Let's return remaining for now to keep simple.
-                            // In robust system, handle splits.
-                            self.recalculate_weight();
-                            return self.add_item(remaining);
-                        }
-                    }
-                }
-            }
-        }
-
-        // 2. Find empty slot
-        if let Some(slot) = self.items.iter_mut().find(|s| s.is_none()) {
-            *slot = Some(item);
-            self.recalculate_weight();
-            return None;
-        }
-
-        // 3. No space
-        Some(item)
-    }
-
-    pub fn recalculate_weight(&mut self) {
-        self.current_weight = self.items.iter().flatten().map(|i| i.weight * i.quantity as f32).sum();
-    }
-}
-
-/// Inventory item
-#[derive(Debug, Clone, Reflect)]
-pub struct InventoryItem {
-    pub item_id: String,
-    pub name: String,
-    pub quantity: i32,
-    pub max_stack: i32,
-    pub weight: f32,
-    pub item_type: ItemType,
-    pub icon_path: String,
-    /// Base value of the item (used for buying/selling)
-    pub value: f32,
-    /// Category name for organization
-    pub category: String,
-    /// Minimum level required to use/buy this item
-    pub min_level: u32,
-    /// Additional information about the item
-    pub info: String,
-}
-
-/// Item type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
-pub enum ItemType {
-    Weapon,
-    Ammo,
-    Consumable,
-    KeyItem,
-    Equipment,
-    Material,
-    Quest,
-}
-
-impl std::fmt::Display for ItemType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ItemType::Weapon => write!(f, "Weapon"),
-            ItemType::Ammo => write!(f, "Ammo"),
-            ItemType::Consumable => write!(f, "Consumable"),
-            ItemType::KeyItem => write!(f, "Key Item"),
-            ItemType::Equipment => write!(f, "Equipment"),
-            ItemType::Material => write!(f, "Material"),
-            ItemType::Quest => write!(f, "Quest Item"),
-        }
-    }
-}
-
-#[derive(Component, Debug, Default, Reflect)]
-#[reflect(Component)]
-pub struct Equipment {
-    pub main_hand: Option<InventoryItem>,
-    pub armor: Option<InventoryItem>,
-}
-
-/// Component for items existing in the world
-#[derive(Component, Debug, Reflect)]
-#[reflect(Component)]
-pub struct PhysicalItem {
-    pub item: InventoryItem,
-}
-
-fn handle_pickup_events(
+pub fn handle_pickup_events(
     mut commands: Commands,
     mut events: ResMut<InteractionEventQueue>,
     mut inventory_query: Query<&mut Inventory>,
     item_query: Query<&PhysicalItem>,
 ) {
-    // Note: Draining the queue here. If other systems need these events, 
-    // we should be careful not to drain unless this is the final processing step,
-    // or use a non-draining iterator if they persist for the frame.
-    // For now, inventory pickup is arguably the primary consumer.
     let events_to_process: Vec<InteractionEvent> = events.0.drain(..).collect();
     
     for event in events_to_process {
@@ -180,28 +33,14 @@ fn handle_pickup_events(
     }
 }
 
-fn update_inventory(
+pub fn update_inventory(
     _query: Query<&mut Inventory>,
 ) {
     // Periodic weight check not strictly needed if we update on modify.
     // Maybe verify constraints?
 }
 
-#[derive(Component)]
-pub struct InventoryUIRoot;
-
-#[derive(Component)]
-pub struct InventoryUISlot {
-    pub index: usize,
-}
-
-#[derive(Component)]
-pub struct InventorySlotIcon;
-
-#[derive(Component)]
-pub struct InventorySlotCount;
-
-fn setup_inventory_ui(mut commands: Commands) {
+pub fn setup_inventory_ui(mut commands: Commands) {
     // Inventory Root
     commands
         .spawn((
@@ -313,7 +152,7 @@ fn setup_inventory_ui(mut commands: Commands) {
         });
 }
 
-fn toggle_inventory_ui(
+pub fn toggle_inventory_ui(
     input: Res<InputState>,
     mut query: Query<&mut Visibility, With<InventoryUIRoot>>,
 ) {
@@ -328,7 +167,7 @@ fn toggle_inventory_ui(
     }
 }
 
-fn update_inventory_ui(
+pub fn update_inventory_ui(
     inventory_query: Query<&Inventory, With<InteractionDetector>>, // Assume player has detector
     mut slot_query: Query<(&InventoryUISlot, &Children)>,
     mut icon_query: Query<&mut BackgroundColor, With<InventorySlotIcon>>,
