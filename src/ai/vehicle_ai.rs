@@ -4,6 +4,7 @@ use crate::vehicles::types::*;
 pub fn update_vehicle_ai(
     mut vehicle_query: Query<(&mut Vehicle, &mut VehicleAI, &GlobalTransform)>,
     path_query: Query<&WaypointPath>,
+    target_transform_query: Query<&GlobalTransform>,
     time: Res<Time>,
 ) {
     let delta = time.delta_secs();
@@ -16,9 +17,11 @@ pub fn update_vehicle_ai(
 
         // 1. Get target from entity or waypoint list
         if let Some(target_ent) = ai.target_entity {
-            // Simplified: if we have a target entity, just head toward it
-            // (In a real scenario, we'd query its transform)
-            has_target = false; // Placeholder
+            // Query target entity's transform for position
+            if let Ok(target_gt) = target_transform_query.get(target_ent) {
+                target_pos = target_gt.translation();
+                has_target = true;
+            }
         } else if !ai.waypoints.is_empty() {
             target_pos = ai.waypoints[ai.current_waypoint_index];
             has_target = true;

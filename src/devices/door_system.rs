@@ -9,6 +9,9 @@ use avian3d::prelude::*;
 use std::collections::HashSet;
 use std::time::Duration;
 
+// Re-import character module for Player component
+use crate::character;
+
 // ============================================================================
 // COMPONENTS
 // ============================================================================
@@ -184,29 +187,46 @@ pub fn update_door_movement(
     }
 }
 
-/// System to handle collision detection for doors
+/// System to handle collision detection for doors using avian3d physics
 pub fn handle_door_collisions(
     mut door_query: Query<(Entity, &mut DoorSystem, &Transform)>,
-    // collision_events: Res<Events<Collision>>,
-    // Actually standard Events might work if registered? But we serve examples.
-    transform_query: Query<&Transform>,
+    spatial_query: SpatialQuery,
+    player_query: Query<Entity, With<crate::character::Player>>,
     mut door_found_queue: ResMut<DoorFoundEventQueue>,
 ) {
-    // Note: In Bevy 0.18 with avian3d, collision detection works differently
-    // This is a simplified version
-    
-    // for event in collision_events.iter_current_update_events() {
-        // Handle collision (simplified as we don't have exact collision data structure for this example)
-        // In a real implementation we'd check contacts
-        
-        // This is just a placeholder as we aren't using the event
-    // }
-
     for (entity, mut door, door_transform) in door_query.iter_mut() {
-        // Check for player in trigger zone (simplified)
-        // In a real implementation, you'd use avian3d's collision detection system
-        
-        // Check if door was found
+        // Check for player in trigger zone using spatial query
+        if door.door_type == DoorType::Trigger {
+            let trigger_center = door_transform.translation + door.trigger_zone_offset;
+            let shape = Collider::cuboid(door.trigger_zone_size.x, door.trigger_zone_size.y, door.trigger_zone_size.z);
+
+            // Query for overlapping entities in the trigger zone
+            let filter = SpatialQueryFilter::default();
+            if let Some(hit) = spatial_query.cast_shape(
+                &shape,
+                trigger_center,
+                Quat::IDENTITY,
+                Dir3::Y,
+                &ShapeCastConfig::default().with_max_distance(0.01),
+                &filter,
+            ) {
+                // Check if the hit entity is a player
+                if player_query.get(hit.entity).is_ok() {
+                    door.player_in_trigger_zone = true;
+
+                    // Auto-open trigger doors when player enters
+                    if !door.locked && door.door_state == DoorCurrentState::Closed && !door.moving {
+                        door.enter = true;
+                    }
+                } else {
+                    door.player_in_trigger_zone = false;
+                }
+            } else {
+                door.player_in_trigger_zone = false;
+            }
+        }
+
+        // Check if door was found (first time interaction available)
         if door.use_event_on_door_found && !door.door_found {
             door_found_queue.0.push(DoorFoundEvent {
                 door_entity: entity,
