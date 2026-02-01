@@ -90,6 +90,10 @@ pub struct ClimbLedgeSystem {
     pub lose_ledge_action_activated: bool,
     pub grabbing_surface: bool,
     pub climb_ledge_action_paused: bool,
+    
+    // Ledge detection state
+    pub ledge_position: Vec3,
+    pub ledge_normal: Vec3,
 }
 
 impl Default for ClimbLedgeSystem {
@@ -171,6 +175,9 @@ impl Default for ClimbLedgeSystem {
             lose_ledge_action_activated: false,
             grabbing_surface: false,
             climb_ledge_action_paused: false,
+            
+            ledge_position: Vec3::ZERO,
+            ledge_normal: Vec3::ZERO,
         }
     }
 }
