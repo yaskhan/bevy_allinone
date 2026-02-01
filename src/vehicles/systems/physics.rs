@@ -364,7 +364,7 @@ pub fn update_vehicles_physics(
 /// Resource to track previous frame velocities for acceleration calculation
 #[derive(Resource, Default)]
 pub struct PassengerAccelerationTracker {
-    pub velocities: bevy::utils::HashMap<Entity, Vec3>,
+    pub velocities: std::collections::HashMap<Entity, Vec3>,
 }
 
 pub fn update_passenger_stability(
