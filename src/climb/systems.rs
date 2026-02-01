@@ -329,6 +329,7 @@ pub fn detect_ledge(
         &mut ClimbStateTracker,
         &CharacterController,
         &Transform,
+        &LinearVelocity,
     ), With<Player>>,
     ground_query: Query<(&GroundDetection, &GroundDetectionSettings)>,
 ) {
@@ -339,6 +340,7 @@ pub fn detect_ledge(
         mut _state_tracker,
         character,
         transform,
+        velocity,
     ) in query.iter_mut() {
         if !climb_system.climb_ledge_active ||
            !climb_system.can_use_climb_ledge ||
@@ -374,20 +376,25 @@ pub fn detect_ledge(
         if climb_system.only_grab_ledge_if_moving_forward {
             // Check if player is moving forward
             let player_forward = transform.forward();
-            let player_velocity_direction = if let Ok((ground_detection, _)) = ground_query.get(entity) {
+            let is_moving_forward = if let Ok((ground_detection, _)) = ground_query.get(entity) {
                 if ground_detection.is_grounded {
-                    // On ground - check movement input
-                    // For this we would need input state, but we don't have it in this system
-                    // We can check linear velocity magnitude
-                    true // Simplified for now
+                    // On ground - check if velocity is in forward direction
+                    if velocity.0.length() > 0.1 {
+                        let velocity_dir = velocity.0.normalize();
+                        let forward_dot = player_forward.dot(velocity_dir);
+                        // Moving forward if dot product is positive (angle < 90 degrees)
+                        forward_dot > 0.5
+                    } else {
+                        false // Not moving
+                    }
                 } else {
                     true // In air, allow grabbing
                 }
             } else {
                 true
             };
-            
-            if !player_velocity_direction {
+
+            if !is_moving_forward {
                 continue;
             }
         }

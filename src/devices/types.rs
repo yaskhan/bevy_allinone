@@ -538,7 +538,9 @@ pub struct DoorSystem {
     pub tag_list_to_open: Vec<String>,
     /// Movement type
     pub movement_type: DoorMovementType,
-    /// Door type info
+    /// Door type
+    pub door_type: DoorType,
+    /// Door type info (alias for door_type for compatibility)
     pub door_type_info: DoorType,
     /// Door state
     pub door_state: DoorCurrentState,
@@ -600,6 +602,12 @@ pub struct DoorSystem {
     pub original_open_speed: f32,
     /// Current player entity
     pub current_player: Option<Entity>,
+    /// Trigger zone offset from door position
+    pub trigger_zone_offset: Vec3,
+    /// Trigger zone size
+    pub trigger_zone_size: Vec3,
+    /// Player currently in trigger zone
+    pub player_in_trigger_zone: bool,
 }
 
 impl Default for DoorSystem {
@@ -608,6 +616,7 @@ impl Default for DoorSystem {
             doors_info: Vec::new(),
             tag_list_to_open: vec!["Player".to_string()],
             movement_type: DoorMovementType::Translate,
+            door_type: DoorType::Trigger,
             door_type_info: DoorType::Trigger,
             door_state: DoorCurrentState::Closed,
             locked: false,
@@ -639,6 +648,9 @@ impl Default for DoorSystem {
             disable_door_open_close_action: false,
             original_open_speed: 1.0,
             current_player: None,
+            trigger_zone_offset: Vec3::new(0.0, 0.0, 2.0),
+            trigger_zone_size: Vec3::new(2.0, 2.0, 2.0),
+            player_in_trigger_zone: false,
         }
     }
 }
