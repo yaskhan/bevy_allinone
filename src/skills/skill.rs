@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use super::types::*;
 
 /// Skill level
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Reflect)]
 pub struct SkillLevel {
     /// Description of skill level
     pub description: String,
@@ -19,7 +19,7 @@ pub struct SkillLevel {
 }
 
 /// Skill
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Reflect)]
 pub struct Skill {
     /// Skill name
     pub name: String,

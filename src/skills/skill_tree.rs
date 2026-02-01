@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use super::skill::Skill;
 
 /// Skill category
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Reflect)]
 pub struct SkillCategory {
     /// Category name
     pub name: String,
@@ -74,7 +74,7 @@ impl SkillCategory {
 }
 
 /// Skill tree
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Reflect)]
 pub struct SkillTree {
     /// Skill categories
     pub categories: Vec<SkillCategory>,
@@ -382,7 +382,7 @@ impl Default for SkillTree {
 }
 
 /// Skill template for save/load
-#[derive(Debug, Clone, Component)]
+#[derive(Debug, Clone, Component, Reflect)]
 pub struct SkillTemplate {
     /// Categories in template
     pub categories: Vec<SkillTemplateCategory>,
@@ -402,7 +402,7 @@ impl Default for SkillTemplate {
 }
 
 /// Category in template
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct SkillTemplateCategory {
     /// Category name
     pub name: String,
@@ -411,7 +411,7 @@ pub struct SkillTemplateCategory {
 }
 
 /// Skill info in template
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct SkillTemplateInfo {
     /// Skill name
     pub name: String,

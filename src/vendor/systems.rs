@@ -28,6 +28,7 @@ pub fn handle_purchase_events(
     mut vendor_query: Query<&mut VendorInventory>,
     mut currency_query: Query<&mut Currency>,
     mut purchase_failed_events: ResMut<PurchaseFailedEventQueue>,
+    stats_query: Query<&crate::stats::stats_system::StatsSystem>,
 ) {
     for event in purchase_events.0.drain(..) {
         let Ok(mut vendor_inventory) = vendor_query.get_mut(event.vendor_entity) else {
@@ -45,12 +46,41 @@ pub fn handle_purchase_events(
             continue;
         }
 
-        // Check availability (simplified - no level check)
-        let item_amount = vendor_inventory.items[event.item_index].amount;
-        let item_infinite = vendor_inventory.items[event.item_index].infinite;
-        let item_name = vendor_inventory.items[event.item_index].item.name.clone();
-        let item_buy_price = vendor_inventory.items[event.item_index].buy_price;
+        // Check compatibility (Level Check)
+        // Helper to extract item props
+        let item = &vendor_inventory.items[event.item_index];
+        let item_amount = item.amount;
+        let item_infinite = item.infinite;
+        let item_name = item.item.name.clone();
+        let item_buy_price = item.buy_price;
+        let item_min_level = item.min_level;
+        let item_use_vendor_level = item.use_vendor_min_level;
 
+        // Check compatibility (Level Check)
+        let mut level_ok = true;
+        
+        // If item has a specific requirement
+        if item_min_level > 0 && item_use_vendor_level {
+           if let Ok(stats) = stats_query.get(event.buyer_entity) {
+                // Assuming DerivedStat::Level exists and returns the current level
+                let player_level = stats.get_derived_stat(crate::stats::types::DerivedStat::Level).copied().unwrap_or(0.0); 
+                 if player_level < item_min_level as f32 {
+                     level_ok = false;
+                 }
+           }
+        }
+
+        if !level_ok {
+             purchase_failed_events.0.push(PurchaseFailedEvent {
+                buyer_entity: event.buyer_entity,
+                vendor_entity: event.vendor_entity,
+                reason: PurchaseFailureReason::LevelRequirementNotMet,
+                item_name: item_name.clone(),
+            });
+            continue;
+        }
+
+        // Check availability
         if item_amount == 0 && !item_infinite {
             purchase_failed_events.0.push(PurchaseFailedEvent {
                 buyer_entity: event.buyer_entity,

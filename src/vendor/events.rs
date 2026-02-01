@@ -3,7 +3,7 @@ use crate::inventory::InventoryItem;
 use super::types::{PurchaseFailureReason, SaleFailureReason};
 
 /// Event for purchasing an item from a vendor
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Event, Reflect)]
 pub struct PurchaseItemEvent {
     /// Entity of the vendor
     pub vendor_entity: Entity,
@@ -20,7 +20,7 @@ pub struct PurchaseItemEvent {
 pub struct PurchaseItemEventQueue(pub Vec<PurchaseItemEvent>);
 
 /// Event for selling an item to a vendor
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Event, Reflect)]
 pub struct SellItemEvent {
     /// Entity of the vendor
     pub vendor_entity: Entity,
@@ -36,7 +36,7 @@ pub struct SellItemEvent {
 pub struct SellItemEventQueue(pub Vec<SellItemEvent>);
 
 /// Event for when a purchase fails
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Event, Reflect)]
 pub struct PurchaseFailedEvent {
     /// Entity of the buyer
     pub buyer_entity: Entity,
@@ -52,7 +52,7 @@ pub struct PurchaseFailedEvent {
 pub struct PurchaseFailedEventQueue(pub Vec<PurchaseFailedEvent>);
 
 /// Event for when a sale fails
-#[derive(Debug, Clone, Event)]
+#[derive(Debug, Clone, Event, Reflect)]
 pub struct SaleFailedEvent {
     /// Entity of the seller
     pub seller_entity: Entity,

@@ -4,6 +4,8 @@ use bevy::app::App;
 pub mod types;
 pub mod systems;
 
+pub use types::*;
+
 pub struct FootstepPlugin;
 
 impl Plugin for FootstepPlugin {

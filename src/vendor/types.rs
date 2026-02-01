@@ -1,7 +1,8 @@
+use bevy::prelude::*;
 use crate::inventory::InventoryItem;
 
 /// Represents an item in the vendor's shop
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct ShopItem {
     /// Reference to the inventory item
     pub item: InventoryItem,
@@ -50,7 +51,7 @@ impl ShopItem {
 }
 
 /// Represents a category in the vendor's shop
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub struct VendorCategory {
     /// Category name
     pub name: String,
@@ -60,7 +61,7 @@ pub struct VendorCategory {
     pub item_count: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub enum PurchaseFailureReason {
     NotEnoughMoney,
     NotEnoughStock,
@@ -68,7 +69,7 @@ pub enum PurchaseFailureReason {
     ItemNotFound,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Reflect)]
 pub enum SaleFailureReason {
     ItemNotFound,
     NotEnoughStock,

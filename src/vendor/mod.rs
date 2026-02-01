@@ -26,13 +26,13 @@ impl Plugin for VendorPlugin {
     fn build(&self, app: &mut App) {
         app
             // Add events
-            .add_event::<PurchaseItemEvent>()
+            .register_type::<PurchaseItemEvent>()
             .init_resource::<PurchaseItemEventQueue>()
-            .add_event::<SellItemEvent>()
+            .register_type::<SellItemEvent>()
             .init_resource::<SellItemEventQueue>()
-            .add_event::<PurchaseFailedEvent>()
+            .register_type::<PurchaseFailedEvent>()
             .init_resource::<PurchaseFailedEventQueue>()
-            .add_event::<SaleFailedEvent>()
+            .register_type::<SaleFailedEvent>()
             .init_resource::<SaleFailedEventQueue>()
             
             // Add systems

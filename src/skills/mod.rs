@@ -31,7 +31,7 @@ impl Plugin for SkillsPlugin {
            .register_type::<SkillsSystem>();
 
         // Add events
-        app.add_event::<SkillSystemEvent>();
+        app.register_type::<SkillSystemEvent>();
 
         // Add systems
         app.add_systems(Update, skills_system_update);

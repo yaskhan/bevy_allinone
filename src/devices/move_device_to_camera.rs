@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy::app::App;
 use bevy::ui::{PositionType, Val, AlignSelf, JustifyContent, AlignItems, UiRect};
 use std::collections::HashSet;
+use crate::weapons::Weapon;
 
 // ============================================================================
 // COMPONENTS
@@ -326,11 +327,12 @@ pub struct ResetRotationAndPositionEventQueue(pub Vec<ResetRotationAndPositionEv
 pub fn handle_move_camera_to_device(
     mut device_query: Query<&mut MoveDeviceToCamera>,
     mut move_events: ResMut<MoveCameraToDeviceEventQueue>,
+    weapon_query: Query<&Weapon>,
     time: Res<Time>,
 ) {
     for event in move_events.0.drain(..) {
         if let Ok(mut device) = device_query.get_mut(event.device_entity) {
-            move_camera(&mut device, event.state, &time);
+            move_camera(&mut device, event.state, &weapon_query, &time);
         }
     }
 }
@@ -339,6 +341,7 @@ pub fn handle_move_camera_to_device(
 fn move_camera(
     device: &mut MoveDeviceToCamera,
     state: bool,
+    weapon_query: &Query<&Weapon>,
     time: &Res<Time>,
 ) {
     device.device_enabled = state;
@@ -385,7 +388,9 @@ fn move_camera(
             }
 
             if !device.keep_only_if_player_is_on_first_person || device.first_person_active {
-                device.carrying_weapons_previously = true; // Simplified
+                // Check if any weapons are currently equipped
+                let has_equipped_weapon = weapon_query.iter().any(|w| w.equipped || w.carrying);
+                device.carrying_weapons_previously = has_equipped_weapon;
 
                 if device.carrying_weapons_previously {
                     if device.disable_weapons_directly_on_start {
