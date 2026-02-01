@@ -28,14 +28,13 @@ impl Plugin for DialogPlugin {
             .register_type::<DialogChoice>()
             .register_type::<CompleteDialog>()
             .register_type::<DialogContent>()
-            .register_type::<DialogSystem>()
+            .register_type::<DialogSystem>();
             
-            // Add events
-            .add_event::<StartDialogEvent>()
-            .add_event::<NextDialogEvent>()
-            .add_event::<SelectDialogChoiceEvent>()
-            .add_event::<CloseDialogEvent>()
-            .add_event::<DialogCompletedEvent>()
+        app.register_type::<StartDialogEvent>()
+            .register_type::<NextDialogEvent>()
+            .register_type::<SelectDialogChoiceEvent>()
+            .register_type::<CloseDialogEvent>()
+            .register_type::<DialogCompletedEvent>()
             
             // Add systems
             .add_systems(Update, (

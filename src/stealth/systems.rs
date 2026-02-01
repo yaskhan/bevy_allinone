@@ -204,7 +204,6 @@ pub fn update_stealth_state(
                     0.0,
                     state.current_look_angle.x.to_radians(),
                     0.0,
-                    0.0,
                 );
                 
                 state.last_time_spring_rotation = time.elapsed_secs();

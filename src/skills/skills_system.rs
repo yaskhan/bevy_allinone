@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use super::skill_tree::SkillTree;
 
 /// Skills system component
-#[derive(Debug, Component)]
+#[derive(Debug, Component, Reflect)]
 pub struct SkillsSystem {
     /// Is skills system active
     pub active: bool,
