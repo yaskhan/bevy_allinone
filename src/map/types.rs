@@ -169,8 +169,26 @@ pub struct MapGlobalState {
 #[reflect(Component)]
 pub struct QuickTravelStation {
     pub destination: Vec3,
+    pub destination_name: String,
     pub is_active: bool,
     pub interact_message: String,
+    /// Maximum distance for interaction
+    pub interaction_distance: f32,
+    /// Allow interaction through walls without line-of-sight check
+    pub allow_through_walls: bool,
+}
+
+impl Default for QuickTravelStation {
+    fn default() -> Self {
+        Self {
+            destination: Vec3::ZERO,
+            destination_name: "Destination".to_string(),
+            is_active: true,
+            interact_message: "Travel".to_string(),
+            interaction_distance: 3.0,
+            allow_through_walls: false,
+        }
+    }
 }
 
 /// Component for map objectives (quests)

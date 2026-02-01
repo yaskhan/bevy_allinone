@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::ui::{Node, Val, UiRect, Display, FlexDirection, AlignItems, JustifyContent, PositionType};
+use avian3d::prelude::*;
 use crate::map::types::*;
 
 // ============================================================================
@@ -61,23 +62,64 @@ pub fn update_visible_map_elements(
     }
 }
 
-/// System to handle quick travel interaction (Simplified proximity for now)
+/// System to handle quick travel interaction with raycast validation.
+/// Uses proximity check combined with line-of-sight verification for more accurate interaction.
 pub fn handle_quick_travel(
-    mut player_query: Query<(&mut Transform, &crate::character::Player)>,
-    stations: Query<(&Transform, &QuickTravelStation), (Without<crate::character::Player>)>,
+    mut player_query: Query<(Entity, &mut Transform, &GlobalTransform, &crate::character::Player)>,
+    stations: Query<(Entity, &Transform, &GlobalTransform, &QuickTravelStation), (Without<crate::character::Player>)>,
     input: Res<ButtonInput<KeyCode>>,
+    spatial_query: SpatialQuery,
 ) {
-    let Some((mut player_transform, _)) = player_query.iter_mut().next() else { return };
+    let Some((player_entity, mut player_transform, player_global, _)) = player_query.iter_mut().next() else { return };
 
-    // Simple interaction: Press E near station
     if input.just_pressed(KeyCode::KeyE) {
-        for (station_transform, station) in stations.iter() {
-            if station.is_active && player_transform.translation.distance(station_transform.translation) < 2.0 {
-                info!("Quick Travel to: {}", station.destination);
-                player_transform.translation = station.destination;
-                // Ideally, we'd play an effect or sound here
-                return; // Teleport effectively happens instantly
+        let player_pos = player_global.translation();
+        let mut best_station: Option<(Vec3, &QuickTravelStation)> = None;
+        let mut best_distance = f32::MAX;
+
+        for (station_entity, _station_transform, station_global, station) in stations.iter() {
+            if !station.is_active {
+                continue;
             }
+
+            let station_pos = station_global.translation();
+            let distance = player_pos.distance(station_pos);
+
+            // Check proximity threshold
+            if distance > station.interaction_distance {
+                continue;
+            }
+
+            // Verify line of sight using raycast (skip if station has allow_through_walls)
+            if !station.allow_through_walls {
+                let dir_to_station = (station_pos - player_pos).normalize();
+                let filter = SpatialQueryFilter::from_excluded_entities([player_entity, station_entity]);
+
+                if let Some(hit) = spatial_query.cast_ray(
+                    player_pos + Vec3::Y * 1.5, // Eye level
+                    Dir3::new(dir_to_station).unwrap_or(Dir3::Y),
+                    distance,
+                    true,
+                    &filter,
+                ) {
+                    // If we hit something before the station, it's blocked
+                    if hit.distance < distance - 0.5 {
+                        continue;
+                    }
+                }
+            }
+
+            // Select closest valid station
+            if distance < best_distance {
+                best_distance = distance;
+                best_station = Some((station_pos, station));
+            }
+        }
+
+        if let Some((station_pos, station)) = best_station {
+            info!("Quick Travel to: {} (from {:?})", station.destination_name, station_pos);
+            player_transform.translation = station.destination;
+            // TODO: Trigger teleport effect/sound
         }
     }
 }

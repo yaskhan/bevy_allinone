@@ -154,14 +154,36 @@ pub fn update_vehicles_physics(
         // --- Specialized Physics ---
         match vehicle.vehicle_type {
             VehicleType::Motorcycle => {
-                // Lean into turns
-                let target_lean = -vehicle.steer_input * 25.0; // Max 25 degrees
-                vehicle.chassis_lean_y = vehicle.chassis_lean_y.lerp(target_lean, delta * 5.0);
-                
-                // Stabilization force for two wheels (simplified)
+                // Progressive lean into turns based on speed and steering
+                let speed_factor = (vehicle.current_speed / vehicle.max_forward_speed).clamp(0.0, 1.0);
+                let target_lean = -vehicle.steer_input * 35.0 * speed_factor; // Max 35 degrees at max speed
+                vehicle.chassis_lean_y = vehicle.chassis_lean_y.lerp(target_lean, delta * 4.0);
+
+                // Advanced stabilization for two-wheeled vehicles
                 if vehicle.is_on_ground {
-                    let roll_error = angular_vel.x;
-                    angular_vel.x -= roll_error * 5.0 * delta;
+                    // Calculate desired up vector based on lean
+                    let lean_rad = vehicle.chassis_lean_y.to_radians();
+                    let desired_up = Vec3::new(lean_rad.sin(), lean_rad.cos(), 0.0);
+
+                    // Current up vector
+                    let current_up = transform.up();
+
+                    // Calculate angular error
+                    let roll_error = current_up.cross(desired_up);
+                    let pitch_error = angular_vel.z; // Forward tilt
+
+                    // Apply corrective torques with damping
+                    let stabilizing_torque_roll = roll_error * vehicle.stability_force * 10.0;
+                    let damping_torque_roll = -angular_vel.x * vehicle.stability_force * 2.0;
+
+                    angular_vel.x += (stabilizing_torque_roll.x + damping_torque_roll) * delta;
+                    angular_vel.z += pitch_error * vehicle.stability_force * delta;
+
+                    // Counter-steering effect at low speeds
+                    if vehicle.current_speed < 5.0 {
+                        let counter_steer = vehicle.steer_input * vehicle.current_speed * 0.5;
+                        angular_vel.y += counter_steer * delta;
+                    }
                 }
             }
             VehicleType::Hovercraft => {
@@ -177,49 +199,87 @@ pub fn update_vehicles_physics(
                 }
             }
             VehicleType::Aircraft => {
-                // Fixed-wing aircraft physics
+                // Fixed-wing aircraft physics with coordinated turn mechanics
                 if vehicle.is_turned_on {
                     let forward_speed = velocity.dot(*forward).max(0.0);
-                    let local_velocity = transform.to_matrix().inverse().transform_point3((*velocity).0);
-                    
-                    // Throttle & Engine Power
+                    let speed_factor = (forward_speed / vehicle.max_forward_speed).clamp(0.0, 1.0);
+
+                    // Throttle & Engine Power with speed-dependent thrust
                     let throttle = vehicle.motor_input.clamp(0.0, 1.0);
-                    let engine_power = throttle * vehicle.engine_torque + (if vehicle.is_boosting { vehicle.boost_multiplier * 50.0 } else { 0.0 });
+                    let thrust_efficiency = 1.0 - (speed_factor * 0.3); // Less efficient at high speeds
+                    let engine_power = throttle * vehicle.engine_torque * thrust_efficiency
+                        + if vehicle.is_boosting { vehicle.boost_multiplier * 50.0 } else { 0.0 };
                     velocity.0 += *forward * engine_power * delta;
 
-                    // Aerodynamics: align velocity with forward direction
+                    // Aerodynamics: induced drag and parasitic drag
                     if velocity.length() > 1.0 {
-                        let aero_factor = forward.dot(velocity.normalize()).powi(2);
-                        let target_vel = *forward * forward_speed;
-                        velocity.0 = velocity.0.lerp(target_vel, aero_factor * forward_speed * vehicle.aero_dynamic_force * delta);
-                        
-                        // Stall logic: rotate downward if speed is low
-                        let stall_rotation = Quat::from_rotation_arc(*forward, velocity.normalize());
-                        angular_vel.0 = angular_vel.0.lerp(stall_rotation.to_scaled_axis(), vehicle.aero_dynamic_force * delta);
+                        let aero_factor = forward.dot(velocity.normalize());
+                        let induced_drag = (1.0 - aero_factor.abs()) * forward_speed * vehicle.aero_dynamic_force;
+                        let parasitic_drag = forward_speed * forward_speed * 0.001;
+
+                        velocity.0 *= 1.0 - (induced_drag + parasitic_drag) * delta;
+
+                        // Stall logic: progressive loss of control at low speeds
+                        let stall_speed = vehicle.max_forward_speed * 0.25;
+                        if forward_speed < stall_speed {
+                            let stall_factor = 1.0 - (forward_speed / stall_speed).clamp(0.0, 1.0);
+                            // Nose drops and control surfaces lose effectiveness
+                            angular_vel.x += stall_factor * 2.0 * delta; // Pitch down
+                        }
                     }
 
-                    // Lift
-                    let lift_direction = velocity.cross(*right).normalize();
-                    let zero_lift_factor = (1.0 - (forward_speed / 300.0)).clamp(0.0, 1.0);
-                    let lift_power = forward_speed * forward_speed * vehicle.lift_amount * zero_lift_factor;
-                    velocity.0 += lift_direction * lift_power * delta * 100.0; // Scaled for physics
+                    // Lift with realistic lift curve (stalls at high angle of attack)
+                    let lift_direction = velocity.cross(*right).normalize_or_zero();
+                    let dynamic_pressure = forward_speed * forward_speed;
+                    let angle_of_attack = forward.dot(velocity.normalize()).acos().min(std::f32::consts::FRAC_PI_2);
+                    let lift_coefficient = (angle_of_attack.sin() * 2.0).clamp(0.0, 1.5); // Simplified lift curve
+                    let lift_power = dynamic_pressure * vehicle.lift_amount * lift_coefficient;
+                    velocity.0 += lift_direction * lift_power * delta * 50.0;
 
-                    // Control Torque (Pitch, Yaw, Roll)
-                    let pitch = -vehicle.steer_input_speed * vehicle.pitch_force; // Using stick vertical or separate vertical axis if needed
-                    let yaw = vehicle.steer_input * vehicle.yaw_force;
-                    let roll = -vehicle.steer_input * vehicle.roll_force; // Simplified mapping for now
+                    // Control inputs with speed-dependent authority
+                    let control_authority = speed_factor.clamp(0.2, 1.0);
+
+                    // Pitch: controlled by vertical input (stick pitch)
+                    let pitch_input = -vehicle.steer_input_speed; // Negative for pull-up
+                    let pitch_torque = pitch_input * vehicle.pitch_force * control_authority;
+
+                    // Yaw: coordinated with roll for turns
+                    let yaw_input = vehicle.steer_input;
+                    let yaw_torque = yaw_input * vehicle.yaw_force * control_authority;
+
+                    // Roll: bank into turns using coordinated turn calculation
+                    // In a coordinated turn: tan(roll) = v^2 / (r * g) where r is turn radius
+                    // Simplified: roll proportional to yaw input and speed squared
+                    let target_roll = -vehicle.steer_input * 45.0 * speed_factor; // Max 45 degree bank
+                    let current_roll = up.dot(*right).asin().to_degrees(); // Current bank angle
+                    let roll_error = target_roll - current_roll;
+                    let roll_torque = roll_error.signum() * vehicle.roll_force * control_authority
+                        + roll_error * 0.1; // Add proportional correction
 
                     let mut torque = Vec3::ZERO;
-                    torque += *right * (vehicle.motor_input * vehicle.pitch_force); // Pitch
-                    torque += *up * (vehicle.steer_input * vehicle.yaw_force); // Yaw
-                    torque += *forward * (vehicle.boost_input * vehicle.roll_force); // Roll (placeholder mapping)
+                    torque += *right * (pitch_torque * 0.5 + vehicle.motor_input * vehicle.pitch_force * 0.3);
+                    torque += *up * yaw_torque;
+                    torque += *forward * roll_torque;
 
-                    angular_vel.0 += torque * forward_speed * 0.01 * delta;
-                    
-                    // Stability: level out if no input
-                    if vehicle.steer_input.abs() < 0.1 {
-                        let roll_error = up.dot(*right); // Sin of roll angle
+                    angular_vel.0 += torque * forward_speed * 0.02 * delta;
+
+                    // Advanced stability: artificial horizon and dampening
+                    let roll_damping = -angular_vel.dot(*forward) * 0.5;
+                    let pitch_damping = -angular_vel.dot(*right) * 0.5;
+                    let yaw_damping = -angular_vel.dot(*up) * 0.3;
+
+                    angular_vel.0 += *forward * roll_damping * delta;
+                    angular_vel.0 += *right * pitch_damping * delta;
+                    angular_vel.0 += *up * yaw_damping * delta;
+
+                    // Auto-leveling when no input
+                    if vehicle.steer_input.abs() < 0.1 && vehicle.steer_input_speed.abs() < 0.1 {
+                        // Level roll
+                        let roll_error = up.dot(*right);
                         angular_vel.0 -= *forward * roll_error * vehicle.stability_force * delta;
+                        // Level pitch (slight nose-up trim)
+                        let pitch_error = up.dot(*forward) - 0.1;
+                        angular_vel.0 -= *right * pitch_error * vehicle.stability_force * 0.5 * delta;
                     }
                 }
             }
@@ -301,29 +361,74 @@ pub fn update_vehicles_physics(
     }
 }
 
+/// Resource to track previous frame velocities for acceleration calculation
+#[derive(Resource, Default)]
+pub struct PassengerAccelerationTracker {
+    pub velocities: bevy::utils::HashMap<Entity, Vec3>,
+}
+
 pub fn update_passenger_stability(
     time: Res<Time>,
-    vehicle_query: Query<(&Vehicle, &LinearVelocity, &AngularVelocity, Option<&Children>)>,
+    mut tracker: ResMut<PassengerAccelerationTracker>,
+    vehicle_query: Query<(Entity, &Vehicle, &LinearVelocity, &AngularVelocity, &Transform, Option<&Children>)>,
     mut stability_query: Query<(&mut VehiclePassengerStability, &mut Transform)>,
 ) {
     let delta = time.delta_secs();
+    const GRAVITY: f32 = 9.81;
 
-    for (_vehicle, _lin_vel, ang_vel, children) in vehicle_query.iter() {
-        let Some(children) = children else { continue; };
-        // Calculate G-forces based on acceleration (simplified via velocity changes)
-        // We'll use angular velocity and rotation for leaning
-        let local_ang_vel = ang_vel.0; 
-        
+    for (vehicle_entity, _vehicle, lin_vel, ang_vel, transform, children) in vehicle_query.iter() {
+        let Some(children) = children else { continue };
+
+        // Calculate linear acceleration (delta-v / delta-t)
+        let prev_vel = tracker.velocities.get(&vehicle_entity).copied().unwrap_or(lin_vel.0);
+        let linear_accel = (lin_vel.0 - prev_vel) / delta.max(0.001);
+
+        // Update stored velocity
+        tracker.velocities.insert(vehicle_entity, lin_vel.0);
+
+        // Transform acceleration to local space
+        let local_accel = transform.rotation.inverse() * linear_accel;
+
+        // Calculate centrifugal/centripetal acceleration from rotation
+        // a_c = ω × (ω × r) where r is offset from center of rotation
+        // Simplified: lateral accel from yaw, vertical from pitch, longitudinal from roll
+        let centripetal_accel = Vec3::new(
+            -ang_vel.y.powi(2) * 0.5, // Lateral from yaw (turning)
+            ang_vel.x.powi(2) * 0.3,  // Vertical from pitch
+            -ang_vel.z.powi(2) * 0.5, // Longitudinal from roll
+        );
+
+        // Total G-force in local space (1.0 = normal gravity)
+        let total_g_force = Vec3::new(
+            (-local_accel.x / GRAVITY) + centripetal_accel.x,
+            1.0 + (-local_accel.y / GRAVITY) + centripetal_accel.y,
+            (-local_accel.z / GRAVITY) + centripetal_accel.z,
+        );
+
         for child in children.iter() {
             if let Ok((mut stability, mut transform)) = stability_query.get_mut(child) {
                 if !stability.enabled { continue; }
 
-                // Target lean depends on lateral acceleration and turning
-                let target_lean_x = local_ang_vel.y * stability.lean_amount; // Leaning back/forward
-                let target_lean_z = -local_ang_vel.x * stability.lean_amount; // Leaning side to side
+                // Calculate target lean based on G-forces
+                // Passengers lean INTO the acceleration (opposite to G-force direction)
+                // Scale by lean_amount for sensitivity tuning
+
+                // Lateral lean (rolling into turns)
+                let target_lean_z = total_g_force.x * stability.lean_amount;
+
+                // Longitudinal lean (pitching under braking/acceleration)
+                let target_lean_x = -total_g_force.z * stability.lean_amount * 0.7;
+
+                // Vertical compression/stretch (subtle)
+                let target_scale_y = 1.0 - (total_g_force.y - 1.0).abs() * 0.05;
 
                 let target_lean = Vec3::new(target_lean_x, 0.0, target_lean_z);
-                stability.current_lean = stability.current_lean.lerp(target_lean, delta * stability.stability_speed);
+
+                // Smooth interpolation
+                stability.current_lean = stability.current_lean.lerp(
+                    target_lean,
+                    delta * stability.stability_speed
+                );
 
                 // Apply rotation to the passenger entity (usually child of seat)
                 transform.rotation = Quat::from_euler(
@@ -331,6 +436,12 @@ pub fn update_passenger_stability(
                     stability.current_lean.x,
                     stability.current_lean.y,
                     stability.current_lean.z,
+                );
+
+                // Optional: Apply subtle vertical scaling under high G
+                transform.scale.y = transform.scale.y.lerp(
+                    target_scale_y.clamp(0.9, 1.1),
+                    delta * stability.stability_speed
                 );
             }
         }
