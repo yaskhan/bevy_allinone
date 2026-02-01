@@ -34,7 +34,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Vehicles System](./vehicles_system.md)** - Complete vehicle physics, seating, weapons, and damage systems
 - **[Climb System](./climb_system.md)** - Parkour, wall running, and ledge hanging
 - **[Stealth System](./stealth_system.md)** - Stealth mechanics, including detection, evasion, and alert systems
-
+- **[Grab System](./grab_system.md)** - Grab mechanics, including picking up, throwing, and carrying objects
  
 ## About This Documentation
  
