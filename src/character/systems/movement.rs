@@ -50,7 +50,18 @@ pub fn apply_character_physics(
         };
 
         // Obstacle detection affects movement
-        let final_move_dir = if movement.obstacle_found { Vec3::ZERO } else { move_dir };
+        let mut final_move_dir = if movement.obstacle_found { Vec3::ZERO } else { move_dir };
+
+        // Slope Sliding
+        if movement.slope_slide_active && ground.is_grounded {
+            let normal = ground.ground_normal;
+            let down = -Vec3::Y;
+            // Project down vector onto plane: v_proj = v - (v . n) * n
+            let slide = (down - down.dot(normal) * normal).normalize_or_zero();
+            // Override with slide direction
+            final_move_dir = slide;
+        }
+
         let target_vel = final_move_dir * movement.current_speed;
         
         velocity.x = target_vel.x;
