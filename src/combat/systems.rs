@@ -200,7 +200,7 @@ pub fn update_timers(
     }
 }
 
-/// System to perform basic melee attacks (Simplified from original combat.rs).
+/// System to perform basic melee attacks with combo support and spatial hit detection.
 pub fn perform_melee_attacks(
     time: Res<Time>,
     input: Res<InputState>,
