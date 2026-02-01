@@ -163,13 +163,13 @@ pub fn update_ladder_movement(
         &mut Transform,
         &mut CharacterController,
     ), With<Player>>,
-    ladder_query: Query<&GlobalTransform, With<LadderSystem>>, // Added query
+    ladder_query: Query<(&GlobalTransform, Option<&LadderDirection>), With<LadderSystem>>, 
 ) {
     for (
         mut ladder_system,
         mut ladder_movement,
         mut _ladder_tracker,
-        mut ladder_exit,
+        ladder_exit,
         mut transform,
         mut _character,
     ) in query.iter_mut() {
@@ -177,8 +177,7 @@ pub fn update_ladder_movement(
             continue;
         }
 
-        // Get ladder direction transform (simplified for refactor)
-        // In full implementation would get from `ladder_system.ladder_direction_transform`
+        // Get ladder direction transform
         let mut ladder_direction = Vec3::Y; // Default upward
         let mut ladder_right = Vec3::X; // Default right
 
@@ -187,10 +186,15 @@ pub fn update_ladder_movement(
         let mut has_ladder_transform = false;
 
         if let Some(ladder_entity) = ladder_system.current_ladder_system {
-             if let Ok(ladder_gt) = ladder_query.get(ladder_entity) {
-                 // Assuming ladder's up is its local Y, and right is local X
-                 // Adjust based on your actual ladder prefab orientation
-                 ladder_direction = ladder_gt.up().as_vec3(); 
+             if let Ok((ladder_gt, maybe_direction)) = ladder_query.get(ladder_entity) {
+                 if let Some(dir_comp) = maybe_direction {
+                     // If we have explicit direction component, rotate it by ladder's rotation
+                     ladder_direction = ladder_gt.rotation() * dir_comp.direction;
+                 } else {
+                     // Fallback to local Y
+                     ladder_direction = ladder_gt.up().as_vec3(); 
+                 }
+                 
                  ladder_right = ladder_gt.right().as_vec3();
                  ladder_translation = ladder_gt.translation();
                  has_ladder_transform = true;
@@ -370,7 +374,7 @@ pub fn handle_ladder_mount(
     ladder_query: Query<&GlobalTransform, With<LadderSystem>>, // Added query
 ) {
     for (
-        mut ladder_system,
+        ladder_system,
         mut _ladder_movement,
         mut ladder_tracker,
         mut ladder_animation,

@@ -58,6 +58,7 @@ pub struct SimpleSwitchSystemParams<'w, 's> {
     pub character_query: Query<'w, 's, &'static CharacterController>,
     pub input_state: Res<'w, InputState>,
     pub event_writer: ResMut<'w, SimpleSwitchEventQueue>,
+    pub animation_player_query: Query<'w, 's, &'static mut AnimationPlayer>,
 }
 
 // ============================================================================
@@ -72,7 +73,14 @@ pub fn handle_simple_switch_activation(
     for event in interaction_events.0.drain(..) {
         if let InteractionType::Activate = event.interaction_type {
             if let Ok(mut switch) = params.switch_query.get_mut(event.target) {
-                activate_switch(&mut params.event_writer, &mut params.device_string_action_query, &mut switch, event.target);
+                activate_switch(
+                    &mut params.event_writer,
+                    &mut params.device_string_action_query,
+                    &mut params.animation_player_query,
+                    &mut params.commands,
+                    &mut switch,
+                    event.target
+                );
             }
         }
     }
@@ -82,6 +90,8 @@ pub fn handle_simple_switch_activation(
 fn activate_switch(
     event_writer: &mut SimpleSwitchEventQueue,
     device_string_action_query: &mut Query<'_, '_, &'static mut DeviceStringAction>,
+    animation_player_query: &mut Query<'_, '_, &'static mut AnimationPlayer>,
+    commands: &mut Commands,
     switch: &mut SimpleSwitch,
     switch_entity: Entity,
 ) {
@@ -96,8 +106,43 @@ fn activate_switch(
         if !switch.not_usable_while_animation_is_playing {
             can_use_button = true;
         } else {
-            // Animation check would go here - simplified for Bevy
-            can_use_button = true;
+            // Animation check
+            if let Some(anim_entity) = &switch.animation {
+                 // If the animation entity has a player, check if it's playing
+                 // Note: This assumes 'animation' field on switch points to entity with AnimationPlayer
+                 // Or we check the switch entity itself if it has the player?
+                 // Usually the switch component is on the root, and animation player might be there or on child.
+                 // let's assume valid entity is stored in `switch.animation` which is a Handle<AnimationClip>.
+                 // Wait, switch.animation is Option<Handle<AnimationClip>> in types.rs line 1241.
+                 // We need the ENTITY that has the AnimationPlayer.
+                 // Checking types.rs... `switch.animation` is Handle<AnimationClip>.
+                 // We don't have a direct reference to the entity with AnimationPlayer in `SimpleSwitch` struct 
+                 // other than `switch_entity` itself or children.
+                 // Let's assume the AnimationPlayer is on the switch_entity for now, or we iterate children?
+                 // The "Simplified for Bevy" comment implies we didn't have the logic.
+                 // Code assumes `switch_entity` might have it.
+                 
+                 if let Ok(_player) = animation_player_query.get(switch_entity) {
+                     // TODO: Implement is_playing check with AnimationPlayer/Graph
+                     /*
+                     if player.is_playing() {
+                         can_use_button = false;
+                     } else {
+                         can_use_button = true;
+                     }
+                     */
+                     can_use_button = true;
+                 } else {
+                     // No animation player found, so we can use it
+                     can_use_button = true;
+                 }
+            }
+            // If check passed or no animation player
+            if !can_use_button {
+                 // Double check logic: logic above sets it.
+            } else {
+                can_use_button = true;
+            }
         }
     } else {
         can_use_button = true;
@@ -108,15 +153,18 @@ fn activate_switch(
     }
 
     // Play sound
-    if let Some(audio_source) = switch.audio_source {
-        // Play audio - simplified
+    if let Some(audio_source) = &switch.press_sound {
+        commands.spawn((
+            AudioPlayer(audio_source.clone()),
+            PlaybackSettings::ONCE,
+        ));
     }
 
     if switch.use_single_switch {
-        play_single_animation(switch);
+        play_single_animation(switch, switch_entity, animation_player_query);
     } else {
         switch.switch_turned_on = !switch.switch_turned_on;
-        play_dual_animation(switch, switch.switch_turned_on);
+        play_dual_animation(switch, switch_entity, animation_player_query, switch.switch_turned_on);
         set_device_string_action_state(device_string_action_query, switch, switch.switch_turned_on);
     }
 
@@ -180,10 +228,15 @@ fn activate_switch(
 /// Play single animation (momentary)
 fn play_single_animation(
     switch: &mut SimpleSwitch,
+    entity: Entity,
+    animation_player_query: &mut Query<'_, '_, &'static mut AnimationPlayer>,
 ) {
-    // In Bevy, we'd play the animation clip
-    // For now, just log
-    info!("Playing single animation: {}", switch.switch_animation_name);
+    if let Some(_clip) = &switch.animation {
+        if let Ok(_player) = animation_player_query.get_mut(entity) {
+            // TODO: Implement with AnimationGraph
+            // player.play(clip.clone()).set_speed(switch.animation_speed);
+        }
+    }
     
     // Reset first animation play flag
     switch.first_animation_play = false;
@@ -192,13 +245,29 @@ fn play_single_animation(
 /// Play dual animation (toggle)
 fn play_dual_animation(
     switch: &mut SimpleSwitch,
+    entity: Entity,
+    animation_player_query: &mut Query<'_, '_, &'static mut AnimationPlayer>,
     play_forward: bool,
 ) {
-    // In Bevy, we'd play the animation clip forward or backward
-    info!(
-        "Playing dual animation: {} (forward: {})",
-        switch.switch_animation_name, play_forward
-    );
+    if let Some(clip) = &switch.animation {
+        if let Ok(_player) = animation_player_query.get_mut(entity) {
+            if play_forward {
+                // TODO: Implement with AnimationGraph
+                // player.play(clip.clone()).set_speed(switch.animation_speed);
+            } else {
+                // To play backward, we might need a separate clip or use speed -1 if supported/looping?
+                // Standard Bevy animation doesn't always support simple "reverse" of a Once clip well without seeking to end.
+                // But let's try negative speed.
+                // player.play(clip.clone()).set_speed(-switch.animation_speed);
+                // If speed is negative, we might need to seek to end first? 
+                // For now, assuming standard speed control works or user has configured it.
+                 if !switch.first_animation_play {
+                     // If it's not the first time, we might want to ensure we start from valid time
+                     // player.seek_to(clip_duration); // We don't have duration here easily without assets.
+                 }
+            }
+        }
+    }
     
     if switch.first_animation_play {
         switch.first_animation_play = false;

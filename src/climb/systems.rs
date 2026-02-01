@@ -28,7 +28,7 @@ pub fn handle_climb_input(
         entity,
         mut climb_system,
         mut state_tracker,
-        mut _auto_hang,
+        mut auto_hang,
         mut _grab_surface,
         mut ledge_jump,
         character,
@@ -89,28 +89,30 @@ pub fn handle_climb_input(
                 let player_pos = _transform.translation;
                 let forward = _transform.forward();
                 let ray_origin = player_pos + Vec3::new(0.0, 1.0, 0.0); // Eye level
-                let ray_dir = forward.normalize();
-                let ray_length = 2.0; // Max reach distance
-                
-                let filter = SpatialQueryFilter::from_excluded_entities([entity]);
-                
-                if let Some(hit) = spatial_query.cast_ray(
-                    ray_origin,
-                    Dir3::from(ray_dir),
-                    ray_length,
-                    true,
-                    &filter,
-                ) {
-                    // Check if surface is grabbable (not too steep)
-                    let surface_normal = hit.normal;
-                    let up_dot = surface_normal.dot(Vec3::Y);
+                // Use Dir3::new to handle Vec3 -> Dir3 conversion safely
+                let ray_dir_vec = forward.normalize();
+                let ray_length = 2.0;
+                if let Ok(ray_dir) = Dir3::new(ray_dir_vec) {
+                    let filter = SpatialQueryFilter::from_excluded_entities([entity]);
                     
-                    // Surface is grabbable if it's somewhat vertical (not floor or ceiling)
-                    if up_dot > -0.3 && up_dot < 0.7 {
-                        // Surface is vertical enough to grab
-                        climb_system.grabbing_surface = true;
-                        climb_system.ledge_position = hit.point;
-                        climb_system.ledge_normal = surface_normal;
+                    if let Some(hit) = spatial_query.cast_ray(
+                        ray_origin,
+                        ray_dir,
+                        ray_length,
+                        true,
+                        &filter,
+                    ) {
+                        // Check if surface is grabbable (not too steep)
+                        let surface_normal = hit.normal;
+                        let up_dot = surface_normal.dot(Vec3::Y);
+                        
+                        // Surface is grabbable if it's somewhat vertical (not floor or ceiling)
+                        if up_dot > -0.3 && up_dot < 0.7 {
+                            // Surface is vertical enough to grab
+                            climb_system.grabbing_surface = true;
+                            // Calculate hit point: origin + dir * distance
+                            climb_system.ledge_position = ray_origin + ray_dir_vec * hit.distance;
+                            climb_system.ledge_normal = surface_normal;
                         
                         // Set state to hanging
                         state_tracker.current_state = ClimbState::Hanging;
@@ -119,6 +121,7 @@ pub fn handle_climb_input(
                         velocity.0 = Vec3::ZERO;
                     }
                 }
+            }
             }
         }
 
@@ -280,7 +283,7 @@ pub fn update_climb_visuals(
     ), With<Player>>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
 ) {
-    for (climb_system, _auto_hang, player_transform) in query.iter_mut() {
+    for (mut climb_system, _auto_hang, player_transform) in query.iter_mut() {
         if !climb_system.climb_ledge_active {
             continue;
         }
@@ -294,12 +297,12 @@ pub fn update_climb_visuals(
 
             // Update icon position based on ledge position
             // This involves projecting the 3D ledge position to screen space
-            if let Ok((camera, camera_transform)) = camera_query.get_single() {
+            if let Some((camera, camera_transform)) = camera_query.iter().next() {
                 let ledge_world_pos = climb_system.ledge_position;
-                let camera_pos = camera_transform.translation();
+                // let camera_pos = camera_transform.translation(); // Unused
                 
                 // Project world position to screen space
-                if let Some(screen_pos) = camera.world_to_viewport(camera_transform, ledge_world_pos) {
+                if let Ok(screen_pos) = camera.world_to_viewport(camera_transform, ledge_world_pos) {
                     // Here you would update the UI element position
                     // For example, positioning a hang icon sprite or UI element
                     // This is where you'd update the UI node position
@@ -308,7 +311,7 @@ pub fn update_climb_visuals(
                     // ui_commands.entity(hang_icon_entity).set_position(screen_pos);
                     
                     // For now, we can store the screen position for UI systems to use
-                    climb_system.current_distance_to_target = screen_pos.distance(Vec2::new(0.5, 0.5)); // Distance from screen center
+                    climb_system.current_distance_to_target = screen_pos.distance(Vec2::new(0.5f32, 0.5f32)); // Distance from screen center
                 }
             }
         }
@@ -396,7 +399,8 @@ pub fn detect_ledge(
         
         // Cast forward ray to detect wall/obstacle
         let forward_ray_origin = player_pos + Vec3::new(0.0, 1.0, 0.0); // Eye level
-        let forward_ray_dir = Dir3::from(player_forward.normalize());
+        // transform.forward() returns Dir3, use it directly
+        let forward_ray_dir = player_forward;
         let forward_ray_length = climb_system.climb_ledge_ray_forward_distance;
         
         let filter = SpatialQueryFilter::from_excluded_entities([entity]);
@@ -409,7 +413,10 @@ pub fn detect_ledge(
             &filter,
         ) {
             // Wall/obstacle found, now cast downward ray to check for ledge
-            let down_ray_origin = forward_hit.point + Vec3::new(0.0, 0.1, 0.0); // Slightly above hit point
+            // Calculate hit point manually
+            let forward_hit_point = forward_ray_origin + forward_ray_dir.as_vec3() * forward_hit.distance;
+            
+            let down_ray_origin = forward_hit_point + Vec3::new(0.0, 0.1, 0.0); // Slightly above hit point
             let down_ray_dir = Dir3::NEG_Y;
             let down_ray_length = climb_system.climb_ledge_ray_down_distance;
             
@@ -420,8 +427,11 @@ pub fn detect_ledge(
                 true,
                 &filter,
             ) {
+                // Calculate down hit point manually
+                let down_hit_point = down_ray_origin + (-Vec3::Y) * down_hit.distance;
+
                 // Ledge found - there's a surface below the wall
-                let ledge_height = forward_hit.point.y - down_hit.point.y;
+                let ledge_height = forward_hit_point.y - down_hit_point.y;
                 
                 // Check if ledge is climbable height (between 0.5 and 3.0 meters typically)
                 if ledge_height > 0.5 && ledge_height < 3.0 {
@@ -435,12 +445,12 @@ pub fn detect_ledge(
                         climb_system.ledge_zone_found = true;
                         climb_system.can_start_to_climb_ledge = true;
                         climb_system.surface_to_hang_on_ground_found = true;
-                        climb_system.ledge_position = down_hit.point;
+                        climb_system.ledge_position = down_hit_point;
                         climb_system.ledge_normal = surface_normal;
                         
                         // Update ledge detection results
                         _ledge_detection.ledge_found = true;
-                        _ledge_detection.ledge_position = down_hit.point;
+                        _ledge_detection.ledge_position = down_hit_point;
                         _ledge_detection.ledge_normal = surface_normal;
                         _ledge_detection.ledge_distance = forward_hit.distance;
                         _ledge_detection.ledge_height = ledge_height;
@@ -528,7 +538,8 @@ pub fn detect_ledge_below(
                 if distance_to_surface > 0.3 && distance_to_surface < 2.0 {
                     // Surface could be a hang point
                     climb_system.surface_to_hang_on_ground_found = true;
-                    climb_system.ledge_position = down_hit.point;
+                    // Calculate hit point manualy
+                    climb_system.ledge_position = down_ray_origin + (-Vec3::Y) * distance_to_surface;
                     climb_system.ledge_normal = surface_normal;
                     
                     // Additional checks for ledge validity
@@ -565,10 +576,10 @@ pub fn update_climb_movement(
     ), With<Player>>,
 ) {
     for (
-        climb_system,
+        mut climb_system,
         mut climb_movement,
         state_tracker,
-        character,
+        _character,
         mut transform,
     ) in query.iter_mut() {
         if !climb_movement.is_active {
@@ -651,7 +662,7 @@ pub fn handle_auto_hang(
         &mut ClimbMovement,
         &mut ClimbStateTracker,
         &CharacterController,
-        &Transform,
+        &mut Transform,
         &mut LinearVelocity,
     ), With<Player>>,
 ) {
@@ -660,8 +671,8 @@ pub fn handle_auto_hang(
         mut auto_hang,
         mut climb_movement,
         mut state_tracker,
-        character,
-        transform,
+        _character,
+        mut transform,
         mut velocity,
     ) in query.iter_mut() {
         if !auto_hang.active {

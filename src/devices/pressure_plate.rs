@@ -50,30 +50,34 @@ pub struct PressurePlateDeactivatedQueue(pub Vec<PressurePlateDeactivated>);
 
 /// System to handle collision detection for pressure plates
 pub fn handle_pressure_plate_collisions(
-    mut plate_query: Query<(Entity, &mut PressurePlate, &Transform, Option<&Collider>)>,
-    // collision_events: Res<Events<Collision>>,
-    transform_query: Query<&Transform>,
+    mut plate_query: Query<(Entity, &mut PressurePlate, &CollidingEntities)>,
+    name_query: Query<&Name>,
     mut activated_queue: ResMut<PressurePlateActivatedQueue>,
     mut deactivated_queue: ResMut<PressurePlateDeactivatedQueue>,
 ) {
-    // Note: In Bevy 0.18 with avian3d, collision detection works differently
-    // This is a simplified version
-    
-    for (entity, mut plate, plate_transform, maybe_collider) in plate_query.iter_mut() {
+    for (entity, mut plate, colliding_entities) in plate_query.iter_mut() {
         // Collect collisions for this plate
         let mut objects_on_plate = HashSet::new();
         
-        // for event in collision_events.iter_current_update_events() {
-             // Logic to check if event involves this plate (entity and collider)
-             // Simplified for now as we don't have full interaction logic
-        // }
-        
-        // Check for objects in proximity (simplified collision detection)
-        // In a real implementation, you'd use avian3d's collision detection system
+        for &colliding_entity in colliding_entities.iter() {
+            // Check if we should ignore this entity based on tags (Name)
+            if let Ok(name) = name_query.get(colliding_entity) {
+                if plate.tags_to_ignore.contains(&name.to_string()) {
+                    continue;
+                }
+            } else {
+                 // If no name, check if we ignore "Untagged" or similar default? 
+                 // For now, if no name, we assume it's valid unless explicitly ignored which requires a name.
+                 // Or we could check for specific components if tags aren't sufficient.
+            }
+
+            objects_on_plate.insert(colliding_entity);
+        }
         
         if objects_on_plate.is_empty() {
             // No objects on plate
-            if !plate.disable_function_called && plate.objects.is_empty() {
+            if !plate.disable_function_called && !plate.objects.is_empty() {
+                 // Only start timer if we previously had objects
                 plate.state_timer += 0.016; // Approximate delta time
                 
                 if plate.state_timer >= plate.deactivation_delay {
@@ -86,6 +90,7 @@ pub fn handle_pressure_plate_collisions(
                     });
                     
                     plate.state_timer = 0.0;
+                    plate.objects.clear();
                 }
             }
         } else {
@@ -119,7 +124,7 @@ pub fn update_pressure_plate_position(
         let mut objects_on_plate = HashSet::new();
         
         // Check distance to objects
-        for (obj_entity, object_transform, collider, maybe_name) in object_query.iter() {
+        for (obj_entity, object_transform, _collider, maybe_name) in object_query.iter() {
             // Skip ignored tags
             if let Some(name) = maybe_name {
                 if plate.tags_to_ignore.contains(&name.to_string()) {
