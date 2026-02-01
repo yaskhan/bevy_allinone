@@ -136,6 +136,9 @@ pub struct CharacterMovementState {
     // Vehicle state
     pub is_in_vehicle: bool,
     pub vehicle_entity: Option<Entity>,
+
+    // Slope state
+    pub slope_slide_active: bool,
 }
 
 /// Character animation modes

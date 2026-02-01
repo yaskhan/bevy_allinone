@@ -131,16 +131,27 @@ fn detect_ground(
     }
 }
 
+use crate::character::types::CharacterMovementState;
+
+// ... imports remain ...
+
 /// Handles slope calculations based on ground normal.
 fn handle_slopes(
-    mut query: Query<(&GroundDetection, &GroundDetectionSettings)>,
+    mut query: Query<(&GroundDetection, &GroundDetectionSettings, &mut CharacterMovementState)>,
 ) {
-    for (detection, settings) in query.iter_mut() {
+    for (detection, settings, mut state) in query.iter_mut() {
         if detection.is_grounded {
+            // angle is deviation from Y-up (0 = flat, 90 = vertical wall)
             let angle = detection.ground_normal.angle_between(Vec3::Y).to_degrees();
+            
+            // If angle exceeds max slope, enable sliding
             if angle > settings.max_slope_angle {
-                // TODO: Inform character controller to slip or prevent movement
+               state.slope_slide_active = true;
+            } else {
+               state.slope_slide_active = false;
             }
+        } else {
+            state.slope_slide_active = false;
         }
     }
 }
