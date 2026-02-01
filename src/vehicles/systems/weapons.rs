@@ -7,9 +7,13 @@ pub fn update_vehicle_weapon_aiming(
     time: Res<Time>,
     mut weapon_system_query: Query<(&VehicleWeaponSystem, &GlobalTransform)>,
     mut transform_query: Query<&mut Transform>,
-    camera_query: Query<&GlobalTransform, With<Camera>>, // Simplified: follow main camera
+    // Simplified: follow main camera (or generic Camera if no MainCamera marked)
+    // In a real game you'd likely filter by With<MainCamera> or check for specific player camera
+    camera_query: Query<&GlobalTransform, (With<Camera>, With<Camera3d>)>, 
 ) {
     let delta = time.delta_secs();
+    
+    // Use the first valid 3D camera found
     let camera_gt = camera_query.iter().next();
     let camera_forward = camera_gt.map(|gt| gt.forward()).unwrap_or(Dir3::NEG_Z);
 
@@ -49,6 +53,7 @@ pub fn update_vehicle_weapon_firing(
     time: Res<Time>,
     mut query: Query<(&mut VehicleWeaponSystem, &InputState, &GlobalTransform)>,
     spatial_query: SpatialQuery,
+    global_transform_query: Query<&GlobalTransform>,
 ) {
     let current_time = time.elapsed_secs();
     let delta = time.delta_secs();
@@ -58,6 +63,8 @@ pub fn update_vehicle_weapon_firing(
         
         let idx = weapon_sys.current_weapon_index;
         if idx >= weapon_sys.weapons.len() { continue; }
+        
+        let base_y_entity = weapon_sys.base_y_entity;
 
         // Switch weapon
         if input.next_weapon_pressed {
@@ -81,12 +88,21 @@ pub fn update_vehicle_weapon_firing(
                 VehicleWeaponType::Laser => {
                     // Continuous damage
                     if current_time - weapon.last_fire_time > weapon.fire_rate {
-                        // Cast laser ray (simplified: forward from vehicle/turret)
-                        let fire_dir = v_gt.forward();
-                        let fire_pos = v_gt.translation();
+                        // Determine fire origin and direction
+                        // Prefer using the actual turret barrel (base_y) if available
+                        let (fire_pos, fire_dir) = if let Some(base_y) = base_y_entity {
+                            if let Ok(barrel_gt) = global_transform_query.get(base_y) {
+                                (barrel_gt.translation(), barrel_gt.forward())
+                            } else {
+                                (v_gt.translation(), v_gt.forward())
+                            }
+                        } else {
+                            (v_gt.translation(), v_gt.forward())
+                        };
                         
+                        // Cast laser ray
                         if let Some(hit) = spatial_query.cast_ray(fire_pos, fire_dir, 1000.0, true, &SpatialQueryFilter::from_mask(0xFFFF_FFFF)) {
-                            info!("Laser hit entity: {:?}", hit.entity);
+                            info!("Laser hit entity: {:?} at dist: {}", hit.entity, hit.distance);
                             // Apply damage logic here
                         }
                         

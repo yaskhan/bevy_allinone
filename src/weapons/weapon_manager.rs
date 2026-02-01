@@ -4,7 +4,8 @@
 
 use bevy::prelude::*;
 use crate::input::InputState;
-use crate::character::Player;
+use crate::character::{CharacterController, Player};
+use crate::physics::GroundDetection;
 use super::types::{Weapon, WeaponPocket, WeaponListOnPocket, PocketType};
 use super::attachments::{WeaponAttachmentSystem, AttachmentStatModifiers};
 use std::collections::HashMap;
@@ -347,15 +348,27 @@ pub fn handle_weapon_manager_input(
 /// Update weapon manager state
 pub fn update_weapon_manager(
     time: Res<Time>,
-    mut manager_query: Query<(Entity, &mut WeaponManager)>,
+    // Updated query to include accurate state sources
+    mut manager_query: Query<(
+        Entity, 
+        &mut WeaponManager, 
+        Option<&GroundDetection>, 
+        Option<&CharacterController>
+    )>,
     mut weapon_query: Query<(&mut Weapon, &mut Visibility)>,
 ) {
-    for (player_entity, mut manager) in manager_query.iter_mut() {
-        // Update player on ground state (simplified - would normally come from character controller)
-        manager.player_on_ground = true;
+    for (player_entity, mut manager, ground_offset, char_controller) in manager_query.iter_mut() {
+        // Update player on ground state
+        if let Some(ground) = ground_offset {
+             manager.player_on_ground = ground.is_grounded;
+        }
 
-        // Update can move state (simplified - would normally check if player is dead/busy)
-        manager.can_move = !manager.player_is_dead && !manager.player_currently_busy;
+        // Update can move state
+        if let Some(controller) = char_controller {
+            manager.player_is_dead = controller.is_dead;
+            // Assuming we might have a busy flag or similar, for now dead check is improvement
+            manager.can_move = !controller.is_dead; 
+        }
 
         // Handle changing weapon state (entity activation/deactivation)
         if manager.changing_weapon {
