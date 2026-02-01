@@ -6,7 +6,7 @@ pub fn update_faction_relations(
     mut faction_system: ResMut<FactionSystem>,
     // Add logic for dynamic relation changes (e.g., turn to enemy if attacked)
 ) {
-    // Logic from factionSystem.cs
+    
 }
 
 /// System to alert other members of the same faction on spotted target.

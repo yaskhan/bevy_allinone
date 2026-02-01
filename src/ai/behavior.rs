@@ -137,7 +137,7 @@ pub fn update_ai_behavior(
             }
             AiBehaviorState::Wander => {
                 if movement.destination.is_none() || movement.destination.unwrap().distance(current_pos) < 1.0 {
-                    // Pick "random" point (simplistic for port)
+                    // Pick "random" point
                     let angle = (time.elapsed_secs() * 2.0).sin() * std::f32::consts::PI;
                     let offset = Vec3::new(angle.cos(), 0.0, angle.sin()) * ai.wander_radius;
                     movement.destination = Some(ai.wander_center + offset);

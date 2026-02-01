@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::collections::HashSet;
 
 
-/// Main component for managing device interactions (port of usingDevicesSystem)
+/// Main component for managing device interactions
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct UsingDevicesSystem {
@@ -228,7 +228,7 @@ impl Default for UsingDevicesSystem {
     }
 }
 
-/// Device info structure (port of deviceInfo class)
+/// Device info structure
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
 pub struct DeviceInfo {
@@ -295,7 +295,7 @@ impl Default for DeviceInfo {
     }
 }
 
-/// Device string action component (port of deviceStringAction)
+/// Device string action component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DeviceStringAction {
@@ -443,7 +443,7 @@ impl DeviceStringActionHelper for DeviceStringAction {
     }
 }
 
-/// Electronic device component (port of electronicDevice)
+/// Electronic device component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ElectronicDevice {
@@ -528,7 +528,7 @@ impl Default for ElectronicDevice {
     }
 }
 
-/// Door system component (port of doorSystem)
+/// Door system component
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DoorSystem {
@@ -643,7 +643,7 @@ impl Default for DoorSystem {
     }
 }
 
-/// Single door info (port of singleDoorInfo class)
+/// Single door info
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
 pub struct SingleDoorInfo {
@@ -707,7 +707,7 @@ pub enum DoorCurrentState {
     Opened,
 }
 
-/// Interaction action info (port of interactionActionInfo class)
+/// Interaction action info
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
 pub struct InteractionActionInfo {
@@ -726,7 +726,7 @@ impl Default for InteractionActionInfo {
     }
 }
 
-/// Icon button info (port of iconButtonInfo class)
+/// Icon button info
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
 pub struct IconButtonInfo {

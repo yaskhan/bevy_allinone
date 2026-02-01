@@ -10,7 +10,6 @@ pub enum EventParameter {
 }
 
 /// A "Remote Event" that can be triggered by name.
-/// This mimics `remoteEventSystem.cs`.
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct RemoteEventReceiver {
@@ -41,7 +40,6 @@ pub struct RemoteEvent {
 pub struct RemoteEventQueue(pub Vec<RemoteEvent>);
 
 /// Defines a trigger area that fires events on intersection
-/// Mimics `eventTriggerSystem.cs`
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct EventTrigger {
