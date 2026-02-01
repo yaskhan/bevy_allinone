@@ -24,7 +24,7 @@ This directory contains comprehensive documentation for the Bevy All-in-One Cont
 - **[Ladder System](./ladder_system.md)** - Structured ladder interaction, mounting, and constrained climbing
 - **[Inventory System](./inventory_system.md)** - Logic for managing items, equipment, currency, and trading with vendors
 - **[Tutorial System](./tutorial_system.md)** - Comprehensive tutorial framework with UI, state management, and event handling
-
+- **[Experience System](./experience_system.md)** - Experience gain, leveling, and skill progression
 
 
 ### Advanced Systems

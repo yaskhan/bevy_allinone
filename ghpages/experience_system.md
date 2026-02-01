@@ -21,6 +21,17 @@ The Experience System delivers a comprehensive framework for character progressi
 - `systems.rs` - Update logic, event handling, and mechanics
 
 ---
+## Table of Contents
+
+- [Overview](#overview)
+- [Core Concepts](#core-concepts)
+- [Component Reference](#component-reference)
+- [Usage Examples](#usage-examples)
+- [Advanced Patterns](#advanced-patterns)
+- [Debugging and Troubleshooting](#debugging-and-troubleshooting)
+- [Performance Considerations](#performance-considerations)
+- [Integration Points](#integration-points)
+- [Future Improvements](#future-improvements)
 
 ## Core Concepts
 
