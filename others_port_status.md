@@ -56,7 +56,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `simpleLensFlareSystem.cs`
 - [x] `simpleSetQuaternionRotation.cs`
 - [x] `spawnObject.cs`
-- [ ] `SplineWalker.cs`
+- [x] `SplineWalker.cs`
 - [ ] `tagLayerSystem.cs`
 - [ ] `taskCounterSystem.cs`
 - [ ] `UIMouseHoverEvent.cs`

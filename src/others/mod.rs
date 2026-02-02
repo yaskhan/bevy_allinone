@@ -53,6 +53,7 @@ pub mod simple_lamp;
 pub mod simple_lens_flare_system;
 pub mod simple_set_quaternion_rotation;
 pub mod spawn_object;
+pub mod spline_walker;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -111,6 +112,7 @@ pub use simple_lamp::SimpleLamp;
 pub use simple_lens_flare_system::SimpleLensFlareSystem;
 pub use simple_set_quaternion_rotation::SimpleSetQuaternionRotation;
 pub use spawn_object::SpawnObject;
+pub use spline_walker::SplineWalker;
 
 pub struct OthersPlugin;
 
@@ -165,6 +167,7 @@ impl Plugin for OthersPlugin {
                 simple_fps_counter::update_simple_fps_counter,
                 simple_set_quaternion_rotation::update_simple_set_quaternion_rotation,
                 spawn_object::update_spawn_object,
+                spline_walker::update_spline_walker,
             ));
     }
 }
