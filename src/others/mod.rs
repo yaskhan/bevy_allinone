@@ -21,6 +21,7 @@ pub mod head_explode_example;
 pub mod hide_body_part_on_character_system;
 pub mod ignore_collision_helper;
 pub mod ignore_collision_system;
+pub mod initial_pop_up_window;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -47,6 +48,7 @@ pub use head_explode_example::HeadExplodeExample;
 pub use hide_body_part_on_character_system::HideBodyPartOnCharacterSystem;
 pub use ignore_collision_helper::IgnoreCollisionHelper;
 pub use ignore_collision_system::IgnoreCollisionSystem;
+pub use initial_pop_up_window::InitialPopUpWindow;
 
 pub struct OthersPlugin;
 

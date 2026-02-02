@@ -24,7 +24,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `hideBodyPartOnCharacterSystem.cs`
 - [x] `ignoreCollisionHelper.cs`
 - [x] `ignoreCollisionSystem.cs`
-- [ ] `initialPopUpWindow.cs`
+- [x] `initialPopUpWindow.cs`
 - [ ] `mechanismPart.cs`
 - [ ] `moveObjectSmoothlySystem.cs`
 - [ ] `onEnableCheckSystem.cs`
