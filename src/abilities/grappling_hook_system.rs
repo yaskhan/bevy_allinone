@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::{LayerMask, SpatialQuery, SpatialQueryFilter, LinearVelocity};
 use crate::input::InputState;
+use super::grappling_hook_targets_system::GrapplingHookTargetsSystem;
 use super::ability_info::AbilityInfo;
 
 /// Grappling hook system (core).
@@ -99,13 +100,14 @@ pub fn handle_grappling_hook_input(
     spatial_query: SpatialQuery,
     input: Res<InputState>,
     camera_query: Query<&GlobalTransform, With<Camera3d>>,
-    mut query: Query<(&mut GrapplingHookSystem, &mut AbilityInfo)>,
+    target_query: Query<&GlobalTransform>,
+    mut query: Query<(&mut GrapplingHookSystem, &mut AbilityInfo, Option<&GrapplingHookTargetsSystem>)>,
 ) {
     let Some(camera) = camera_query.iter().next() else { return };
     let cam_pos = camera.translation();
     let cam_forward = camera.forward().as_vec3();
 
-    for (mut hook, mut ability) in query.iter_mut() {
+    for (mut hook, mut ability, targets_system) in query.iter_mut() {
         if ability.name != hook.ability_name {
             continue;
         }
@@ -115,6 +117,21 @@ pub fn handle_grappling_hook_input(
         }
 
         if input.ability_use_pressed && ability.is_current && !hook.active {
+            if let Some(targets) = targets_system {
+                if let Some(target_entity) = targets.closest_target {
+                    if let Ok(target_transform) = target_query.get(target_entity) {
+                        hook.current_target = Some(target_transform.translation());
+                        hook.current_target_entity = Some(target_entity);
+                        hook.active = true;
+                        hook.attracting_object_active = false;
+                        hook.last_time_hook_active = time.elapsed_secs();
+                        hook.last_time_object_moving = 0.0;
+                        ability.active = true;
+                        continue;
+                    }
+                }
+            }
+
             let filter = SpatialQueryFilter::default().with_mask(hook.layer_mask);
             if let Some(hit) = spatial_query.cast_ray(
                 cam_pos,
