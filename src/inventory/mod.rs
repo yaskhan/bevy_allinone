@@ -22,6 +22,7 @@ pub mod inventory_menu_panels_system;
 pub mod inventory_object_to_equip_info;
 pub mod inventory_prefab_creation_system;
 pub mod inventory_slot_options_buttons;
+pub mod melee_shield_inventory_prefab_creation_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -52,6 +53,7 @@ pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPan
 pub use inventory_object_to_equip_info::InventoryObjectToEquipInfo;
 pub use inventory_prefab_creation_system::InventoryPrefabCreationSystem;
 pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
+pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -83,6 +85,7 @@ impl Plugin for InventoryPlugin {
             inventory_list_manager::update_inventory_list_manager,
             inventory_menu_panels_system::update_inventory_menu_panels_system,
             inventory_prefab_creation_system::update_inventory_prefab_creation_system,
+            melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
