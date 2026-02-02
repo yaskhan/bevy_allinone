@@ -12,6 +12,7 @@ pub mod vehicle_builder;
 pub mod vehicle_interface;
 pub mod vehicle_laser;
 pub mod controllers;
+pub mod hoverboard_animation;
 
 pub use types::*;
 pub use spawn::*;
@@ -28,6 +29,7 @@ pub use controllers::CarController;
 pub use controllers::DummyVehicleController;
 pub use controllers::EmptyVehicleController;
 pub use controllers::FlyingController;
+pub use hoverboard_animation::HoverBoardAnimationSystem;
 
 use systems::*;
 
@@ -66,6 +68,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<DummyVehicleController>()
             .register_type::<EmptyVehicleController>()
             .register_type::<FlyingController>()
+            .register_type::<HoverBoardAnimationSystem>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -96,6 +99,7 @@ impl Plugin for VehiclesPlugin {
                 vehicle_builder::update_vehicle_builder,
                 vehicle_laser::update_vehicle_laser,
                 controllers::update_vehicle_controller_types,
+                hoverboard_animation::update_hoverboard_animation,
             ));
     }
 }
