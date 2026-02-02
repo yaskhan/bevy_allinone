@@ -14,7 +14,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `destroyGameObject.cs`
 - [x] `dissolveObject.cs`
 - [x] `eventObjectFoundOnRaycastSystem.cs`
-- [ ] `fadeObject.cs`
+- [x] `fadeObject.cs`
 - [ ] `featuresManager.cs`
 - [ ] `flyingTurretSystem.cs`
 - [ ] `followObjectPositionSystem.cs`
