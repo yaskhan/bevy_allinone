@@ -62,7 +62,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `UIMouseHoverEvent.cs`
 
 ## Console Mode
-- [ ] `consoleMode.cs`
+- [x] `consoleMode.cs`
 
 ## Scanner System
 - [ ] `scannerSystem.cs`
