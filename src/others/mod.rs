@@ -48,6 +48,7 @@ pub mod simple_action_button;
 pub mod simple_animation_system;
 pub mod simple_audio_play;
 pub mod simple_event_system;
+pub mod simple_fps_counter;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -101,6 +102,7 @@ pub use simple_action_button::{SimpleActionButton, SimpleActionButtonEvent};
 pub use simple_animation_system::SimpleAnimationSystem;
 pub use simple_audio_play::SimpleAudioPlay;
 pub use simple_event_system::{SimpleEvent, SimpleEventSystem};
+pub use simple_fps_counter::SimpleFpsCounter;
 
 pub struct OthersPlugin;
 
@@ -152,6 +154,7 @@ impl Plugin for OthersPlugin {
                 simple_animation_system::update_simple_animation_system,
                 simple_audio_play::update_simple_audio_play,
                 simple_event_system::update_simple_event_system,
+                simple_fps_counter::update_simple_fps_counter,
             ));
     }
 }

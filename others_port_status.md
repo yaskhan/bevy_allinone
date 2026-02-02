@@ -51,7 +51,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `simpleAnimationSystem.cs`
 - [x] `simpleAudioPlay.cs`
 - [x] `simpleEventSystem.cs`
-- [ ] `SimpleFPSCounter.cs`
+- [x] `SimpleFPSCounter.cs`
 - [ ] `simpleLamp.cs`
 - [ ] `simpleLensFlareSystem.cs`
 - [ ] `simpleSetQuaternionRotation.cs`
