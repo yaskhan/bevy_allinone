@@ -21,6 +21,7 @@ pub mod grappling_hook_targets_system;
 pub mod object_to_attract_with_grappling_hook;
 pub mod custom_ability_system;
 pub mod drain_stat_system;
+pub mod laser_vision_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -46,6 +47,7 @@ use grappling_hook_targets_system::*;
 use object_to_attract_with_grappling_hook::*;
 use custom_ability_system::*;
 use drain_stat_system::*;
+use laser_vision_system::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -99,6 +101,12 @@ pub use custom_ability_system::{
     CustomAbilityDeactivateEventQueue,
 };
 pub use drain_stat_system::{DrainStatSystem, DrainStatInfo};
+pub use laser_vision_system::{
+    LaserVisionSystem,
+    LaserVisionSliceEvent,
+    LaserVisionSliceEventQueue,
+    LaserVisionToggleEventQueue,
+};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -127,6 +135,8 @@ impl Plugin for AbilitiesPlugin {
             .init_resource::<CustomAbilityEnableEventQueue>()
             .init_resource::<CustomAbilityDisableEventQueue>()
             .init_resource::<CustomAbilityDeactivateEventQueue>()
+            .init_resource::<LaserVisionSliceEventQueue>()
+            .init_resource::<LaserVisionToggleEventQueue>()
             .init_resource::<ParticleCollisionEventQueue>()
             .init_resource::<ParticleTriggerEventQueue>()
             // Add systems
@@ -156,6 +166,7 @@ impl Plugin for AbilitiesPlugin {
                 update_grappling_hook_targets,
                 update_custom_ability_system,
                 update_drain_stat_system,
+                update_laser_vision_system,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
