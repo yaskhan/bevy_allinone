@@ -7,7 +7,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `IKDrivingSystem.cs`
 - [x] `launchTrayectory.cs`
 - [x] `playerHUDManager.cs`
-- [ ] `shipInterfaceInfo.cs`
+- [x] `shipInterfaceInfo.cs`
 - [ ] `skidsManager.cs`
 - [ ] `vehicleBuilder.cs`
 - [ ] `vehicleDamageReceiver.cs`

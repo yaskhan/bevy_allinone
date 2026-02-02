@@ -7,6 +7,7 @@ pub mod hoverboard_waypoints;
 pub mod ik_driving_system;
 pub mod launch_trajectory;
 pub mod player_hud_manager;
+pub mod ship_interface_info;
 
 pub use types::*;
 pub use spawn::*;
@@ -14,6 +15,7 @@ pub use hoverboard_waypoints::HoverBoardWaypoints;
 pub use ik_driving_system::IKDrivingSystem;
 pub use launch_trajectory::LaunchTrajectory;
 pub use player_hud_manager::PlayerHudManager;
+pub use ship_interface_info::ShipInterfaceInfo;
 
 use systems::*;
 
@@ -43,6 +45,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<IKDrivingSystem>()
             .register_type::<LaunchTrajectory>()
             .register_type::<PlayerHudManager>()
+            .register_type::<ShipInterfaceInfo>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
