@@ -21,7 +21,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `followObjectPositionUpdateSystem.cs`
 - [x] `GKC_Utils.cs`
 - [x] `headExplodeExample.cs`
-- [ ] `hideBodyPartOnCharacterSystem.cs`
+- [x] `hideBodyPartOnCharacterSystem.cs`
 - [ ] `ignoreCollisionHelper.cs`
 - [ ] `ignoreCollisionSystem.cs`
 - [ ] `initialPopUpWindow.cs`

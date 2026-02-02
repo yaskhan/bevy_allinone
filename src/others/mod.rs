@@ -18,6 +18,7 @@ pub mod follow_object_position_system;
 pub mod follow_object_position_update_system;
 pub mod gkc_utils;
 pub mod head_explode_example;
+pub mod hide_body_part_on_character_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -41,6 +42,7 @@ pub use follow_object_position_system::FollowObjectPositionSystem;
 pub use follow_object_position_update_system::FollowObjectPositionUpdateSystem;
 pub use gkc_utils::GkcUtils;
 pub use head_explode_example::HeadExplodeExample;
+pub use hide_body_part_on_character_system::HideBodyPartOnCharacterSystem;
 
 pub struct OthersPlugin;
 
@@ -66,6 +68,7 @@ impl Plugin for OthersPlugin {
                 follow_object_position_system::update_follow_object_position_system,
                 follow_object_position_update_system::update_follow_object_position_update_system,
                 head_explode_example::update_head_explode_example,
+                hide_body_part_on_character_system::update_hide_body_part_on_character_system,
             ));
     }
 }
