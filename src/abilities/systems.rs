@@ -11,8 +11,8 @@ use crate::stats::StatsSystem;
 pub fn update_abilities(
     time: Res<Time>,
     mut abilities: Query<&mut AbilityInfo>,
-    mut cooldown_events: EventWriter<AbilityCooldownEvent>,
-    mut time_limit_events: EventWriter<AbilityTimeLimitEvent>,
+    mut cooldown_events: ResMut<AbilityCooldownEventQueue>,
+    mut time_limit_events: ResMut<AbilityTimeLimitEventQueue>,
 ) {
     let delta_time = time.delta_secs();
     
@@ -23,7 +23,7 @@ pub fn update_abilities(
         ability.update(delta_time);
 
         if ability.cooldown_in_process != prev_cooldown {
-            cooldown_events.send(AbilityCooldownEvent {
+            cooldown_events.0.push(AbilityCooldownEvent {
                 ability_name: ability.name.clone(),
                 started: ability.cooldown_in_process,
             });
@@ -31,7 +31,7 @@ pub fn update_abilities(
         }
 
         if ability.time_limit_in_process != prev_time_limit {
-            time_limit_events.send(AbilityTimeLimitEvent {
+            time_limit_events.0.push(AbilityTimeLimitEvent {
                 ability_name: ability.name.clone(),
                 started: ability.time_limit_in_process,
             });
@@ -42,10 +42,10 @@ pub fn update_abilities(
 
 /// System to handle ability activation events
 pub fn handle_ability_activation(
-    mut events: EventReader<ActivateAbilityEvent>,
+    mut events: ResMut<ActivateAbilityEventQueue>,
     mut abilities: Query<&mut AbilityInfo>,
 ) {
-    for event in events.read() {
+    for event in events.0.drain(..) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
             if !ability.enabled {
                 continue;
@@ -97,6 +97,7 @@ pub fn update_player_abilities_context(
 
 /// Handle ability input from the input system (selection + use).
 pub fn handle_ability_input(
+    time: Res<Time>,
     mut player_query: Query<(&InputState, &mut PlayerAbilitiesSystem, Option<&mut StatsSystem>)>,
     mut abilities: Query<&mut AbilityInfo>,
 ) {
@@ -134,6 +135,7 @@ pub fn handle_ability_input(
                     &mut ability,
                     system.is_on_ground,
                     stats.as_deref_mut(),
+                    time.delta_secs(),
                 );
             }
         }
@@ -152,10 +154,10 @@ pub fn handle_ability_input(
 
 /// System to handle ability deactivation events
 pub fn handle_ability_deactivation(
-    mut events: EventReader<DeactivateAbilityEvent>,
+    mut events: ResMut<DeactivateAbilityEventQueue>,
     mut abilities: Query<&mut AbilityInfo>,
 ) {
-    for event in events.read() {
+    for event in events.0.drain(..) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
             ability.deactivate();
             ability.status = if ability.enabled {
@@ -169,10 +171,10 @@ pub fn handle_ability_deactivation(
 
 /// System to handle ability enable/disable events
 pub fn handle_ability_enabled_events(
-    mut events: EventReader<SetAbilityEnabledEvent>,
+    mut events: ResMut<SetAbilityEnabledEventQueue>,
     mut abilities: Query<&mut AbilityInfo>,
 ) {
-    for event in events.read() {
+    for event in events.0.drain(..) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
             if event.enabled {
                 ability.enable();

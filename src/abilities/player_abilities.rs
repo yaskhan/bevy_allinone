@@ -258,7 +258,13 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Holds the current ability
-    pub fn input_press_hold_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool, stats: Option<&mut StatsSystem>) {
+    pub fn input_press_hold_use_current_ability(
+        &mut self,
+        ability: &mut AbilityInfo,
+        is_on_ground: bool,
+        stats: Option<&mut StatsSystem>,
+        delta_time: f32,
+    ) {
         if !self.enabled {
             return;
         }
@@ -284,7 +290,7 @@ impl PlayerAbilitiesSystem {
         }
         
         if ability.use_energy_on_press_hold {
-            self.check_ability_use_energy(ability, stats);
+            self.check_ability_use_energy_with_delta(ability, stats, delta_time);
         }
     }
 
@@ -338,21 +344,37 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Checks and uses energy for the ability
-    pub fn check_ability_use_energy(&mut self, ability: &AbilityInfo, mut stats: Option<&mut StatsSystem>) {
-        if ability.use_energy {
-            if let Some(stats_system) = stats.as_deref_mut() {
-                if stats_system.get_derived_stat_by_name(&self.energy_stat_name).is_some() {
-                    stats_system.use_stat_by_name(&self.energy_stat_name, ability.energy_amount);
-                } else if stats_system.get_custom_stat(&self.energy_stat_name).is_some() {
-                    stats_system.use_custom_stat(&self.energy_stat_name, ability.energy_amount);
-                } else {
-                    self.use_power_bar(ability.energy_amount);
-                }
+    pub fn check_ability_use_energy(&mut self, ability: &AbilityInfo, stats: Option<&mut StatsSystem>) {
+        self.check_ability_use_energy_with_delta(ability, stats, 1.0);
+    }
 
-                self.sync_energy_from_stats(stats_system);
+    pub fn check_ability_use_energy_with_delta(
+        &mut self,
+        ability: &AbilityInfo,
+        mut stats: Option<&mut StatsSystem>,
+        delta_time: f32,
+    ) {
+        if !ability.use_energy {
+            return;
+        }
+
+        let mut amount = ability.energy_amount;
+        if ability.energy_consumption_type == super::types::EnergyConsumptionType::Continuous {
+            amount *= delta_time;
+        }
+
+        if let Some(stats_system) = stats.as_deref_mut() {
+            if stats_system.get_derived_stat_by_name(&self.energy_stat_name).is_some() {
+                stats_system.use_stat_by_name(&self.energy_stat_name, amount);
+            } else if stats_system.get_custom_stat(&self.energy_stat_name).is_some() {
+                stats_system.use_custom_stat(&self.energy_stat_name, amount);
             } else {
-                self.use_power_bar(ability.energy_amount);
+                self.use_power_bar(amount);
             }
+
+            self.sync_energy_from_stats(stats_system);
+        } else {
+            self.use_power_bar(amount);
         }
     }
 
@@ -453,7 +475,7 @@ impl PlayerAbilitiesSystem {
     /// Selects and holds a new separated ability
     pub fn input_select_and_press_hold_new_separated_ability(&mut self, abilities: &mut Query<&mut AbilityInfo>, is_on_ground: bool) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
-            self.input_press_hold_use_current_ability(&mut ability, is_on_ground, None);
+            self.input_press_hold_use_current_ability(&mut ability, is_on_ground, None, 1.0);
         }
     }
 
