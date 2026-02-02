@@ -49,6 +49,7 @@ pub mod simple_animation_system;
 pub mod simple_audio_play;
 pub mod simple_event_system;
 pub mod simple_fps_counter;
+pub mod simple_lamp;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -103,6 +104,7 @@ pub use simple_animation_system::SimpleAnimationSystem;
 pub use simple_audio_play::SimpleAudioPlay;
 pub use simple_event_system::{SimpleEvent, SimpleEventSystem};
 pub use simple_fps_counter::SimpleFpsCounter;
+pub use simple_lamp::SimpleLamp;
 
 pub struct OthersPlugin;
 

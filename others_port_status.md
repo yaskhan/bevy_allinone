@@ -52,7 +52,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `simpleAudioPlay.cs`
 - [x] `simpleEventSystem.cs`
 - [x] `SimpleFPSCounter.cs`
-- [ ] `simpleLamp.cs`
+- [x] `simpleLamp.cs`
 - [ ] `simpleLensFlareSystem.cs`
 - [ ] `simpleSetQuaternionRotation.cs`
 - [ ] `spawnObject.cs`
