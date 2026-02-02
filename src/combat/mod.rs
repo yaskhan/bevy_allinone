@@ -6,6 +6,7 @@ pub mod damage_over_time;
 pub mod destroyable;
 pub mod area_effect;
 pub mod damage_ui;
+pub mod sync;
 
 pub use types::*;
 pub use systems::*;
@@ -13,6 +14,7 @@ pub use damage_over_time::*;
 pub use destroyable::*;
 pub use area_effect::*;
 pub use damage_ui::*;
+pub use sync::*;
 
 pub struct CombatPlugin;
 
@@ -39,6 +41,10 @@ impl Plugin for CombatPlugin {
                 systems::regenerate_shields,
                 systems::perform_melee_attacks,
                 systems::perform_blocking,
+                
+                // Sync Stats <-> Combat
+                sync::sync_stats_to_combat, // Push Max from Stats to Health
+                sync::sync_combat_to_stats, // Push Current from Health to Stats
                 
                 // Damage Logic Chain
                 damage_ui::trigger_damage_ui, // Read events before drain

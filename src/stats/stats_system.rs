@@ -174,10 +174,30 @@ impl StatsSystem {
         }
 
         let min = stat.min_value();
-        let max = stat.max_value();
+        
+        // Dynamic Max Lookup
+        let max = match stat {
+            DerivedStat::CurrentHealth => self.derived_stats.get(&DerivedStat::MaxHealth).copied().unwrap_or(stat.max_value()),
+            DerivedStat::CurrentStamina => self.derived_stats.get(&DerivedStat::MaxStamina).copied().unwrap_or(stat.max_value()),
+            DerivedStat::CurrentMana => self.derived_stats.get(&DerivedStat::MaxMana).copied().unwrap_or(stat.max_value()),
+            _ => stat.max_value(), // Fallback to types.rs default max (often 100.0 which might be too low for high level chars!)
+        };
+        
+        // If the static max is 100 but we have 200 HP, we rely on the dynamic max above.
+        // But for other stats like Strength, 100 might be a hard cap?
+        // Actually, CoreAttributes have max_value, DerivedStats typically don't have hard caps in method.
+        // Let's relax the clamping if it's "Current" type and we didn't find a dynamic max, 
+        // OR better: Update max_value in types.rs to be f32::MAX for unbounded stats?
+        // For now, trusting the dynamic lookup for resources.
+        
         let clamped_value = value.max(min).min(max);
 
         self.derived_stats.insert(stat, clamped_value);
+    }
+
+    /// Sets a derived stat value without clamping (Internal/Unsafe use or specific overrides)
+    pub fn set_derived_stat_value(&mut self, stat: DerivedStat, value: f32) {
+        self.derived_stats.insert(stat, value);
     }
 
     /// Increases a derived stat
@@ -427,9 +447,19 @@ impl StatsSystem {
         self.derived_stats.insert(DerivedStat::CriticalChance, critical_chance);
         self.derived_stats.insert(DerivedStat::MovementSpeed, movement_speed);
         self.derived_stats.insert(DerivedStat::AttackSpeed, attack_speed);
-        self.derived_stats.insert(DerivedStat::MagicResistance, magic_resistance);
         self.derived_stats.insert(DerivedStat::Stealth, stealth);
         self.derived_stats.insert(DerivedStat::Persuasion, persuasion);
+        
+        // Ensure Current values are clamped to new Max values
+        if let Some(current) = self.derived_stats.get(&DerivedStat::CurrentHealth).copied() {
+             self.derived_stats.insert(DerivedStat::CurrentHealth, current.min(max_health));
+        }
+        if let Some(current) = self.derived_stats.get(&DerivedStat::CurrentStamina).copied() {
+             self.derived_stats.insert(DerivedStat::CurrentStamina, current.min(max_stamina));
+        }
+        if let Some(current) = self.derived_stats.get(&DerivedStat::CurrentMana).copied() {
+             self.derived_stats.insert(DerivedStat::CurrentMana, current.min(max_mana));
+        }
     }
 
     /// Saves current stats to a template
