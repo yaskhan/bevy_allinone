@@ -28,6 +28,7 @@ pub mod on_enable_check_system;
 pub mod open_initial_pop_up_window;
 pub mod pause_animation_system;
 pub mod place_object_in_camera_editor_position_system;
+pub mod player_options_editor_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -61,6 +62,7 @@ pub use on_enable_check_system::OnEnableCheckSystem;
 pub use open_initial_pop_up_window::OpenInitialPopUpWindow;
 pub use pause_animation_system::PauseAnimationSystem;
 pub use place_object_in_camera_editor_position_system::PlaceObjectInCameraEditorPositionSystem;
+pub use player_options_editor_system::PlayerOptionsEditorSystem;
 
 pub struct OthersPlugin;
 

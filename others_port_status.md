@@ -31,7 +31,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `openInitialPopUpWindow.cs`
 - [x] `pauseAnimationSystem.cs`
 - [x] `placeObjectInCameraEditorPositionSystem.cs`
-- [ ] `playerOptionsEditorSystem.cs`
+- [x] `playerOptionsEditorSystem.cs`
 - [ ] `playSoundOnCollision.cs`
 - [ ] `playSoundOnTriggerEnter.cs`
 - [ ] `putGear.cs`
