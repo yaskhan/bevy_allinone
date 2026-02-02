@@ -27,7 +27,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `initialPopUpWindow.cs`
 - [x] `mechanismPart.cs`
 - [x] `moveObjectSmoothlySystem.cs`
-- [ ] `onEnableCheckSystem.cs`
+- [x] `onEnableCheckSystem.cs`
 - [ ] `openInitialPopUpWindow.cs`
 - [ ] `pauseAnimationSystem.cs`
 - [ ] `placeObjectInCameraEditorPositionSystem.cs`

@@ -24,6 +24,7 @@ pub mod ignore_collision_system;
 pub mod initial_pop_up_window;
 pub mod mechanism_part;
 pub mod move_object_smoothly_system;
+pub mod on_enable_check_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -53,6 +54,7 @@ pub use ignore_collision_system::IgnoreCollisionSystem;
 pub use initial_pop_up_window::InitialPopUpWindow;
 pub use mechanism_part::MechanismPart;
 pub use move_object_smoothly_system::MoveObjectSmoothlySystem;
+pub use on_enable_check_system::OnEnableCheckSystem;
 
 pub struct OthersPlugin;
 
@@ -80,6 +82,7 @@ impl Plugin for OthersPlugin {
                 head_explode_example::update_head_explode_example,
                 hide_body_part_on_character_system::update_hide_body_part_on_character_system,
                 move_object_smoothly_system::update_move_object_smoothly_system,
+                on_enable_check_system::update_on_enable_check_system,
             ));
     }
 }
