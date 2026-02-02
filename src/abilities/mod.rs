@@ -16,6 +16,7 @@ pub mod ability_pickups;
 pub mod player_teleport;
 pub mod grappling_hook_effect;
 pub mod grappling_hook_system;
+pub mod grappling_hook_target;
 
 use bevy::prelude::*;
 use types::*;
@@ -36,6 +37,7 @@ use ability_pickups::*;
 use player_teleport::*;
 use grappling_hook_effect::*;
 use grappling_hook_system::*;
+use grappling_hook_target::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -72,6 +74,7 @@ pub use player_teleport::PlayerTeleportAbility;
 pub use player_teleport::{TeleportStartEvent, TeleportEndEvent, TeleportStartEventQueue, TeleportEndEventQueue};
 pub use grappling_hook_effect::GrapplingHookEffect;
 pub use grappling_hook_system::GrapplingHookSystem;
+pub use grappling_hook_target::GrapplingHookTarget;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;

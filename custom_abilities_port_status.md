@@ -5,7 +5,7 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 ## Grappling Hook System
 - [x] `grapplingHookEffect.cs`
 - [x] `grapplingHookSystem.cs`
-- [ ] `grapplingHookTarget.cs`
+- [x] `grapplingHookTarget.cs`
 - [ ] `grapplingHookTargetsSystem.cs`
 - [ ] `objectToAttractWithGrapplingHook.cs`
 
