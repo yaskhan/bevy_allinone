@@ -37,6 +37,7 @@ pub mod replace_material_system;
 pub mod rotate_objects;
 pub mod rotatory_gear;
 pub mod scan_element_info;
+pub mod set_fixed_rotation;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -79,6 +80,7 @@ pub use replace_material_system::ReplaceMaterialSystem;
 pub use rotate_objects::RotateObjects;
 pub use rotatory_gear::RotatoryGear;
 pub use scan_element_info::ScanElementInfo;
+pub use set_fixed_rotation::SetFixedRotation;
 
 pub struct OthersPlugin;
 
@@ -118,6 +120,7 @@ impl Plugin for OthersPlugin {
                 replace_material_system::update_replace_material_system,
                 rotate_objects::update_rotate_objects,
                 rotatory_gear::update_rotatory_gear,
+                set_fixed_rotation::update_set_fixed_rotation,
             ));
     }
 }
