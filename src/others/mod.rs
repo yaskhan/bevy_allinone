@@ -25,6 +25,7 @@ pub mod initial_pop_up_window;
 pub mod mechanism_part;
 pub mod move_object_smoothly_system;
 pub mod on_enable_check_system;
+pub mod open_initial_pop_up_window;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -55,6 +56,7 @@ pub use initial_pop_up_window::InitialPopUpWindow;
 pub use mechanism_part::MechanismPart;
 pub use move_object_smoothly_system::MoveObjectSmoothlySystem;
 pub use on_enable_check_system::OnEnableCheckSystem;
+pub use open_initial_pop_up_window::OpenInitialPopUpWindow;
 
 pub struct OthersPlugin;
 
@@ -83,6 +85,7 @@ impl Plugin for OthersPlugin {
                 hide_body_part_on_character_system::update_hide_body_part_on_character_system,
                 move_object_smoothly_system::update_move_object_smoothly_system,
                 on_enable_check_system::update_on_enable_check_system,
+                open_initial_pop_up_window::update_open_initial_pop_up_window,
             ));
     }
 }
