@@ -43,7 +43,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `setFixedRotation.cs`
 - [x] `setGameObjectActiveState.cs`
 - [x] `setObjectParentSystem.cs`
-- [ ] `setObjectScaleSystem.cs`
+- [x] `setObjectScaleSystem.cs`
 - [ ] `setRigidbodyStateSystem.cs`
 - [ ] `showGameInfoHud.cs`
 - [ ] `showMessageOnHUDSystem.cs`

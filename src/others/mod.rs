@@ -40,6 +40,7 @@ pub mod scan_element_info;
 pub mod set_fixed_rotation;
 pub mod set_game_object_active_state;
 pub mod set_object_parent_system;
+pub mod set_object_scale_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -85,6 +86,7 @@ pub use scan_element_info::ScanElementInfo;
 pub use set_fixed_rotation::SetFixedRotation;
 pub use set_game_object_active_state::SetGameObjectActiveState;
 pub use set_object_parent_system::SetObjectParentSystem;
+pub use set_object_scale_system::SetObjectScaleSystem;
 
 pub struct OthersPlugin;
 
@@ -127,6 +129,7 @@ impl Plugin for OthersPlugin {
                 set_fixed_rotation::update_set_fixed_rotation,
                 set_game_object_active_state::update_set_game_object_active_state,
                 set_object_parent_system::update_set_object_parent_system,
+                set_object_scale_system::update_set_object_scale_system,
             ));
     }
 }
