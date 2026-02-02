@@ -13,7 +13,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `consoleLogOnScreenSystem.cs`
 - [x] `destroyGameObject.cs`
 - [x] `dissolveObject.cs`
-- [ ] `eventObjectFoundOnRaycastSystem.cs`
+- [x] `eventObjectFoundOnRaycastSystem.cs`
 - [ ] `fadeObject.cs`
 - [ ] `featuresManager.cs`
 - [ ] `flyingTurretSystem.cs`
