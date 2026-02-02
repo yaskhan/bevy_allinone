@@ -227,8 +227,26 @@ impl StatsSystem {
             return;
         }
 
+        // Check for max value override first
+        let max_override = if let Some(entry) = self.custom_stats.get(name) {
+            if entry.use_other_stat_as_max {
+                if let Some(other_name) = &entry.other_stat_as_max_name {
+                    self.get_custom_stat_amount(other_name)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         if let Some(entry) = self.custom_stats.get_mut(name) {
-            entry.value = value;
+            match value {
+                StatValue::Amount(v) => entry.set_amount(v, max_override),
+                StatValue::Bool(v) => entry.set_bool(v),
+            }
         } else {
             let entry = match value {
                 StatValue::Amount(amount) => StatEntry::new_amount(name, amount, None),
@@ -244,8 +262,23 @@ impl StatsSystem {
             return;
         }
 
+        // Check for max value override first
+        let max_override = if let Some(entry) = self.custom_stats.get(name) {
+            if entry.use_other_stat_as_max {
+                if let Some(other_name) = &entry.other_stat_as_max_name {
+                    self.get_custom_stat_amount(other_name)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
         if let Some(entry) = self.custom_stats.get_mut(name) {
-            entry.increase_amount(amount);
+            entry.increase_amount(amount, max_override);
         }
     }
 
@@ -466,6 +499,30 @@ impl StatsSystem {
                     StatEntry::new_amount(&entry.name, entry.value, None),
                 );
             }
+        }
+
+        // Re-apply max limits for custom stats that depend on others
+        // We do this in a second pass because dependencies might have been loaded later
+        let mut updates: Vec<(String, f32)> = Vec::new();
+        
+        for (name, entry) in &self.custom_stats {
+            if entry.use_other_stat_as_max {
+                if let Some(other_name) = &entry.other_stat_as_max_name {
+                    if let Some(max_val) = self.get_custom_stat_amount(other_name) {
+                        if let Some(current) = entry.get_amount() {
+                           if current > max_val {
+                               updates.push((name.clone(), max_val));
+                           }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (name, val) in updates {
+             if let Some(entry) = self.custom_stats.get_mut(&name) {
+                 entry.set_amount(val, None); // Max is implicit in value here, or we could pass it.
+             }
         }
 
         self.recalculate_derived_stats();

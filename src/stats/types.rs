@@ -309,8 +309,21 @@ impl StatEntry {
     }
 
     /// Sets the numeric value
-    pub fn set_amount(&mut self, value: f32) {
-        self.value = StatValue::Amount(value);
+    pub fn set_amount(&mut self, value: f32, max_override: Option<f32>) {
+        let mut new_value = value;
+        
+        // Apply max value clamping
+        let max = if max_override.is_some() {
+            max_override
+        } else {
+            self.max_value
+        };
+
+        if let Some(max_val) = max {
+            new_value = new_value.min(max_val);
+        }
+
+        self.value = StatValue::Amount(new_value);
     }
 
     /// Sets the boolean value
@@ -319,11 +332,18 @@ impl StatEntry {
     }
 
     /// Increases the numeric value
-    pub fn increase_amount(&mut self, amount: f32) {
+    pub fn increase_amount(&mut self, amount: f32, max_override: Option<f32>) {
         if let StatValue::Amount(current) = &mut self.value {
             *current += amount;
-            if let Some(max) = self.max_value {
-                *current = current.min(max);
+            
+            let max = if max_override.is_some() {
+                max_override
+            } else {
+                self.max_value
+            };
+
+            if let Some(max_val) = max {
+                *current = current.min(max_val);
             }
         }
     }
