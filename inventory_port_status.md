@@ -8,7 +8,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `consumableInventoryPrefabCreationSystem.cs`
 - [x] `currencySystem.cs`
 - [x] `generalItemOnInventory.cs`
-- [ ] `getInventoryObjectSystem.cs`
+- [x] `getInventoryObjectSystem.cs`
 - [ ] `getObjectFromInventorySystem.cs`
 - [ ] `inventoryBankManager.cs`
 - [ ] `inventoryBankSystem.cs`

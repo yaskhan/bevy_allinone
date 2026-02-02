@@ -6,6 +6,7 @@ pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
 pub mod general_item_on_inventory;
+pub mod get_inventory_object_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -20,6 +21,7 @@ pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInvent
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
 pub use general_item_on_inventory::GeneralItemOnInventory;
+pub use get_inventory_object_system::GetInventoryObjectEvent;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -27,6 +29,7 @@ pub struct InventoryPlugin;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<CurrencyTransactionEvent>()
+        .add_event::<GetInventoryObjectEvent>()
         .add_systems(Update, (
             update_inventory,
             handle_pickup_events,
@@ -37,6 +40,7 @@ impl Plugin for InventoryPlugin {
             consumable_inventory_prefab_creation_system::update_consumable_inventory_prefab_creation_system,
             currency_system::update_currency_system,
             general_item_on_inventory::update_general_item_on_inventory,
+            get_inventory_object_system::update_get_inventory_object_system,
         ))
         .add_systems(Startup, setup_inventory_ui);
     }
