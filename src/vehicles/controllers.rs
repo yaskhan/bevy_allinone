@@ -151,6 +151,21 @@ impl Default for TurretController {
     }
 }
 
+/// Generic vehicle controller.
+///
+/// GKC reference: `vehicleController.cs`
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct VehicleController {
+    pub enabled: bool,
+}
+
+impl Default for VehicleController {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 /// Update vehicle type based on controller components.
 pub fn update_vehicle_controller_types(
     mut aircraft_vehicles: Query<&mut Vehicle, With<AirCraftController>>,
@@ -163,6 +178,7 @@ pub fn update_vehicle_controller_types(
     mut motorbike_vehicles: Query<&mut Vehicle, With<MotorBikeController>>,
     mut sphere_vehicles: Query<&mut Vehicle, With<SphereController>>,
     mut turret_vehicles: Query<&mut Vehicle, With<TurretController>>,
+    mut generic_vehicles: Query<&mut Vehicle, With<VehicleController>>,
 ) {
     for mut vehicle in aircraft_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Aircraft;
@@ -193,5 +209,8 @@ pub fn update_vehicle_controller_types(
     }
     for mut vehicle in turret_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Turret;
+    }
+    for mut vehicle in generic_vehicles.iter_mut() {
+        vehicle.vehicle_type = VehicleType::Car;
     }
 }

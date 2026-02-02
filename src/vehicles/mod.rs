@@ -34,6 +34,7 @@ pub use controllers::HoverCraftController;
 pub use controllers::MotorBikeController;
 pub use controllers::SphereController;
 pub use controllers::TurretController;
+pub use controllers::VehicleController;
 pub use hoverboard_animation::HoverBoardAnimationSystem;
 
 use systems::*;
@@ -78,6 +79,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<MotorBikeController>()
             .register_type::<SphereController>()
             .register_type::<TurretController>()
+            .register_type::<VehicleController>()
             .register_type::<HoverBoardAnimationSystem>()
             .add_systems(Update, (
                 input::vehicle_input_system,

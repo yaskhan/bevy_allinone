@@ -28,7 +28,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `motorBikeController.cs`
 - [x] `sphereController.cs`
 - [x] `turretController.cs`
-- [ ] `vehicleController.cs`
+- [x] `vehicleController.cs`
 
 ## Vehicle AI
 - [ ] `vehicleAINavMesh.cs`
