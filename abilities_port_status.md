@@ -38,6 +38,6 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Wire ability events and add `add_event` registrations in the plugin (implemented via event queues)
 - [x] Connect ability activation to input actions (press/hold/release)
 - [x] Implement hold behavior (continuous use + energy drain)
-- [ ] Integrate grounded / first-person constraints with character/camera systems
+- [x] Integrate grounded / first-person constraints with character/camera systems
 - [ ] Port stamina/energy to shared Stats system (or a dedicated Energy resource)
 - [ ] Build minimal UI indicators (current ability + cooldown/limit)
