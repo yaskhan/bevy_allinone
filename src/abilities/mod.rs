@@ -3,6 +3,7 @@ pub mod systems;
 pub mod ability_info;
 pub mod player_abilities;
 pub mod ui;
+pub mod dash;
 
 use bevy::prelude::*;
 use types::*;
@@ -10,6 +11,7 @@ use systems::*;
 use ability_info::*;
 use player_abilities::*;
 use ui::*;
+use dash::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -24,6 +26,7 @@ pub use types::AbilityTimeLimitEvent;
 
 pub use player_abilities::PlayerAbilitiesSystem;
 pub use ui::{AbilityWheelUI, AbilitySlotElement};
+pub use dash::DashAbility;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -47,6 +50,8 @@ impl Plugin for AbilitiesPlugin {
                 update_ability_wheel_ui,
                 update_ability_slot_elements,
                 handle_ability_input,
+                start_dash_from_ability,
+                update_dash_ability,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,

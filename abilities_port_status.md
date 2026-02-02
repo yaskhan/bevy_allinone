@@ -22,7 +22,7 @@ Source: `gkit/Scripts/Abilities System/`
 ## Not Implemented Yet (GKC Parity)
 - [x] Ability UI wheel + slot elements (`abilitySlotElement`, `playerAbilitiesUISystem`)
 - [x] Ability input buffering/mapping integration with the input system
-- [ ] Ability-specific systems from GKC: `dashSystem`
+- [x] Ability-specific systems from GKC: `dashSystem`
 - [ ] Ability-specific systems from GKC: `magicSpellActionSystem`
 - [ ] Ability-specific systems from GKC: `oxygenSystem`
 - [ ] Ability-specific systems from GKC: `staminaSystem`
