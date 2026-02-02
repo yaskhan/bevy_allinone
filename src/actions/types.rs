@@ -71,6 +71,38 @@ impl Default for StateChangeEventType {
     }
 }
 
+/// Player state control flags for managing player systems during actions
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub struct PlayerStateControl {
+    pub disable_movement: bool,
+    pub disable_rotation: bool,
+    pub disable_input: bool,
+    pub disable_gravity: bool,
+    pub collider_as_trigger: bool,
+    pub disable_collider: bool,
+    pub hide_hud: bool,
+    pub invincible: bool,
+    pub preserve_crouch: bool,
+    pub preserve_strafe: bool,
+}
+
+impl Default for PlayerStateControl {
+    fn default() -> Self {
+        Self {
+            disable_movement: false,
+            disable_rotation: false,
+            disable_input: false,
+            disable_gravity: false,
+            collider_as_trigger: false,
+            disable_collider: false,
+            hide_hud: false,
+            invincible: false,
+            preserve_crouch: false,
+            preserve_strafe: false,
+        }
+    }
+}
+
 /// Condition that must be met for an event to fire
 #[derive(Debug, Clone, Reflect, PartialEq)]
 pub enum EventCondition {
@@ -376,6 +408,9 @@ pub struct ActionSystem {
     
     // Internal state
     pub player_detected: bool,
+    
+    // Player state management
+    pub player_state_control: PlayerStateControl,
 }
 
 impl Default for ActionSystem {
@@ -428,6 +463,7 @@ impl Default for ActionSystem {
             can_interrupt_other_action_active: false,
             use_event_on_interrupted_action: false,
             player_detected: false,
+            player_state_control: PlayerStateControl::default(),
         }
     }
 }
