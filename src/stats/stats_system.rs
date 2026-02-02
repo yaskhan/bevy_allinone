@@ -59,7 +59,12 @@ impl Default for StatsSystem {
         derived_stats.insert(DerivedStat::Stealth, DerivedStat::Stealth.default_value());
         derived_stats.insert(DerivedStat::Persuasion, DerivedStat::Persuasion.default_value());
         derived_stats.insert(DerivedStat::Experience, DerivedStat::Experience.default_value());
+        derived_stats.insert(DerivedStat::Experience, DerivedStat::Experience.default_value());
         derived_stats.insert(DerivedStat::Level, DerivedStat::Level.default_value());
+        derived_stats.insert(DerivedStat::FireResistance, DerivedStat::FireResistance.default_value());
+        derived_stats.insert(DerivedStat::PoisonResistance, DerivedStat::PoisonResistance.default_value());
+        derived_stats.insert(DerivedStat::ElectricResistance, DerivedStat::ElectricResistance.default_value());
+        derived_stats.insert(DerivedStat::ExplosionResistance, DerivedStat::ExplosionResistance.default_value());
 
         Self {
             active: true,
@@ -163,6 +168,10 @@ impl StatsSystem {
             "persuasion" => self.derived_stats.get(&DerivedStat::Persuasion).copied(),
             "experience" | "exp" => self.derived_stats.get(&DerivedStat::Experience).copied(),
             "level" => self.derived_stats.get(&DerivedStat::Level).copied(),
+            "fire_resistance" | "fireresistance" | "fire_res" => self.derived_stats.get(&DerivedStat::FireResistance).copied(),
+            "poison_resistance" | "poisonresistance" | "poison_res" => self.derived_stats.get(&DerivedStat::PoisonResistance).copied(),
+            "electric_resistance" | "electricresistance" | "electric_res" => self.derived_stats.get(&DerivedStat::ElectricResistance).copied(),
+            "explosion_resistance" | "explosionresistance" | "explosion_res" => self.derived_stats.get(&DerivedStat::ExplosionResistance).copied(),
             _ => None,
         }
     }
@@ -450,6 +459,18 @@ impl StatsSystem {
         self.derived_stats.insert(DerivedStat::Stealth, stealth);
         self.derived_stats.insert(DerivedStat::Persuasion, persuasion);
         
+        // Base resistances (could be based on attributes, e.g. Constitution -> Poison)
+        let fire_res = intelligence * 0.01 + constitution * 0.01;
+        let poison_res = constitution * 0.02; 
+        
+        // Note: We use insert with the calculated BASE value. 
+        // Real gameplay might have modifiers on top.
+        // For now, let's keep them at defaults or simple attribute scaling if we want.
+        // Let's stick to simple Attribute scaling for now to demonstrate GKit parity.
+        self.derived_stats.insert(DerivedStat::FireResistance, fire_res);
+        self.derived_stats.insert(DerivedStat::PoisonResistance, poison_res);
+        // Electric/Explosion stay at 0 base for now unless modified
+        
         // Ensure Current values are clamped to new Max values
         if let Some(current) = self.derived_stats.get(&DerivedStat::CurrentHealth).copied() {
              self.derived_stats.insert(DerivedStat::CurrentHealth, current.min(max_health));
@@ -589,6 +610,10 @@ impl StatsSystem {
             "persuasion" => Some(DerivedStat::Persuasion),
             "experience" | "exp" => Some(DerivedStat::Experience),
             "level" => Some(DerivedStat::Level),
+            "fire_resistance" | "fireresistance" => Some(DerivedStat::FireResistance),
+            "poison_resistance" | "poisonresistance" => Some(DerivedStat::PoisonResistance),
+            "electric_resistance" | "electricresistance" => Some(DerivedStat::ElectricResistance),
+            "explosion_resistance" | "explosionresistance" => Some(DerivedStat::ExplosionResistance),
             _ => None,
         }
     }

@@ -78,7 +78,14 @@ pub enum DerivedStat {
     /// Experience points
     Experience,
     /// Current level
-    Level,
+    /// Resistance to fire damage
+    FireResistance,
+    /// Resistance to poison damage
+    PoisonResistance,
+    /// Resistance to electric/shock damage
+    ElectricResistance,
+    /// Resistance to explosive damage
+    ExplosionResistance,
 }
 
 impl DerivedStat {
@@ -97,6 +104,10 @@ impl DerivedStat {
             DerivedStat::MovementSpeed => 1.0,
             DerivedStat::AttackSpeed => 1.0,
             DerivedStat::MagicResistance => 0.0,
+            DerivedStat::FireResistance => 0.0,
+            DerivedStat::PoisonResistance => 0.0,
+            DerivedStat::ElectricResistance => 0.0,
+            DerivedStat::ExplosionResistance => 0.0,
             DerivedStat::Stealth => 0.0,
             DerivedStat::Persuasion => 0.0,
             DerivedStat::Experience => 0.0,

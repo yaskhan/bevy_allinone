@@ -54,6 +54,7 @@ impl Plugin for CombatPlugin {
                 damage_ui::update_damage_ui,
                 damage_over_time::update_damage_over_time,
                 destroyable::handle_destroyable_death,
+                systems::handle_character_death, // Character Death -> Ragdoll
                 area_effect::handle_area_effects,
             ).chain());
     }

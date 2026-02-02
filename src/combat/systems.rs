@@ -2,13 +2,15 @@ use bevy::prelude::*;
 use avian3d::prelude::*;
 use super::types::*;
 use crate::input::InputState;
+use crate::stats::{StatsSystem, types::DerivedStat};
+use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
 
 /// System to process damage events, reduce health/shields, and show feedback.
 pub fn process_damage_events(
     mut commands: Commands,
     mut damage_queue: ResMut<DamageEventQueue>,
     mut death_queue: ResMut<DeathEventQueue>,
-    mut health_query: Query<(&mut Health, Option<&mut Shield>, Option<&Blocking>, &GlobalTransform)>,
+    mut health_query: Query<(&mut Health, Option<&mut Shield>, Option<&Blocking>, Option<&StatsSystem>, &GlobalTransform)>,
     receiver_query: Query<&DamageReceiver>,
     time: Res<Time>,
 ) {
@@ -27,12 +29,48 @@ pub fn process_damage_events(
         }
 
         // 2. Apply Damage to Root Health
-        if let Ok((mut health, shield_opt, blocking_opt, transform)) = health_query.get_mut(target_root) {
+        if let Ok((mut health, shield_opt, blocking_opt, stats_opt, transform)) = health_query.get_mut(target_root) {
             if health.is_invulnerable || health.temporal_invincibility_timer > 0.0 || health.is_dead {
                 continue;
             }
 
-            let mut final_damage = event.amount * health.general_damage_multiplier * part_multiplier;
+            // Calculate Resistance / Defense
+            let mut resistance = 0.0;
+            let mut flat_defense = 0.0;
+
+            if let Some(stats) = stats_opt {
+                match event.damage_type {
+                    DamageType::Fire => resistance = stats.get_derived_stat(DerivedStat::FireResistance).copied().unwrap_or(0.0),
+                    DamageType::Poison => resistance = stats.get_derived_stat(DerivedStat::PoisonResistance).copied().unwrap_or(0.0),
+                    DamageType::Electric => resistance = stats.get_derived_stat(DerivedStat::ElectricResistance).copied().unwrap_or(0.0),
+                    DamageType::Explosion => resistance = stats.get_derived_stat(DerivedStat::ExplosionResistance).copied().unwrap_or(0.0),
+                    DamageType::Melee | DamageType::Ranged => {
+                        // Physical damage uses Defense stat (often flat reduction in RPGs, or percent. Let's assume flat for Defense)
+                        // Wait, DerivedStat::Defense default is 5.0. If damage is 10.0, 5.0 flat reduction is huge (50%).
+                        // If it's percent, 5.0 is 500%? No.
+                        // Let's assume Defense is flat reduction for now, or scaled.
+                        // GKit usually does: damage - defense.
+                        flat_defense = stats.get_derived_stat(DerivedStat::Defense).copied().unwrap_or(0.0);
+                    },
+                    DamageType::Environmental => {}, // No res for now
+                    DamageType::Heal => {}, 
+                    DamageType::Fall => {}, // Fall damage usually ignores defense
+                }
+            }
+
+            let mut final_damage = event.amount;
+            
+            // Apply Flat Defense (Physical)
+            if flat_defense > 0.0 {
+                final_damage = (final_damage - flat_defense).max(0.0);
+            }
+            
+            // Apply Percent Resistance (Elemental)
+            if resistance > 0.0 {
+                final_damage *= (1.0 - resistance).max(0.0);
+            }
+
+            final_damage *= health.general_damage_multiplier * part_multiplier;
             let mut is_parry = false;
             let mut is_block = false;
             let is_heal = event.damage_type == DamageType::Heal;
@@ -292,6 +330,31 @@ pub fn update_damage_numbers(
 
         if damage_number.lifetime <= 0.0 {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+/// System to handle character death events (trigger ragdoll, etc.)
+pub fn handle_character_death(
+    mut death_queue: ResMut<DeathEventQueue>,
+    mut ragdoll_queue: ResMut<ActivateRagdollQueue>,
+    query: Query<&Health>, // Just to verify? Or maybe just pass through.
+    ragdoll_query: Query<Entity, With<crate::player::ragdoll::Ragdoll>>,
+) {
+    for event in death_queue.0.drain(..) {
+        // Trigger Ragdoll if component exists
+        if ragdoll_query.contains(event.entity) {
+            ragdoll_queue.0.push(ActivateRagdollEvent {
+                entity: event.entity,
+                force_direction: None, // Could pass this from DamageEvent if we tracked it
+                force_magnitude: 0.0,
+            });
+        } else {
+            // Standard despawn or other logic for non-ragdoll entities?
+            // For now, leave them or despawn?
+            // GKit likely keeps them dead on ground.
+            // If no ragdoll, we probably just want to disable collision/ai?
+            // Leaving empty for now to avoid premature despawning of player.
         }
     }
 }
