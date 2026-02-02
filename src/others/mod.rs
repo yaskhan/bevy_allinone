@@ -32,6 +32,7 @@ pub mod player_options_editor_system;
 pub mod play_sound_on_collision;
 pub mod play_sound_on_trigger_enter;
 pub mod put_gear;
+pub mod rail_mechanism;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -69,6 +70,7 @@ pub use player_options_editor_system::PlayerOptionsEditorSystem;
 pub use play_sound_on_collision::{PlaySoundOnCollision, CollisionSoundEvent};
 pub use play_sound_on_trigger_enter::{PlaySoundOnTriggerEnter, TriggerSoundEvent};
 pub use put_gear::PutGear;
+pub use rail_mechanism::RailMechanism;
 
 pub struct OthersPlugin;
 
@@ -104,6 +106,7 @@ impl Plugin for OthersPlugin {
                 place_object_in_camera_editor_position_system::update_place_object_in_camera_editor_position_system,
                 play_sound_on_collision::update_play_sound_on_collision,
                 play_sound_on_trigger_enter::update_play_sound_on_trigger_enter,
+                rail_mechanism::update_rail_mechanism,
             ));
     }
 }
