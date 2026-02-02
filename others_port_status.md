@@ -19,7 +19,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `flyingTurretSystem.cs`
 - [x] `followObjectPositionSystem.cs`
 - [x] `followObjectPositionUpdateSystem.cs`
-- [ ] `GKC_Utils.cs`
+- [x] `GKC_Utils.cs`
 - [ ] `headExplodeExample.cs`
 - [ ] `hideBodyPartOnCharacterSystem.cs`
 - [ ] `ignoreCollisionHelper.cs`

@@ -16,6 +16,7 @@ pub mod features_manager;
 pub mod flying_turret_system;
 pub mod follow_object_position_system;
 pub mod follow_object_position_update_system;
+pub mod gkc_utils;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -37,6 +38,7 @@ pub use features_manager::FeaturesManager;
 pub use flying_turret_system::FlyingTurretSystem;
 pub use follow_object_position_system::FollowObjectPositionSystem;
 pub use follow_object_position_update_system::FollowObjectPositionUpdateSystem;
+pub use gkc_utils::GkcUtils;
 
 pub struct OthersPlugin;
 
