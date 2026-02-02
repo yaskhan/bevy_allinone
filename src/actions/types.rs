@@ -71,6 +71,39 @@ impl Default for StateChangeEventType {
     }
 }
 
+/// Weapon event types for triggering weapon actions
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum WeaponEventType {
+    None,
+    Fire { burst_count: i32, delay_between_shots: f32 },
+    Reload,
+    Aim { enable: bool },
+    SwitchWeapon { weapon_index: i32 },
+    ThrowGrenade { force: f32, direction: Vec3 },
+}
+
+impl Default for WeaponEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+/// Power event types for consuming/restoring power
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum PowerEventType {
+    None,
+    ConsumePower { amount: f32 },
+    RestorePower { amount: f32 },
+    DrainOverTime { amount_per_second: f32, duration: f32 },
+    RequirePower { minimum_amount: f32 },
+}
+
+impl Default for PowerEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Player state control flags for managing player systems during actions
 #[derive(Debug, Clone, Reflect, PartialEq)]
 pub struct PlayerStateControl {
@@ -84,6 +117,16 @@ pub struct PlayerStateControl {
     pub invincible: bool,
     pub preserve_crouch: bool,
     pub preserve_strafe: bool,
+    
+    // Weapon control
+    pub disable_weapon_input: bool,
+    pub force_aim: bool,
+    pub disable_weapon_switching: bool,
+    pub preserve_aim_state: bool,
+    
+    // Power control
+    pub disable_power_usage: bool,
+    pub power_drain_multiplier: f32,
 }
 
 impl Default for PlayerStateControl {
@@ -99,6 +142,12 @@ impl Default for PlayerStateControl {
             invincible: false,
             preserve_crouch: false,
             preserve_strafe: false,
+            disable_weapon_input: false,
+            force_aim: false,
+            disable_weapon_switching: false,
+            preserve_aim_state: false,
+            disable_power_usage: false,
+            power_drain_multiplier: 1.0,
         }
     }
 }
@@ -163,6 +212,16 @@ pub struct ActionEvent {
     // State change events
     pub use_state_change_event: bool,
     pub state_change_event_type: StateChangeEventType,
+    
+    // Weapon events
+    pub use_weapon_event: bool,
+    pub weapon_event_type: WeaponEventType,
+    pub weapon_target_entity: Option<Entity>,
+    
+    // Power events
+    pub use_power_event: bool,
+    pub power_event_type: PowerEventType,
+    pub power_event_affects_player: bool,
 }
 
 impl Default for ActionEvent {
@@ -187,6 +246,12 @@ impl Default for ActionEvent {
             physics_target_self: true,
             use_state_change_event: false,
             state_change_event_type: StateChangeEventType::None,
+            use_weapon_event: false,
+            weapon_event_type: WeaponEventType::None,
+            weapon_target_entity: None,
+            use_power_event: false,
+            power_event_type: PowerEventType::None,
+            power_event_affects_player: true,
         }
     }
 }
@@ -496,6 +561,10 @@ pub struct PlayerActionSystem {
     pub previous_physics_state: bool,
     pub saved_crouch_state: bool,
     pub saved_strafe_state: bool,
+    
+    // Saved weapon state
+    pub saved_aim_state: bool,
+    pub saved_weapon_index: usize,
 }
 
 impl Default for PlayerActionSystem {
@@ -516,6 +585,8 @@ impl Default for PlayerActionSystem {
             previous_physics_state: true,
             saved_crouch_state: false,
             saved_strafe_state: false,
+            saved_aim_state: false,
+            saved_weapon_index: 0,
         }
     }
 }
@@ -640,3 +711,27 @@ pub struct StateChangeEventTriggered {
 
 #[derive(Resource, Default)]
 pub struct StateChangeEventQueue(pub Vec<StateChangeEventTriggered>);
+
+/// Weapon event triggered during an action
+#[derive(Debug, Clone)]
+pub struct WeaponEventTriggered {
+    pub event_type: WeaponEventType,
+    pub player_entity: Entity,
+    pub target_entity: Option<Entity>,
+}
+
+/// Queue for weapon events triggered during actions
+#[derive(Resource, Default)]
+pub struct WeaponEventQueue(pub Vec<WeaponEventTriggered>);
+
+/// Power event triggered during an action
+#[derive(Debug, Clone)]
+pub struct PowerEventTriggered {
+    pub event_type: PowerEventType,
+    pub player_entity: Entity,
+    pub amount: f32,
+}
+
+/// Queue for power events triggered during actions
+#[derive(Resource, Default)]
+pub struct PowerEventQueue(pub Vec<PowerEventTriggered>);

@@ -9,6 +9,7 @@ pub fn update_action_system(
     mut action_query: Query<(Entity, &mut ActionSystem, &GlobalTransform)>,
     mut char_state_query: Query<&mut crate::character::types::CharacterMovementState>,
     mut player_modes_query: Query<&mut crate::player::player_modes::PlayerModesSystem>,
+    mut weapon_manager_query: Query<&mut crate::weapons::WeaponManager>,
     mut commands: Commands,
     time: Res<Time>,
     input: Res<InputState>,
@@ -59,6 +60,30 @@ pub fn update_action_system(
                         // Check if current mode is strafe-related (e.g., contains "Strafe" in name)
                         player_action.saved_strafe_state = player_modes.current_players_mode_name.contains("Strafe");
                         info!("Saved strafe state: {}", player_action.saved_strafe_state);
+                    }
+                }
+                
+                // Save weapon states
+                if control.preserve_aim_state {
+                    if let Ok(weapon_manager) = weapon_manager_query.get(event.player_entity) {
+                        player_action.saved_aim_state = weapon_manager.aiming_in_third_person;
+                        info!("Saved aim state: {}", player_action.saved_aim_state);
+                    }
+                }
+                
+                // Apply immediate weapon control
+                if control.disable_weapon_input {
+                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                        weapon_manager.player_currently_busy = true;
+                        info!("Weapon input disabled during action");
+                    }
+                }
+                
+                if control.force_aim {
+                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                        weapon_manager.aiming_in_third_person = true;
+                        weapon_manager.aiming_in_first_person = true;
+                        info!("Forced aim state during action");
                     }
                 }
                 
@@ -217,6 +242,23 @@ pub fn update_action_system(
                                     player_modes.current_players_mode_name = mode_name.clone();
                                     info!("Restored strafe mode to: {}", mode_name);
                                 }
+                            }
+                        }
+                        
+                        // Restore weapon states
+                        if control.preserve_aim_state && player_action.saved_aim_state {
+                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                                weapon_manager.aiming_in_third_person = true;
+                                weapon_manager.aiming_in_first_person = true;
+                                info!("Restored aim state to: true");
+                            }
+                        }
+                        
+                        // Reset busy flag if it was disabled
+                        if control.disable_weapon_input {
+                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                                weapon_manager.player_currently_busy = false;
+                                info!("Weapon input re-enabled");
                             }
                         }
                         
@@ -604,6 +646,8 @@ pub fn process_action_events_system(
     mut camera_queue: ResMut<CameraEventQueue>,
     mut physics_queue: ResMut<PhysicsEventQueue>,
     mut state_change_queue: ResMut<StateChangeEventQueue>,
+    mut weapon_queue: ResMut<WeaponEventQueue>,
+    mut power_queue: ResMut<PowerEventQueue>,
     time: Res<Time>,
 ) {
     for (mut player_action, player_entity, player_transform) in player_query.iter_mut() {
@@ -658,7 +702,18 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue, &mut physics_queue, &mut state_change_queue);
+                                    fire_action_event(
+                                        event, 
+                                        action_entity, 
+                                        player_entity, 
+                                        &mut event_queue, 
+                                        &mut remote_queue, 
+                                        &mut camera_queue, 
+                                        &mut physics_queue, 
+                                        &mut state_change_queue,
+                                        &mut weapon_queue,
+                                        &mut power_queue,
+                                    );
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -697,7 +752,18 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue, &mut physics_queue, &mut state_change_queue);
+                                    fire_action_event(
+                                        event, 
+                                        action_entity, 
+                                        player_entity, 
+                                        &mut event_queue, 
+                                        &mut remote_queue, 
+                                        &mut camera_queue, 
+                                        &mut physics_queue, 
+                                        &mut state_change_queue,
+                                        &mut weapon_queue,
+                                        &mut power_queue,
+                                    );
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -721,6 +787,8 @@ fn fire_action_event(
     camera_queue: &mut CameraEventQueue,
     physics_queue: &mut PhysicsEventQueue,
     state_change_queue: &mut StateChangeEventQueue,
+    weapon_queue: &mut WeaponEventQueue,
+    power_queue: &mut PowerEventQueue,
 ) {
     if event.use_bevy_event {
         event_queue.0.push(ActionEventTriggered {
@@ -769,6 +837,32 @@ fn fire_action_event(
             player_entity,
         });
         info!("State Change Event: {:?} triggered", event.state_change_event_type);
+    }
+
+    if event.use_weapon_event {
+        weapon_queue.0.push(WeaponEventTriggered {
+            event_type: event.weapon_event_type.clone(),
+            player_entity,
+            target_entity: event.weapon_target_entity,
+        });
+        info!("Weapon Event: {:?} triggered", event.weapon_event_type);
+    }
+
+    if event.use_power_event {
+        let amount = match &event.power_event_type {
+            PowerEventType::ConsumePower { amount } => *amount,
+            PowerEventType::RestorePower { amount } => *amount,
+            PowerEventType::DrainOverTime { amount_per_second, .. } => *amount_per_second,
+            PowerEventType::RequirePower { minimum_amount } => *minimum_amount,
+            _ => 0.0,
+        };
+        
+        power_queue.0.push(PowerEventTriggered {
+            event_type: event.power_event_type.clone(),
+            player_entity,
+            amount,
+        });
+        info!("Power Event: {:?} triggered with amount {}", event.power_event_type, amount);
     }
 }
 
