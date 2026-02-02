@@ -20,7 +20,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `followObjectPositionSystem.cs`
 - [x] `followObjectPositionUpdateSystem.cs`
 - [x] `GKC_Utils.cs`
-- [ ] `headExplodeExample.cs`
+- [x] `headExplodeExample.cs`
 - [ ] `hideBodyPartOnCharacterSystem.cs`
 - [ ] `ignoreCollisionHelper.cs`
 - [ ] `ignoreCollisionSystem.cs`

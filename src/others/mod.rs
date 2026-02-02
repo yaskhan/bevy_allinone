@@ -17,6 +17,7 @@ pub mod flying_turret_system;
 pub mod follow_object_position_system;
 pub mod follow_object_position_update_system;
 pub mod gkc_utils;
+pub mod head_explode_example;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -39,6 +40,7 @@ pub use flying_turret_system::FlyingTurretSystem;
 pub use follow_object_position_system::FollowObjectPositionSystem;
 pub use follow_object_position_update_system::FollowObjectPositionUpdateSystem;
 pub use gkc_utils::GkcUtils;
+pub use head_explode_example::HeadExplodeExample;
 
 pub struct OthersPlugin;
 
@@ -63,6 +65,7 @@ impl Plugin for OthersPlugin {
                 flying_turret_system::update_flying_turret_system,
                 follow_object_position_system::update_follow_object_position_system,
                 follow_object_position_update_system::update_follow_object_position_update_system,
+                head_explode_example::update_head_explode_example,
             ));
     }
 }
