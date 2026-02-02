@@ -26,7 +26,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `ignoreCollisionSystem.cs`
 - [x] `initialPopUpWindow.cs`
 - [x] `mechanismPart.cs`
-- [ ] `moveObjectSmoothlySystem.cs`
+- [x] `moveObjectSmoothlySystem.cs`
 - [ ] `onEnableCheckSystem.cs`
 - [ ] `openInitialPopUpWindow.cs`
 - [ ] `pauseAnimationSystem.cs`
