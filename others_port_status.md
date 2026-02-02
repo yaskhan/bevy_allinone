@@ -33,7 +33,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `placeObjectInCameraEditorPositionSystem.cs`
 - [x] `playerOptionsEditorSystem.cs`
 - [x] `playSoundOnCollision.cs`
-- [ ] `playSoundOnTriggerEnter.cs`
+- [x] `playSoundOnTriggerEnter.cs`
 - [ ] `putGear.cs`
 - [ ] `railMechanism.cs`
 - [ ] `replaceMaterialSystem.cs`

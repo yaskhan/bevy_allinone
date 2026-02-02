@@ -30,6 +30,7 @@ pub mod pause_animation_system;
 pub mod place_object_in_camera_editor_position_system;
 pub mod player_options_editor_system;
 pub mod play_sound_on_collision;
+pub mod play_sound_on_trigger_enter;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -65,6 +66,7 @@ pub use pause_animation_system::PauseAnimationSystem;
 pub use place_object_in_camera_editor_position_system::PlaceObjectInCameraEditorPositionSystem;
 pub use player_options_editor_system::PlayerOptionsEditorSystem;
 pub use play_sound_on_collision::{PlaySoundOnCollision, CollisionSoundEvent};
+pub use play_sound_on_trigger_enter::{PlaySoundOnTriggerEnter, TriggerSoundEvent};
 
 pub struct OthersPlugin;
 
@@ -77,6 +79,7 @@ impl Plugin for OthersPlugin {
             .add_event::<ConsoleLogEvent>()
             .add_event::<RaycastObjectFoundEvent>()
             .add_event::<CollisionSoundEvent>()
+            .add_event::<TriggerSoundEvent>()
             .add_systems(Update, (
                 add_force_to_object_system::update_add_force_to_object_system,
                 animator_trigger_enter_exit_event::update_animator_trigger_enter_exit_event,
@@ -98,6 +101,7 @@ impl Plugin for OthersPlugin {
                 pause_animation_system::update_pause_animation_system,
                 place_object_in_camera_editor_position_system::update_place_object_in_camera_editor_position_system,
                 play_sound_on_collision::update_play_sound_on_collision,
+                play_sound_on_trigger_enter::update_play_sound_on_trigger_enter,
             ));
     }
 }
