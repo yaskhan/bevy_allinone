@@ -34,6 +34,7 @@ pub mod play_sound_on_trigger_enter;
 pub mod put_gear;
 pub mod rail_mechanism;
 pub mod replace_material_system;
+pub mod rotate_objects;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -73,6 +74,7 @@ pub use play_sound_on_trigger_enter::{PlaySoundOnTriggerEnter, TriggerSoundEvent
 pub use put_gear::PutGear;
 pub use rail_mechanism::RailMechanism;
 pub use replace_material_system::ReplaceMaterialSystem;
+pub use rotate_objects::RotateObjects;
 
 pub struct OthersPlugin;
 
@@ -110,6 +112,7 @@ impl Plugin for OthersPlugin {
                 play_sound_on_trigger_enter::update_play_sound_on_trigger_enter,
                 rail_mechanism::update_rail_mechanism,
                 replace_material_system::update_replace_material_system,
+                rotate_objects::update_rotate_objects,
             ));
     }
 }
