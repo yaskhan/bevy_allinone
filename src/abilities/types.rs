@@ -60,3 +60,17 @@ pub struct SetAbilityEnabledEvent {
     pub ability_name: String,
     pub enabled: bool,
 }
+
+/// Event for ability cooldown state changes
+#[derive(Event)]
+pub struct AbilityCooldownEvent {
+    pub ability_name: String,
+    pub started: bool,
+}
+
+/// Event for ability time limit state changes
+#[derive(Event)]
+pub struct AbilityTimeLimitEvent {
+    pub ability_name: String,
+    pub started: bool,
+}

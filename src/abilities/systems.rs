@@ -9,11 +9,32 @@ use crate::physics::GroundDetection;
 pub fn update_abilities(
     time: Res<Time>,
     mut abilities: Query<&mut AbilityInfo>,
+    mut cooldown_events: EventWriter<AbilityCooldownEvent>,
+    mut time_limit_events: EventWriter<AbilityTimeLimitEvent>,
 ) {
     let delta_time = time.delta_secs();
     
     for mut ability in abilities.iter_mut() {
+        let prev_cooldown = ability.cooldown_in_process;
+        let prev_time_limit = ability.time_limit_in_process;
+
         ability.update(delta_time);
+
+        if ability.cooldown_in_process != prev_cooldown {
+            cooldown_events.send(AbilityCooldownEvent {
+                ability_name: ability.name.clone(),
+                started: ability.cooldown_in_process,
+            });
+            ability.was_cooldown_in_process = ability.cooldown_in_process;
+        }
+
+        if ability.time_limit_in_process != prev_time_limit {
+            time_limit_events.send(AbilityTimeLimitEvent {
+                ability_name: ability.name.clone(),
+                started: ability.time_limit_in_process,
+            });
+            ability.was_time_limit_in_process = ability.time_limit_in_process;
+        }
     }
 }
 

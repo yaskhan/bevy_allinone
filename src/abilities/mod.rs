@@ -17,6 +17,8 @@ pub use ability_info::AbilityInfo;
 pub use types::ActivateAbilityEvent;
 pub use types::DeactivateAbilityEvent;
 pub use types::SetAbilityEnabledEvent;
+pub use types::AbilityCooldownEvent;
+pub use types::AbilityTimeLimitEvent;
 
 pub use player_abilities::PlayerAbilitiesSystem;
 
@@ -33,6 +35,8 @@ impl Plugin for AbilitiesPlugin {
             .add_event::<ActivateAbilityEvent>()
             .add_event::<DeactivateAbilityEvent>()
             .add_event::<SetAbilityEnabledEvent>()
+            .add_event::<AbilityCooldownEvent>()
+            .add_event::<AbilityTimeLimitEvent>()
             // Add systems
             .add_systems(Update, (
                 update_player_abilities_context,

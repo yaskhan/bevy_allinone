@@ -87,6 +87,12 @@ pub struct AbilityInfo {
     
     /// Time limit timer
     pub time_limit_timer: f32,
+
+    /// Previous cooldown state (for change detection)
+    pub was_cooldown_in_process: bool,
+
+    /// Previous time limit state (for change detection)
+    pub was_time_limit_in_process: bool,
 }
 
 impl Default for AbilityInfo {
@@ -134,6 +140,8 @@ impl Default for AbilityInfo {
             last_time_active: 0.0,
             cooldown_timer: 0.0,
             time_limit_timer: 0.0,
+            was_cooldown_in_process: false,
+            was_time_limit_in_process: false,
         }
     }
 }
