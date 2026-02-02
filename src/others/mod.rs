@@ -47,6 +47,7 @@ pub mod show_message_on_hud_system;
 pub mod simple_action_button;
 pub mod simple_animation_system;
 pub mod simple_audio_play;
+pub mod simple_event_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -99,6 +100,7 @@ pub use show_message_on_hud_system::{ShowHudMessageEvent, ShowMessageOnHudSystem
 pub use simple_action_button::{SimpleActionButton, SimpleActionButtonEvent};
 pub use simple_animation_system::SimpleAnimationSystem;
 pub use simple_audio_play::SimpleAudioPlay;
+pub use simple_event_system::{SimpleEvent, SimpleEventSystem};
 
 pub struct OthersPlugin;
 
@@ -114,6 +116,7 @@ impl Plugin for OthersPlugin {
             .add_event::<TriggerSoundEvent>()
             .add_event::<ShowHudMessageEvent>()
             .add_event::<SimpleActionButtonEvent>()
+            .add_event::<SimpleEvent>()
             .add_systems(Update, (
                 add_force_to_object_system::update_add_force_to_object_system,
                 animator_trigger_enter_exit_event::update_animator_trigger_enter_exit_event,
@@ -148,6 +151,7 @@ impl Plugin for OthersPlugin {
                 show_message_on_hud_system::update_show_message_on_hud_system,
                 simple_animation_system::update_simple_animation_system,
                 simple_audio_play::update_simple_audio_play,
+                simple_event_system::update_simple_event_system,
             ));
     }
 }

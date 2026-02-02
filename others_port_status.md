@@ -50,7 +50,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `simpleActionButton.cs`
 - [x] `simpleAnimationSystem.cs`
 - [x] `simpleAudioPlay.cs`
-- [ ] `simpleEventSystem.cs`
+- [x] `simpleEventSystem.cs`
 - [ ] `SimpleFPSCounter.cs`
 - [ ] `simpleLamp.cs`
 - [ ] `simpleLensFlareSystem.cs`
