@@ -11,6 +11,7 @@ pub mod throw_trajectory;
 pub mod wall_running_zone;
 pub mod particle_detection;
 pub mod template_ability;
+pub mod weapon_integration;
 
 use bevy::prelude::*;
 use types::*;
@@ -26,6 +27,7 @@ use throw_trajectory::*;
 use wall_running_zone::*;
 use particle_detection::*;
 use template_ability::*;
+use weapon_integration::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -56,6 +58,7 @@ pub use particle_detection::{
     ParticleTriggerEventQueue,
 };
 pub use template_ability::TemplateAbilitySystem;
+pub use weapon_integration::AbilityWeaponIntegration;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -93,6 +96,7 @@ impl Plugin for AbilitiesPlugin {
                 handle_particle_collision_events,
                 handle_particle_trigger_events,
                 update_template_ability,
+                update_weapon_ability_hooks,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,

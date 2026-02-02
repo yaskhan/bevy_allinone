@@ -30,7 +30,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability-specific systems from GKC: `wallRunningZoneSystem`
 - [x] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
 - [x] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
-- [ ] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
+- [x] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
 - [ ] Ability pickup/enable hooks from inventory/pickups
 - [ ] Editor tooling equivalents (Unity inspectors) not applicable / not ported
 
