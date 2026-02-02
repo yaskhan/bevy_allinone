@@ -246,7 +246,7 @@ impl PlayerAbilitiesSystem {
         if !ability.use_press_hold() {
             return;
         }
-        
+
         if !self.check_if_ability_can_be_activated(ability, is_on_ground) {
             return;
         }
@@ -254,8 +254,6 @@ impl PlayerAbilitiesSystem {
         if ability.use_energy_on_press_hold {
             self.check_ability_use_energy(ability);
         }
-        
-        ability.use_press_hold();
     }
 
     /// Releases the current ability

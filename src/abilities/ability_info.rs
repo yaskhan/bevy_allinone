@@ -272,7 +272,9 @@ impl AbilityInfo {
             return false;
         }
 
-        // Implementation for hold-based abilities
+        self.active = true;
+        self.status = AbilityStatus::Active;
+
         true
     }
 

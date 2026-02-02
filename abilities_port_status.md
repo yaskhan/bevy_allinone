@@ -14,7 +14,7 @@ Source: `gkit/Scripts/Abilities System/`
 
 ## Partially Implemented / Stubs
 - [x] Ability activation/deactivation events are defined but not wired (`handle_*` systems are empty)
-- [ ] `PressHold` behavior is a placeholder (no hold-timer or continuous action logic)
+- [x] `PressHold` behavior is a placeholder (no hold-timer or continuous action logic)
 - [ ] Grounded / first-person checks are TODOs (no integration with character/camera yet)
 - [ ] Ability cooldown/limit side-effects (e.g., UI, FX, events) are not triggered
 - [ ] Energy system is local to `PlayerAbilitiesSystem` (not connected to Stats/Stamina systems)
