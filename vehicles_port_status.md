@@ -11,7 +11,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `skidsManager.cs`
 - [x] `vehicleBuilder.cs`
 - [x] `vehicleDamageReceiver.cs`
-- [ ] `vehicleHUDManager.cs`
+- [x] `vehicleHUDManager.cs`
 - [ ] `vehicleInterface.cs`
 - [ ] `vehicleLaser.cs`
 - [ ] `vehicleWeaponSystem.cs`
