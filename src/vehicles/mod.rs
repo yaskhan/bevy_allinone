@@ -11,6 +11,7 @@ pub mod ship_interface_info;
 pub mod vehicle_builder;
 pub mod vehicle_interface;
 pub mod vehicle_laser;
+pub mod controllers;
 
 pub use types::*;
 pub use spawn::*;
@@ -22,6 +23,7 @@ pub use ship_interface_info::ShipInterfaceInfo;
 pub use vehicle_builder::VehicleBuilder;
 pub use vehicle_interface::VehicleInterface;
 pub use vehicle_laser::VehicleLaser;
+pub use controllers::AirCraftController;
 
 use systems::*;
 
@@ -55,6 +57,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleBuilder>()
             .register_type::<VehicleInterface>()
             .register_type::<VehicleLaser>()
+            .register_type::<AirCraftController>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -84,6 +87,7 @@ impl Plugin for VehiclesPlugin {
                 player_hud_manager::update_player_hud_manager,
                 vehicle_builder::update_vehicle_builder,
                 vehicle_laser::update_vehicle_laser,
+                controllers::update_vehicle_controller_types,
             ));
     }
 }
