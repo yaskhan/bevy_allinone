@@ -20,6 +20,7 @@ pub mod inventory_list_manager;
 pub mod inventory_menu_icon_element;
 pub mod inventory_menu_panels_system;
 pub mod inventory_object_to_equip_info;
+pub mod inventory_prefab_creation_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -48,6 +49,7 @@ pub use inventory_list_manager::InventoryListManager;
 pub use inventory_menu_icon_element::InventoryMenuIconElement;
 pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPanelsSystem};
 pub use inventory_object_to_equip_info::InventoryObjectToEquipInfo;
+pub use inventory_prefab_creation_system::InventoryPrefabCreationSystem;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -78,6 +80,7 @@ impl Plugin for InventoryPlugin {
             inventory_capture_manager_transparent::update_inventory_capture_manager_transparent,
             inventory_list_manager::update_inventory_list_manager,
             inventory_menu_panels_system::update_inventory_menu_panels_system,
+            inventory_prefab_creation_system::update_inventory_prefab_creation_system,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
