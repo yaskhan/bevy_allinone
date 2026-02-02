@@ -5,7 +5,7 @@ Source: `gkit/Scripts/Inventory/`
 ## Core Systems
 - [x] `ammoInventoryPrefabCreationSystem.cs`
 - [x] `carryPhysicallyObjectFromInventory.cs`
-- [ ] `consumableInventoryPrefabCreationSystem.cs`
+- [x] `consumableInventoryPrefabCreationSystem.cs`
 - [ ] `currencySystem.cs`
 - [ ] `generalItemOnInventory.cs`
 - [ ] `getInventoryObjectSystem.cs`
