@@ -10,6 +10,7 @@ pub mod stamina;
 pub mod throw_trajectory;
 pub mod wall_running_zone;
 pub mod particle_detection;
+pub mod template_ability;
 
 use bevy::prelude::*;
 use types::*;
@@ -24,6 +25,7 @@ use stamina::*;
 use throw_trajectory::*;
 use wall_running_zone::*;
 use particle_detection::*;
+use template_ability::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -39,7 +41,8 @@ pub use types::AbilityTimeLimitEvent;
 pub use player_abilities::PlayerAbilitiesSystem;
 pub use ui::{AbilityWheelUI, AbilitySlotElement};
 pub use dash::DashAbility;
-pub use magic_spell::{MagicSpellAbility, MagicSpellCastEvent};
+pub use magic_spell::MagicSpellAbility;
+pub use types::MagicSpellCastEvent;
 pub use oxygen::OxygenSystem;
 pub use stamina::StaminaSystem;
 pub use throw_trajectory::ThrowObjectTrajectory;
@@ -52,6 +55,7 @@ pub use particle_detection::{
     ParticleCollisionEventQueue,
     ParticleTriggerEventQueue,
 };
+pub use template_ability::TemplateAbilitySystem;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -88,6 +92,7 @@ impl Plugin for AbilitiesPlugin {
                 update_wall_running_zones,
                 handle_particle_collision_events,
                 handle_particle_trigger_events,
+                update_template_ability,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
