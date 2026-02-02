@@ -9,7 +9,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `audioSourceInfo.cs`
 - [x] `BezierSpline.cs`
 - [x] `changeObjectColors.cs`
-- [ ] `checkCollisionType.cs`
+- [x] `checkCollisionType.cs`
 - [ ] `consoleLogOnScreenSystem.cs`
 - [ ] `destroyGameObject.cs`
 - [ ] `dissolveObject.cs`
