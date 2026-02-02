@@ -40,6 +40,7 @@ pub use controllers::VehicleController;
 pub use hoverboard_animation::HoverBoardAnimationSystem;
 pub use vehicle_ai_navmesh::VehicleAINavMesh;
 pub use waypoints::WaypointCircuit;
+pub use waypoints::WaypointProgressTracker;
 
 use systems::*;
 
@@ -87,6 +88,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<HoverBoardAnimationSystem>()
             .register_type::<VehicleAINavMesh>()
             .register_type::<WaypointCircuit>()
+            .register_type::<WaypointProgressTracker>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -119,6 +121,7 @@ impl Plugin for VehiclesPlugin {
                 controllers::update_vehicle_controller_types,
                 hoverboard_animation::update_hoverboard_animation,
                 vehicle_ai_navmesh::update_vehicle_ai_navmesh,
+                waypoints::update_waypoint_progress_tracker,
             ));
     }
 }
