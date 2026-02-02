@@ -41,7 +41,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `rotatoryGear.cs`
 - [x] `scanElementInfo.cs`
 - [x] `setFixedRotation.cs`
-- [ ] `setGameObjectActiveState.cs`
+- [x] `setGameObjectActiveState.cs`
 - [ ] `setObjectParentSystem.cs`
 - [ ] `setObjectScaleSystem.cs`
 - [ ] `setRigidbodyStateSystem.cs`
