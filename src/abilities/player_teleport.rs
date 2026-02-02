@@ -2,9 +2,10 @@ use bevy::prelude::*;
 use avian3d::prelude::{LayerMask, SpatialQuery, SpatialQueryFilter};
 use super::ability_info::AbilityInfo;
 use super::player_abilities::PlayerAbilitiesSystem;
-use crate::camera::CameraState;
+use crate::camera::{CameraController, CameraState};
 use crate::character::CharacterController;
 use crate::input::InputState;
+use crate::actions::types::{ActivateCustomActionEvent, ActivateCustomActionEventQueue, StopCustomActionEvent, StopCustomActionEventQueue};
 
 #[derive(Debug, Clone)]
 pub struct TeleportStartEvent {
@@ -50,9 +51,24 @@ pub struct PlayerTeleportAbility {
     pub use_teleport_mark: bool,
     pub teleport_mark: Option<Entity>,
 
+    pub use_bullet_time_on_teleport: bool,
+    pub bullet_time_scale_on_teleport: f32,
+    pub bullet_time_active: bool,
+    pub cached_time_scale: f32,
+
     pub change_camera_fov_on_teleport: bool,
     pub camera_fov_on_teleport: f32,
     pub camera_fov_on_teleport_speed: f32,
+
+    pub use_action_system_on_teleport: bool,
+    pub action_name_used_on_teleport: String,
+
+    pub use_smooth_camera_follow_state_on_teleport: bool,
+    pub smooth_camera_follow_duration: f32,
+    pub smooth_camera_follow_speed: f32,
+    pub smooth_camera_follow_active: bool,
+    pub smooth_camera_follow_timer: f32,
+    pub cached_camera_follow_speed: f32,
 
     pub searching_for_teleport: bool,
     pub teleport_can_be_executed: bool,
@@ -85,9 +101,21 @@ impl Default for PlayerTeleportAbility {
             teleport_instantly: true,
             use_teleport_mark: false,
             teleport_mark: None,
+            use_bullet_time_on_teleport: false,
+            bullet_time_scale_on_teleport: 0.5,
+            bullet_time_active: false,
+            cached_time_scale: 1.0,
             change_camera_fov_on_teleport: false,
             camera_fov_on_teleport: 40.0,
             camera_fov_on_teleport_speed: 8.0,
+            use_action_system_on_teleport: true,
+            action_name_used_on_teleport: "Teleport Pose".to_string(),
+            use_smooth_camera_follow_state_on_teleport: false,
+            smooth_camera_follow_duration: 3.0,
+            smooth_camera_follow_speed: 6.0,
+            smooth_camera_follow_active: false,
+            smooth_camera_follow_timer: 0.0,
+            cached_camera_follow_speed: 15.0,
             searching_for_teleport: false,
             teleport_can_be_executed: false,
             teleport_surface_found: false,
@@ -108,6 +136,7 @@ pub fn update_teleport_target(
     camera_query: Query<&GlobalTransform, With<Camera3d>>,
     mut query: Query<&mut PlayerTeleportAbility>,
     mut mark_query: Query<(&mut Transform, &mut Visibility)>,
+    mut time_scale: ResMut<Time<Virtual>>,
 ) {
     let Some(camera) = camera_query.iter().next() else { return };
     let cam_pos = camera.translation();
@@ -124,6 +153,12 @@ pub fn update_teleport_target(
 
         if !teleport.teleport_can_be_executed {
             continue;
+        }
+
+        if teleport.use_bullet_time_on_teleport && !teleport.bullet_time_active {
+            teleport.cached_time_scale = time_scale.relative_speed();
+            time_scale.set_relative_speed(teleport.bullet_time_scale_on_teleport);
+            teleport.bullet_time_active = true;
         }
 
         let filter = SpatialQueryFilter::default().with_mask(teleport.teleport_layer_mask);
@@ -171,7 +206,11 @@ pub fn handle_teleport_input(
         Option<&CharacterController>,
     )>,
     mut camera_query: Query<&mut CameraState>,
+    mut camera_controller_query: Query<&mut CameraController>,
     mut mark_query: Query<(&mut Transform, &mut Visibility)>,
+    mut time_scale: ResMut<Time<Virtual>>,
+    mut activate_action_queue: ResMut<ActivateCustomActionEventQueue>,
+    mut stop_action_queue: ResMut<StopCustomActionEventQueue>,
     mut start_events: ResMut<TeleportStartEventQueue>,
     mut end_events: ResMut<TeleportEndEventQueue>,
 ) {
@@ -201,7 +240,33 @@ pub fn handle_teleport_input(
                         cam_state.fov_override_speed = teleport.cached_fov_speed;
                     }
                 }
+                if teleport.use_bullet_time_on_teleport && teleport.bullet_time_active {
+                    time_scale.set_relative_speed(teleport.cached_time_scale);
+                    teleport.bullet_time_active = false;
+                }
+                if teleport.use_smooth_camera_follow_state_on_teleport && teleport.smooth_camera_follow_active {
+                    for mut controller in camera_controller_query.iter_mut() {
+                        if controller.follow_target == Some(entity) {
+                            controller.smooth_follow_speed = teleport.cached_camera_follow_speed;
+                        }
+                    }
+                    teleport.smooth_camera_follow_active = false;
+                    teleport.smooth_camera_follow_timer = 0.0;
+                }
+                if teleport.use_action_system_on_teleport && !teleport.action_name_used_on_teleport.is_empty() {
+                    stop_action_queue.0.push(StopCustomActionEvent {
+                        player_entity: entity,
+                        action_name: teleport.action_name_used_on_teleport.clone(),
+                    });
+                }
                 end_events.0.push(TeleportEndEvent { entity });
+            }
+            if teleport.use_teleport_mark {
+                if let Some(mark_entity) = teleport.teleport_mark {
+                    if let Ok((_, mut visibility)) = mark_query.get_mut(mark_entity) {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
             }
             continue;
         }
@@ -214,6 +279,12 @@ pub fn handle_teleport_input(
         if input.ability_use_released && ability.is_current {
             if teleport.teleport_can_be_executed {
                 if teleport.use_teleport_if_surface_not_found || teleport.teleport_surface_found {
+                    if teleport.use_bullet_time_on_teleport && !teleport.bullet_time_active {
+                        teleport.cached_time_scale = time_scale.relative_speed();
+                        time_scale.set_relative_speed(teleport.bullet_time_scale_on_teleport);
+                        teleport.bullet_time_active = true;
+                    }
+
                     if teleport.change_camera_fov_on_teleport {
                         if let Ok(mut cam_state) = camera_query.get_single_mut() {
                             teleport.cached_fov_override = cam_state.fov_override;
@@ -221,6 +292,24 @@ pub fn handle_teleport_input(
                             cam_state.fov_override = Some(teleport.camera_fov_on_teleport);
                             cam_state.fov_override_speed = Some(teleport.camera_fov_on_teleport_speed);
                         }
+                    }
+
+                    if teleport.use_smooth_camera_follow_state_on_teleport && !teleport.smooth_camera_follow_active {
+                        for mut controller in camera_controller_query.iter_mut() {
+                            if controller.follow_target == Some(entity) {
+                                teleport.cached_camera_follow_speed = controller.smooth_follow_speed;
+                                controller.smooth_follow_speed = teleport.smooth_camera_follow_speed;
+                            }
+                        }
+                        teleport.smooth_camera_follow_active = true;
+                        teleport.smooth_camera_follow_timer = teleport.smooth_camera_follow_duration;
+                    }
+
+                    if teleport.use_action_system_on_teleport && !teleport.action_name_used_on_teleport.is_empty() {
+                        activate_action_queue.0.push(ActivateCustomActionEvent {
+                            player_entity: entity,
+                            action_name: teleport.action_name_used_on_teleport.clone(),
+                        });
                     }
 
                     start_events.0.push(TeleportStartEvent {
@@ -236,6 +325,25 @@ pub fn handle_teleport_input(
                                 cam_state.fov_override = teleport.cached_fov_override;
                                 cam_state.fov_override_speed = teleport.cached_fov_speed;
                             }
+                        }
+                        if teleport.use_bullet_time_on_teleport && teleport.bullet_time_active {
+                            time_scale.set_relative_speed(teleport.cached_time_scale);
+                            teleport.bullet_time_active = false;
+                        }
+                        if teleport.use_smooth_camera_follow_state_on_teleport && teleport.smooth_camera_follow_active {
+                            for mut controller in camera_controller_query.iter_mut() {
+                                if controller.follow_target == Some(entity) {
+                                    controller.smooth_follow_speed = teleport.cached_camera_follow_speed;
+                                }
+                            }
+                            teleport.smooth_camera_follow_active = false;
+                            teleport.smooth_camera_follow_timer = 0.0;
+                        }
+                        if teleport.use_action_system_on_teleport && !teleport.action_name_used_on_teleport.is_empty() {
+                            stop_action_queue.0.push(StopCustomActionEvent {
+                                player_entity: entity,
+                                action_name: teleport.action_name_used_on_teleport.clone(),
+                            });
                         }
                         end_events.0.push(TeleportEndEvent { entity });
                     } else {
@@ -255,6 +363,11 @@ pub fn handle_teleport_input(
                     }
                 }
             }
+
+            if teleport.use_bullet_time_on_teleport && teleport.bullet_time_active {
+                time_scale.set_relative_speed(teleport.cached_time_scale);
+                teleport.bullet_time_active = false;
+            }
         }
 
         if teleport.teleport_in_process && !teleport.teleport_instantly {
@@ -268,6 +381,25 @@ pub fn handle_teleport_input(
                         cam_state.fov_override = teleport.cached_fov_override;
                         cam_state.fov_override_speed = teleport.cached_fov_speed;
                     }
+                }
+                if teleport.use_bullet_time_on_teleport && teleport.bullet_time_active {
+                    time_scale.set_relative_speed(teleport.cached_time_scale);
+                    teleport.bullet_time_active = false;
+                }
+                if teleport.use_smooth_camera_follow_state_on_teleport && teleport.smooth_camera_follow_active {
+                    for mut controller in camera_controller_query.iter_mut() {
+                        if controller.follow_target == Some(entity) {
+                            controller.smooth_follow_speed = teleport.cached_camera_follow_speed;
+                        }
+                    }
+                    teleport.smooth_camera_follow_active = false;
+                    teleport.smooth_camera_follow_timer = 0.0;
+                }
+                if teleport.use_action_system_on_teleport && !teleport.action_name_used_on_teleport.is_empty() {
+                    stop_action_queue.0.push(StopCustomActionEvent {
+                        player_entity: entity,
+                        action_name: teleport.action_name_used_on_teleport.clone(),
+                    });
                 }
                 end_events.0.push(TeleportEndEvent { entity });
             } else {
@@ -284,6 +416,18 @@ pub fn handle_teleport_input(
                         }
                     }
                 }
+            }
+        }
+
+        if teleport.use_smooth_camera_follow_state_on_teleport && teleport.smooth_camera_follow_active {
+            teleport.smooth_camera_follow_timer -= time.delta_secs();
+            if teleport.smooth_camera_follow_timer <= 0.0 {
+                for mut controller in camera_controller_query.iter_mut() {
+                    if controller.follow_target == Some(entity) {
+                        controller.smooth_follow_speed = teleport.cached_camera_follow_speed;
+                    }
+                }
+                teleport.smooth_camera_follow_active = false;
             }
         }
     }
