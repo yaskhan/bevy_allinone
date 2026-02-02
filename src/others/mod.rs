@@ -43,6 +43,7 @@ pub mod set_object_parent_system;
 pub mod set_object_scale_system;
 pub mod set_rigidbody_state_system;
 pub mod show_game_info_hud;
+pub mod show_message_on_hud_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -91,6 +92,7 @@ pub use set_object_parent_system::SetObjectParentSystem;
 pub use set_object_scale_system::SetObjectScaleSystem;
 pub use set_rigidbody_state_system::SetRigidbodyStateSystem;
 pub use show_game_info_hud::ShowGameInfoHud;
+pub use show_message_on_hud_system::{ShowHudMessageEvent, ShowMessageOnHudSystem};
 
 pub struct OthersPlugin;
 
@@ -104,6 +106,7 @@ impl Plugin for OthersPlugin {
             .add_event::<RaycastObjectFoundEvent>()
             .add_event::<CollisionSoundEvent>()
             .add_event::<TriggerSoundEvent>()
+            .add_event::<ShowHudMessageEvent>()
             .add_systems(Update, (
                 add_force_to_object_system::update_add_force_to_object_system,
                 animator_trigger_enter_exit_event::update_animator_trigger_enter_exit_event,
@@ -135,6 +138,7 @@ impl Plugin for OthersPlugin {
                 set_object_parent_system::update_set_object_parent_system,
                 set_object_scale_system::update_set_object_scale_system,
                 set_rigidbody_state_system::update_set_rigidbody_state_system,
+                show_message_on_hud_system::update_show_message_on_hud_system,
             ));
     }
 }

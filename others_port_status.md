@@ -46,7 +46,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `setObjectScaleSystem.cs`
 - [x] `setRigidbodyStateSystem.cs`
 - [x] `showGameInfoHud.cs`
-- [ ] `showMessageOnHUDSystem.cs`
+- [x] `showMessageOnHUDSystem.cs`
 - [ ] `simpleActionButton.cs`
 - [ ] `simpleAnimationSystem.cs`
 - [ ] `simpleAudioPlay.cs`
