@@ -7,7 +7,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `animatorTriggerEnterExitEvent.cs`
 - [x] `animatorTriggerEvent.cs`
 - [x] `audioSourceInfo.cs`
-- [ ] `BezierSpline.cs`
+- [x] `BezierSpline.cs`
 - [ ] `changeObjectColors.cs`
 - [ ] `checkCollisionType.cs`
 - [ ] `consoleLogOnScreenSystem.cs`

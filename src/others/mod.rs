@@ -4,6 +4,7 @@ pub mod add_force_to_object_system;
 pub mod animator_trigger_enter_exit_event;
 pub mod animator_trigger_event;
 pub mod audio_source_info;
+pub mod bezier_spline;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -13,6 +14,7 @@ pub use animator_trigger_enter_exit_event::{
 };
 pub use animator_trigger_event::{AnimatorTriggerEvent, AnimatorTriggerEventRequest};
 pub use audio_source_info::AudioSourceInfo;
+pub use bezier_spline::BezierSpline;
 
 pub struct OthersPlugin;
 
