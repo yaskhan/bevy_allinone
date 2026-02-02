@@ -29,6 +29,7 @@ pub use controllers::CarController;
 pub use controllers::DummyVehicleController;
 pub use controllers::EmptyVehicleController;
 pub use controllers::FlyingController;
+pub use controllers::HoverBoardController;
 pub use hoverboard_animation::HoverBoardAnimationSystem;
 
 use systems::*;
@@ -68,6 +69,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<DummyVehicleController>()
             .register_type::<EmptyVehicleController>()
             .register_type::<FlyingController>()
+            .register_type::<HoverBoardController>()
             .register_type::<HoverBoardAnimationSystem>()
             .add_systems(Update, (
                 input::vehicle_input_system,
