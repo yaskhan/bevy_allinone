@@ -12,7 +12,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `checkCollisionType.cs`
 - [x] `consoleLogOnScreenSystem.cs`
 - [x] `destroyGameObject.cs`
-- [ ] `dissolveObject.cs`
+- [x] `dissolveObject.cs`
 - [ ] `eventObjectFoundOnRaycastSystem.cs`
 - [ ] `fadeObject.cs`
 - [ ] `featuresManager.cs`

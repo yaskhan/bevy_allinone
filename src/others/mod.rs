@@ -9,6 +9,7 @@ pub mod change_object_colors;
 pub mod check_collision_type;
 pub mod console_log_on_screen_system;
 pub mod destroy_game_object;
+pub mod dissolve_object;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -23,6 +24,7 @@ pub use change_object_colors::ChangeObjectColors;
 pub use check_collision_type::{CheckCollisionType, CollisionType};
 pub use console_log_on_screen_system::{ConsoleLogEvent, ConsoleLogOnScreenSystem};
 pub use destroy_game_object::DestroyGameObject;
+pub use dissolve_object::DissolveObject;
 
 pub struct OthersPlugin;
 
@@ -39,6 +41,7 @@ impl Plugin for OthersPlugin {
                 change_object_colors::update_change_object_colors,
                 console_log_on_screen_system::update_console_log_on_screen_system,
                 destroy_game_object::update_destroy_game_object,
+                dissolve_object::update_dissolve_object,
             ));
     }
 }
