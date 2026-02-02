@@ -18,6 +18,7 @@ pub mod weapon_attachment_on_inventory;
 pub mod weapon_on_inventory;
 pub mod inventory_quick_access_slot_element;
 pub mod inventory_quick_access_slots_system;
+pub mod inventory_list_manager_data;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
@@ -71,6 +72,7 @@ pub use weapon_attachment_on_inventory::WeaponAttachmentOnInventory;
 pub use weapon_on_inventory::WeaponOnInventory;
 pub use inventory_quick_access_slot_element::InventoryQuickAccessSlotElement;
 pub use inventory_quick_access_slots_system::InventoryQuickAccessSlotsSystem;
+pub use inventory_list_manager_data::InventoryListManagerData;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
@@ -104,7 +106,8 @@ pub struct InventoryPlugin;
 
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<CurrencyTransactionEvent>()
+        app.init_resource::<InventoryListManagerData>()
+        .add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
         .add_event::<InventoryBankTransferEvent>()

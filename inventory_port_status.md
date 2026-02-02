@@ -56,4 +56,4 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryQuickAccessSlotsSystem.cs`
 
 ## Scriptable Objects
-- [ ] `inventoryListManagerData.cs`
+- [x] `inventoryListManagerData.cs`
