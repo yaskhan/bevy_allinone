@@ -106,6 +106,21 @@ impl Default for HoverCraftController {
     }
 }
 
+/// Motor bike controller.
+///
+/// GKC reference: `motorBikeController.cs`
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MotorBikeController {
+    pub enabled: bool,
+}
+
+impl Default for MotorBikeController {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 /// Update vehicle type based on controller components.
 pub fn update_vehicle_controller_types(
     mut aircraft_vehicles: Query<&mut Vehicle, With<AirCraftController>>,
@@ -115,6 +130,7 @@ pub fn update_vehicle_controller_types(
     mut flying_vehicles: Query<&mut Vehicle, With<FlyingController>>,
     mut hoverboard_vehicles: Query<&mut Vehicle, With<HoverBoardController>>,
     mut hovercraft_vehicles: Query<&mut Vehicle, With<HoverCraftController>>,
+    mut motorbike_vehicles: Query<&mut Vehicle, With<MotorBikeController>>,
 ) {
     for mut vehicle in aircraft_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Aircraft;
@@ -136,5 +152,8 @@ pub fn update_vehicle_controller_types(
     }
     for mut vehicle in hovercraft_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Hovercraft;
+    }
+    for mut vehicle in motorbike_vehicles.iter_mut() {
+        vehicle.vehicle_type = VehicleType::Motorcycle;
     }
 }
