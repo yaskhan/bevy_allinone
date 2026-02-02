@@ -49,6 +49,7 @@ pub mod interaction;
 pub mod inventory;
 pub mod ladder;
 pub mod map;
+pub mod others;
 pub mod physics;
 pub mod player;
 pub mod puzzle;
@@ -89,6 +90,7 @@ pub mod prelude {
     pub use crate::inventory::*;
     pub use crate::ladder::*;
     pub use crate::map::*;
+    pub use crate::others::*;
     pub use crate::point_and_click::*;
     pub use crate::physics::*;
     pub use crate::player::*;
@@ -135,6 +137,7 @@ impl Plugin for GameControllerPlugin {
             .add_plugins(inventory::InventoryPlugin)
             .add_plugins(ladder::LadderPlugin)
             .add_plugins(map::MapPlugin)
+            .add_plugins(others::OthersPlugin)
             .add_plugins(physics::PhysicsPlugin)
             .add_plugins(player::PlayerPlugin)
             .add_plugins(puzzle::PuzzlePlugin)

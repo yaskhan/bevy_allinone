@@ -1,0 +1,69 @@
+# Others Port Status (Bevy 0.18)
+
+Source: `gkit/Scripts/Others/`
+
+## Core
+- [x] `addForceToObjectSystem.cs`
+- [ ] `animatorTriggerEnterExitEvent.cs`
+- [ ] `animatorTriggerEvent.cs`
+- [ ] `audioSourceInfo.cs`
+- [ ] `BezierSpline.cs`
+- [ ] `changeObjectColors.cs`
+- [ ] `checkCollisionType.cs`
+- [ ] `consoleLogOnScreenSystem.cs`
+- [ ] `destroyGameObject.cs`
+- [ ] `dissolveObject.cs`
+- [ ] `eventObjectFoundOnRaycastSystem.cs`
+- [ ] `fadeObject.cs`
+- [ ] `featuresManager.cs`
+- [ ] `flyingTurretSystem.cs`
+- [ ] `followObjectPositionSystem.cs`
+- [ ] `followObjectPositionUpdateSystem.cs`
+- [ ] `GKC_Utils.cs`
+- [ ] `headExplodeExample.cs`
+- [ ] `hideBodyPartOnCharacterSystem.cs`
+- [ ] `ignoreCollisionHelper.cs`
+- [ ] `ignoreCollisionSystem.cs`
+- [ ] `initialPopUpWindow.cs`
+- [ ] `mechanismPart.cs`
+- [ ] `moveObjectSmoothlySystem.cs`
+- [ ] `onEnableCheckSystem.cs`
+- [ ] `openInitialPopUpWindow.cs`
+- [ ] `pauseAnimationSystem.cs`
+- [ ] `placeObjectInCameraEditorPositionSystem.cs`
+- [ ] `playerOptionsEditorSystem.cs`
+- [ ] `playSoundOnCollision.cs`
+- [ ] `playSoundOnTriggerEnter.cs`
+- [ ] `putGear.cs`
+- [ ] `railMechanism.cs`
+- [ ] `replaceMaterialSystem.cs`
+- [ ] `rotateObjects.cs`
+- [ ] `rotatoryGear.cs`
+- [ ] `scanElementInfo.cs`
+- [ ] `setFixedRotation.cs`
+- [ ] `setGameObjectActiveState.cs`
+- [ ] `setObjectParentSystem.cs`
+- [ ] `setObjectScaleSystem.cs`
+- [ ] `setRigidbodyStateSystem.cs`
+- [ ] `showGameInfoHud.cs`
+- [ ] `showMessageOnHUDSystem.cs`
+- [ ] `simpleActionButton.cs`
+- [ ] `simpleAnimationSystem.cs`
+- [ ] `simpleAudioPlay.cs`
+- [ ] `simpleEventSystem.cs`
+- [ ] `SimpleFPSCounter.cs`
+- [ ] `simpleLamp.cs`
+- [ ] `simpleLensFlareSystem.cs`
+- [ ] `simpleSetQuaternionRotation.cs`
+- [ ] `spawnObject.cs`
+- [ ] `SplineWalker.cs`
+- [ ] `tagLayerSystem.cs`
+- [ ] `taskCounterSystem.cs`
+- [ ] `UIMouseHoverEvent.cs`
+
+## Console Mode
+- [ ] `consoleMode.cs`
+
+## Scanner System
+- [ ] `scannerSystem.cs`
+- [ ] `simpleScannerSystem.cs`
