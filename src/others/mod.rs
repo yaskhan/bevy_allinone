@@ -12,6 +12,7 @@ pub mod destroy_game_object;
 pub mod dissolve_object;
 pub mod event_object_found_on_raycast_system;
 pub mod fade_object;
+pub mod features_manager;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -29,12 +30,14 @@ pub use destroy_game_object::DestroyGameObject;
 pub use dissolve_object::DissolveObject;
 pub use event_object_found_on_raycast_system::{EventObjectFoundOnRaycastSystem, RaycastObjectFoundEvent};
 pub use fade_object::FadeObject;
+pub use features_manager::FeaturesManager;
 
 pub struct OthersPlugin;
 
 impl Plugin for OthersPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<AnimatorTriggerEnterEvent>()
+        app.init_resource::<FeaturesManager>()
+            .add_event::<AnimatorTriggerEnterEvent>()
             .add_event::<AnimatorTriggerExitEvent>()
             .add_event::<AnimatorTriggerEventRequest>()
             .add_event::<ConsoleLogEvent>()
