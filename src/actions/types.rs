@@ -55,6 +55,22 @@ impl Default for PhysicsEventType {
     }
 }
 
+/// State change event types for player state transitions
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum StateChangeEventType {
+    None,
+    ChangePlayerState { state_name: String, force: bool },
+    ChangePlayerMode { mode_name: String },
+    ChangeControlState { control_state: String },
+    EnableState { state_name: String, enabled: bool },
+}
+
+impl Default for StateChangeEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Condition that must be met for an event to fire
 #[derive(Debug, Clone, Reflect, PartialEq)]
 pub enum EventCondition {
@@ -111,6 +127,10 @@ pub struct ActionEvent {
     pub use_physics_event: bool,
     pub physics_event_type: PhysicsEventType,
     pub physics_target_self: bool,  // Apply to player (true) or target (false)
+    
+    // State change events
+    pub use_state_change_event: bool,
+    pub state_change_event_type: StateChangeEventType,
 }
 
 impl Default for ActionEvent {
@@ -133,6 +153,8 @@ impl Default for ActionEvent {
             use_physics_event: false,
             physics_event_type: PhysicsEventType::None,
             physics_target_self: true,
+            use_state_change_event: false,
+            state_change_event_type: StateChangeEventType::None,
         }
     }
 }
@@ -568,3 +590,13 @@ pub struct PhysicsEventTriggered {
 
 #[derive(Resource, Default)]
 pub struct PhysicsEventQueue(pub Vec<PhysicsEventTriggered>);
+
+/// State change event triggered during action
+#[derive(Debug, Clone)]
+pub struct StateChangeEventTriggered {
+    pub event_type: StateChangeEventType,
+    pub player_entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct StateChangeEventQueue(pub Vec<StateChangeEventTriggered>);
