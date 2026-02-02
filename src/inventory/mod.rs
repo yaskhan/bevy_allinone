@@ -5,6 +5,7 @@ pub mod ammo_inventory_prefab_creation_system;
 pub mod ammo_on_inventory;
 pub mod energy_on_inventory;
 pub mod health_on_inventory;
+pub mod jetpack_fuel_on_inventory;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
@@ -45,6 +46,7 @@ pub use ammo_inventory_prefab_creation_system::AmmoInventoryPrefabCreationSystem
 pub use ammo_on_inventory::AmmoOnInventory;
 pub use energy_on_inventory::EnergyOnInventory;
 pub use health_on_inventory::HealthOnInventory;
+pub use jetpack_fuel_on_inventory::JetpackFuelOnInventory;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};

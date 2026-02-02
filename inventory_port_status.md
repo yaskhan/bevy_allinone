@@ -39,7 +39,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `ammoOnInventory.cs`
 - [x] `energyOnInventory.cs`
 - [x] `healthOnInventory.cs`
-- [ ] `jetpackFuelOnInventory.cs`
+- [x] `jetpackFuelOnInventory.cs`
 - [ ] `meleeShieldOnInventory.cs`
 - [ ] `meleeWeaponConsumableOnInventory.cs`
 - [ ] `meleeWeaponOnInventory.cs`
