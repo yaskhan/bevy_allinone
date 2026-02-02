@@ -13,7 +13,7 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 - [x] `customAbilitySystem.cs`
 - [x] `drainStatSystem.cs`
 - [x] `laserVisionSystem.cs`
-- [ ] `manualDetonationMineSystem.cs`
+- [x] `manualDetonationMineSystem.cs`
 - [ ] `playerGravitySystem.cs`
 - [ ] `playerShieldSystem.cs`
 - [ ] `playerStealthSystem.cs`
