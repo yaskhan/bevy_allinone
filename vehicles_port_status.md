@@ -13,7 +13,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `vehicleDamageReceiver.cs`
 - [x] `vehicleHUDManager.cs`
 - [x] `vehicleInterface.cs`
-- [ ] `vehicleLaser.cs`
+- [x] `vehicleLaser.cs`
 - [ ] `vehicleWeaponSystem.cs`
 
 ## Vehicle Controllers
