@@ -14,7 +14,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `vehicleHUDManager.cs`
 - [x] `vehicleInterface.cs`
 - [x] `vehicleLaser.cs`
-- [ ] `vehicleWeaponSystem.cs`
+- [x] `vehicleWeaponSystem.cs`
 
 ## Vehicle Controllers
 - [ ] `airCraftController.cs`
