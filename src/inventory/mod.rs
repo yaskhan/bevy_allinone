@@ -8,6 +8,7 @@ pub mod currency_system;
 pub mod general_item_on_inventory;
 pub mod get_inventory_object_system;
 pub mod get_object_from_inventory_system;
+pub mod inventory_bank_manager;
 
 use bevy::prelude::*;
 use types::*;
@@ -24,6 +25,7 @@ pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
 pub use general_item_on_inventory::GeneralItemOnInventory;
 pub use get_inventory_object_system::GetInventoryObjectEvent;
 pub use get_object_from_inventory_system::GetObjectFromInventoryEvent;
+pub use inventory_bank_manager::InventoryBankManager;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -45,6 +47,7 @@ impl Plugin for InventoryPlugin {
             general_item_on_inventory::update_general_item_on_inventory,
             get_inventory_object_system::update_get_inventory_object_system,
             get_object_from_inventory_system::update_get_object_from_inventory_system,
+            inventory_bank_manager::update_inventory_bank_manager,
         ))
         .add_systems(Startup, setup_inventory_ui);
     }

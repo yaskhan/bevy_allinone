@@ -10,7 +10,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `generalItemOnInventory.cs`
 - [x] `getInventoryObjectSystem.cs`
 - [x] `getObjectFromInventorySystem.cs`
-- [ ] `inventoryBankManager.cs`
+- [x] `inventoryBankManager.cs`
 - [ ] `inventoryBankSystem.cs`
 - [ ] `inventoryBankUISystem.cs`
 - [ ] `inventoryCaptureManager.cs`
