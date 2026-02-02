@@ -18,4 +18,4 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 - [x] `playerShieldSystem.cs`
 - [x] `playerStealthSystem.cs`
 - [x] `removeGravityFromCharacterSystem.cs`
-- [ ] `templateAbilitySystem.cs`
+- [x] `templateAbilitySystem.cs`
