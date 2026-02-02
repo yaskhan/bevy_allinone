@@ -22,6 +22,30 @@ pub enum WalkToTargetState {
     TimedOut,
 }
 
+/// Condition that must be met for an event to fire
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum EventCondition {
+    None,
+    PlayerOnGround,
+    PlayerInAir,
+    PlayerCrouching,
+    PlayerSprinting,
+    ActionProgressGreaterThan(f32),
+    ActionProgressLessThan(f32),
+    ActionProgressBetween(f32, f32),
+    HealthGreaterThan(f32),
+    HealthLessThan(f32),
+    DistanceToTargetLessThan(f32),
+    DistanceToTargetGreaterThan(f32),
+    CustomCondition(String),
+}
+
+impl Default for EventCondition {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Action event that triggers at a specific time during action
 #[derive(Debug, Clone, Reflect)]
 pub struct ActionEvent {
@@ -37,6 +61,10 @@ pub struct ActionEvent {
     
     pub send_player_entity: bool,
     pub call_if_action_stopped: bool,
+    
+    // Conditions
+    pub condition: EventCondition,
+    pub check_condition_continuously: bool,
 }
 
 impl Default for ActionEvent {
@@ -50,6 +78,8 @@ impl Default for ActionEvent {
             remote_event_name: String::new(),
             send_player_entity: false,
             call_if_action_stopped: false,
+            condition: EventCondition::None,
+            check_condition_continuously: false,
         }
     }
 }

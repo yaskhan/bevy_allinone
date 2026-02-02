@@ -533,19 +533,22 @@ pub fn update_walk_to_target_system(
 
 /// System to process timed events during actions
 pub fn process_action_events_system(
-    mut player_query: Query<(&mut PlayerActionSystem, Entity)>,
-    mut action_query: Query<&mut ActionSystem>,
+    mut player_query: Query<(&mut PlayerActionSystem, Entity, &Transform)>,
+    mut action_query: Query<(&mut ActionSystem, Option<&Transform>)>,
+    state_query: Query<&crate::player::player_state::PlayerStateSystem>,
+    modes_query: Query<&crate::player::player_modes::PlayerModesSystem>,
+    stats_query: Query<&crate::stats::stats_system::StatsSystem>,
     mut event_queue: ResMut<ActionEventTriggeredQueue>,
     mut remote_queue: ResMut<RemoteActionEventQueue>,
     time: Res<Time>,
 ) {
-    for (mut player_action, player_entity) in player_query.iter_mut() {
+    for (mut player_action, player_entity, player_transform) in player_query.iter_mut() {
         if !player_action.is_action_active {
             continue;
         }
         
         if let Some(action_entity) = player_action.current_action {
-            if let Ok(mut action) = action_query.get_mut(action_entity) {
+            if let Ok((mut action, action_transform)) = action_query.get_mut(action_entity) {
                 if !action.use_event_list || action.event_list.is_empty() {
                     continue;
                 }
@@ -566,12 +569,28 @@ pub fn process_action_events_system(
                 if action.use_accumulative_delay {
                     // Accumulative mode: Sequential events
                     let mut accumulated_time = 0.0;
+                    let action_progress = player_action.action_timer / action.duration;
                     for event in action.event_list.iter_mut() {
                         if !event.event_triggered {
                             accumulated_time += event.delay_to_activate;
                             if elapsed >= accumulated_time {
-                                fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
-                                event.event_triggered = true;
+                                // Check condition before firing
+                                if check_event_condition(
+                                    &event.condition,
+                                    action_progress,
+                                    player_entity,
+                                    player_transform,
+                                    action_transform,
+                                    &state_query,
+                                    &modes_query,
+                                    &stats_query,
+                                ) {
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                    event.event_triggered = true;
+                                } else if !event.check_condition_continuously {
+                                    // Mark as triggered even if condition failed (don't retry)
+                                    event.event_triggered = true;
+                                }
                             } else {
                                 break; // Stop checking further events
                             }
@@ -581,10 +600,26 @@ pub fn process_action_events_system(
                     }
                 } else {
                     // Parallel mode: All events check independently
+                    let action_progress = player_action.action_timer / action.duration;
                     for event in action.event_list.iter_mut() {
                         if !event.event_triggered && elapsed >= event.delay_to_activate {
-                            fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
-                            event.event_triggered = true;
+                            // Check condition before firing
+                            if check_event_condition(
+                                &event.condition,
+                                action_progress,
+                                player_entity,
+                                player_transform,
+                                action_transform,
+                                &state_query,
+                                &modes_query,
+                                &stats_query,
+                            ) {
+                                fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                event.event_triggered = true;
+                            } else if !event.check_condition_continuously {
+                                // Mark as triggered even if condition failed (don't retry)
+                                event.event_triggered = true;
+                            }
                         }
                     }
                 }
@@ -615,5 +650,145 @@ fn fire_action_event(
             player_entity: if event.send_player_entity { Some(player_entity) } else { None },
         });
         info!("Remote Event: {} triggered", event.remote_event_name);
+    }
+}
+
+/// Check if event condition is met
+fn check_event_condition(
+    condition: &EventCondition,
+    action_progress: f32,
+    player_entity: Entity,
+    player_transform: &Transform,
+    action_transform: Option<&Transform>,
+    state_query: &Query<&crate::player::player_state::PlayerStateSystem>,
+    modes_query: &Query<&crate::player::player_modes::PlayerModesSystem>,
+    stats_query: &Query<&crate::stats::stats_system::StatsSystem>,
+) -> bool {
+    match condition {
+        EventCondition::None => true,
+        
+        // Action progress conditions (fully implemented)
+        EventCondition::ActionProgressGreaterThan(threshold) => action_progress > *threshold,
+        EventCondition::ActionProgressLessThan(threshold) => action_progress < *threshold,
+        EventCondition::ActionProgressBetween(min, max) => {
+            action_progress >= *min && action_progress <= *max
+        }
+        
+        // Player state conditions
+        EventCondition::PlayerOnGround => {
+            if let Ok(state_system) = state_query.get(player_entity) {
+                // Check if "On Ground" state is active
+                state_system.player_state_list.iter().any(|state| {
+                    state.name.to_lowercase().contains("ground") && state.state_active
+                })
+            } else {
+                warn!("PlayerOnGround condition: PlayerStateSystem not found");
+                true // Default to true if component not found
+            }
+        }
+        
+        EventCondition::PlayerInAir => {
+            if let Ok(state_system) = state_query.get(player_entity) {
+                // Check if "In Air" or "Jumping" state is active
+                state_system.player_state_list.iter().any(|state| {
+                    (state.name.to_lowercase().contains("air") || 
+                     state.name.to_lowercase().contains("jump")) && 
+                    state.state_active
+                })
+            } else {
+                warn!("PlayerInAir condition: PlayerStateSystem not found");
+                true
+            }
+        }
+        
+        EventCondition::PlayerCrouching => {
+            if let Ok(state_system) = state_query.get(player_entity) {
+                // Check if "Crouching" state is active
+                state_system.player_state_list.iter().any(|state| {
+                    state.name.to_lowercase().contains("crouch") && state.state_active
+                })
+            } else {
+                warn!("PlayerCrouching condition: PlayerStateSystem not found");
+                true
+            }
+        }
+        
+        EventCondition::PlayerSprinting => {
+            if let Ok(state_system) = state_query.get(player_entity) {
+                // Check if "Sprinting" or "Running" state is active
+                state_system.player_state_list.iter().any(|state| {
+                    (state.name.to_lowercase().contains("sprint") || 
+                     state.name.to_lowercase().contains("run")) && 
+                    state.state_active
+                })
+            } else {
+                warn!("PlayerSprinting condition: PlayerStateSystem not found");
+                true
+            }
+        }
+        
+        // Health conditions
+        EventCondition::HealthGreaterThan(threshold) => {
+            if let Ok(stats) = stats_query.get(player_entity) {
+                if let Some(health) = stats.get_derived_stat(crate::stats::types::DerivedStat::CurrentHealth) {
+                    *health > *threshold
+                } else {
+                    warn!("HealthGreaterThan condition: CurrentHealth stat not found");
+                    true
+                }
+            } else {
+                warn!("HealthGreaterThan condition: StatsSystem not found");
+                true
+            }
+        }
+        
+        EventCondition::HealthLessThan(threshold) => {
+            if let Ok(stats) = stats_query.get(player_entity) {
+                if let Some(health) = stats.get_derived_stat(crate::stats::types::DerivedStat::CurrentHealth) {
+                    *health < *threshold
+                } else {
+                    warn!("HealthLessThan condition: CurrentHealth stat not found");
+                    true
+                }
+            } else {
+                warn!("HealthLessThan condition: StatsSystem not found");
+                true
+            }
+        }
+        
+        // Distance conditions
+        EventCondition::DistanceToTargetLessThan(threshold) => {
+            if let Some(action_transform) = action_transform {
+                let distance = player_transform.translation.distance(action_transform.translation);
+                distance < *threshold
+            } else {
+                warn!("DistanceToTargetLessThan condition: Action transform not found");
+                true
+            }
+        }
+        
+        EventCondition::DistanceToTargetGreaterThan(threshold) => {
+            if let Some(action_transform) = action_transform {
+                let distance = player_transform.translation.distance(action_transform.translation);
+                distance > *threshold
+            } else {
+                warn!("DistanceToTargetGreaterThan condition: Action transform not found");
+                true
+            }
+        }
+        
+        // Custom condition (placeholder for future extension)
+        EventCondition::CustomCondition(name) => {
+            // TODO: Implement custom condition registry
+            // For now, check if it matches a player state name
+            if let Ok(state_system) = state_query.get(player_entity) {
+                state_system.player_state_list.iter().any(|state| {
+                    state.name.to_lowercase() == name.to_lowercase() && state.state_active
+                })
+            } else {
+                warn!("CustomCondition '{}': PlayerStateSystem not found", name);
+                true
+            }
+        }
     }
 }
