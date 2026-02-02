@@ -27,7 +27,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `hoverCraftController.cs`
 - [x] `motorBikeController.cs`
 - [x] `sphereController.cs`
-- [ ] `turretController.cs`
+- [x] `turretController.cs`
 - [ ] `vehicleController.cs`
 
 ## Vehicle AI
