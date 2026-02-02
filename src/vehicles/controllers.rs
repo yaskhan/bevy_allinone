@@ -31,15 +31,34 @@ impl Default for CarController {
     }
 }
 
+/// Dummy vehicle controller.
+///
+/// GKC reference: `dummyVehicleController.cs`
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct DummyVehicleController {
+    pub enabled: bool,
+}
+
+impl Default for DummyVehicleController {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 /// Update vehicle type based on controller components.
 pub fn update_vehicle_controller_types(
     mut aircraft_vehicles: Query<&mut Vehicle, With<AirCraftController>>,
     mut car_vehicles: Query<&mut Vehicle, With<CarController>>,
+    mut dummy_vehicles: Query<&mut Vehicle, With<DummyVehicleController>>,
 ) {
     for mut vehicle in aircraft_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Aircraft;
     }
     for mut vehicle in car_vehicles.iter_mut() {
+        vehicle.vehicle_type = VehicleType::Car;
+    }
+    for mut vehicle in dummy_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Car;
     }
 }
