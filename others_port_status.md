@@ -48,7 +48,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `showGameInfoHud.cs`
 - [x] `showMessageOnHUDSystem.cs`
 - [x] `simpleActionButton.cs`
-- [ ] `simpleAnimationSystem.cs`
+- [x] `simpleAnimationSystem.cs`
 - [ ] `simpleAudioPlay.cs`
 - [ ] `simpleEventSystem.cs`
 - [ ] `SimpleFPSCounter.cs`

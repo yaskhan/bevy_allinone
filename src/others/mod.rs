@@ -45,6 +45,7 @@ pub mod set_rigidbody_state_system;
 pub mod show_game_info_hud;
 pub mod show_message_on_hud_system;
 pub mod simple_action_button;
+pub mod simple_animation_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -95,6 +96,7 @@ pub use set_rigidbody_state_system::SetRigidbodyStateSystem;
 pub use show_game_info_hud::ShowGameInfoHud;
 pub use show_message_on_hud_system::{ShowHudMessageEvent, ShowMessageOnHudSystem};
 pub use simple_action_button::{SimpleActionButton, SimpleActionButtonEvent};
+pub use simple_animation_system::SimpleAnimationSystem;
 
 pub struct OthersPlugin;
 
@@ -142,6 +144,7 @@ impl Plugin for OthersPlugin {
                 set_object_scale_system::update_set_object_scale_system,
                 set_rigidbody_state_system::update_set_rigidbody_state_system,
                 show_message_on_hud_system::update_show_message_on_hud_system,
+                simple_animation_system::update_simple_animation_system,
             ));
     }
 }
