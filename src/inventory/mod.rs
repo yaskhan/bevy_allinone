@@ -19,6 +19,7 @@ pub mod inventory_list_element;
 pub mod inventory_list_manager;
 pub mod inventory_menu_icon_element;
 pub mod inventory_menu_panels_system;
+pub mod inventory_object_to_equip_info;
 
 use bevy::prelude::*;
 use types::*;
@@ -46,6 +47,7 @@ pub use inventory_list_element::InventoryListElement;
 pub use inventory_list_manager::InventoryListManager;
 pub use inventory_menu_icon_element::InventoryMenuIconElement;
 pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPanelsSystem};
+pub use inventory_object_to_equip_info::InventoryObjectToEquipInfo;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;

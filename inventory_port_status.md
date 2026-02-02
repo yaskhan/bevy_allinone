@@ -23,7 +23,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryMenuIconElement.cs`
 - [x] `inventoryMenuPanelsSystem.cs`
 - [x] `inventoryObject.cs`
-- [ ] `inventoryObjectToEquipInfo.cs`
+- [x] `inventoryObjectToEquipInfo.cs`
 - [ ] `inventoryPrefabCreationSystem.cs`
 - [ ] `inventorySlotOptionsButtons.cs`
 - [x] `inventoryWeightManager.cs`
