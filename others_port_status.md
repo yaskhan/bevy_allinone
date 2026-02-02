@@ -8,7 +8,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `animatorTriggerEvent.cs`
 - [x] `audioSourceInfo.cs`
 - [x] `BezierSpline.cs`
-- [ ] `changeObjectColors.cs`
+- [x] `changeObjectColors.cs`
 - [ ] `checkCollisionType.cs`
 - [ ] `consoleLogOnScreenSystem.cs`
 - [ ] `destroyGameObject.cs`
