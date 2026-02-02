@@ -14,6 +14,7 @@ pub mod template_ability;
 pub mod weapon_integration;
 pub mod ability_pickups;
 pub mod player_teleport;
+pub mod grappling_hook_effect;
 
 use bevy::prelude::*;
 use types::*;
@@ -32,6 +33,7 @@ use template_ability::*;
 use weapon_integration::*;
 use ability_pickups::*;
 use player_teleport::*;
+use grappling_hook_effect::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -66,6 +68,7 @@ pub use weapon_integration::AbilityWeaponIntegration;
 pub use ability_pickups::AbilityPickup;
 pub use player_teleport::PlayerTeleportAbility;
 pub use player_teleport::{TeleportStartEvent, TeleportEndEvent, TeleportStartEventQueue, TeleportEndEventQueue};
+pub use grappling_hook_effect::GrapplingHookEffect;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -108,6 +111,7 @@ impl Plugin for AbilitiesPlugin {
                 update_weapon_ability_hooks,
                 update_teleport_target,
                 handle_teleport_input,
+                update_grappling_hook_effect,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
