@@ -38,7 +38,7 @@ Source: `gkit/Scripts/Inventory/`
 ## Inventory Pickups Behaviour
 - [x] `ammoOnInventory.cs`
 - [x] `energyOnInventory.cs`
-- [ ] `healthOnInventory.cs`
+- [x] `healthOnInventory.cs`
 - [ ] `jetpackFuelOnInventory.cs`
 - [ ] `meleeShieldOnInventory.cs`
 - [ ] `meleeWeaponConsumableOnInventory.cs`
