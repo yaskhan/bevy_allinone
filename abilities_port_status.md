@@ -40,4 +40,4 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Implement hold behavior (continuous use + energy drain)
 - [x] Integrate grounded / first-person constraints with character/camera systems
 - [x] Port stamina/energy to shared Stats system (or a dedicated Energy resource)
-- [ ] Build minimal UI indicators (current ability + cooldown/limit)
+- [x] Build minimal UI indicators (current ability + cooldown/limit)
