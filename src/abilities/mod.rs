@@ -27,6 +27,7 @@ pub mod player_gravity_system;
 pub mod player_shield_system;
 pub mod player_stealth_system;
 pub mod remove_gravity_from_character_system;
+pub mod grappling_hook_rope;
 
 use bevy::prelude::*;
 use types::*;
@@ -58,6 +59,7 @@ use player_gravity_system::*;
 use player_shield_system::*;
 use player_stealth_system::*;
 use remove_gravity_from_character_system::*;
+use grappling_hook_rope::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -126,6 +128,7 @@ pub use player_gravity_system::PlayerGravityAbility;
 pub use player_shield_system::PlayerShieldSystem;
 pub use player_stealth_system::{PlayerStealthSystem, PlayerStealthEventQueue};
 pub use remove_gravity_from_character_system::{RemoveGravityFromCharacterSystem, RemoveGravityEventQueue};
+pub use grappling_hook_rope::GrapplingHookRope;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -197,6 +200,7 @@ impl Plugin for AbilitiesPlugin {
                 update_player_stealth_system,
                 activate_remove_gravity,
                 update_remove_gravity,
+                update_grappling_hook_rope,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
