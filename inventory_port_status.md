@@ -21,7 +21,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryListManager.cs`
 - [x] `inventoryManager.cs`
 - [x] `inventoryMenuIconElement.cs`
-- [ ] `inventoryMenuPanelsSystem.cs`
+- [x] `inventoryMenuPanelsSystem.cs`
 - [x] `inventoryObject.cs`
 - [ ] `inventoryObjectToEquipInfo.cs`
 - [ ] `inventoryPrefabCreationSystem.cs`

@@ -18,6 +18,7 @@ pub mod inventory_info;
 pub mod inventory_list_element;
 pub mod inventory_list_manager;
 pub mod inventory_menu_icon_element;
+pub mod inventory_menu_panels_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -44,6 +45,7 @@ pub use inventory_info::InventoryInfo;
 pub use inventory_list_element::InventoryListElement;
 pub use inventory_list_manager::InventoryListManager;
 pub use inventory_menu_icon_element::InventoryMenuIconElement;
+pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPanelsSystem};
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -54,6 +56,7 @@ impl Plugin for InventoryPlugin {
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
         .add_event::<InventoryBankTransferEvent>()
+        .add_event::<InventoryMenuPanelEvent>()
         .add_systems(Update, (
             update_inventory,
             handle_pickup_events,
@@ -72,6 +75,7 @@ impl Plugin for InventoryPlugin {
             inventory_capture_manager::update_inventory_capture_manager,
             inventory_capture_manager_transparent::update_inventory_capture_manager_transparent,
             inventory_list_manager::update_inventory_list_manager,
+            inventory_menu_panels_system::update_inventory_menu_panels_system,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
