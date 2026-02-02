@@ -51,6 +51,7 @@ pub mod simple_event_system;
 pub mod simple_fps_counter;
 pub mod simple_lamp;
 pub mod simple_lens_flare_system;
+pub mod simple_set_quaternion_rotation;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -107,6 +108,7 @@ pub use simple_event_system::{SimpleEvent, SimpleEventSystem};
 pub use simple_fps_counter::SimpleFpsCounter;
 pub use simple_lamp::SimpleLamp;
 pub use simple_lens_flare_system::SimpleLensFlareSystem;
+pub use simple_set_quaternion_rotation::SimpleSetQuaternionRotation;
 
 pub struct OthersPlugin;
 
@@ -159,6 +161,7 @@ impl Plugin for OthersPlugin {
                 simple_audio_play::update_simple_audio_play,
                 simple_event_system::update_simple_event_system,
                 simple_fps_counter::update_simple_fps_counter,
+                simple_set_quaternion_rotation::update_simple_set_quaternion_rotation,
             ));
     }
 }

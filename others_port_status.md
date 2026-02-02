@@ -54,7 +54,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `SimpleFPSCounter.cs`
 - [x] `simpleLamp.cs`
 - [x] `simpleLensFlareSystem.cs`
-- [ ] `simpleSetQuaternionRotation.cs`
+- [x] `simpleSetQuaternionRotation.cs`
 - [ ] `spawnObject.cs`
 - [ ] `SplineWalker.cs`
 - [ ] `tagLayerSystem.cs`
