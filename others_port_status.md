@@ -36,7 +36,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `playSoundOnTriggerEnter.cs`
 - [x] `putGear.cs`
 - [x] `railMechanism.cs`
-- [ ] `replaceMaterialSystem.cs`
+- [x] `replaceMaterialSystem.cs`
 - [ ] `rotateObjects.cs`
 - [ ] `rotatoryGear.cs`
 - [ ] `scanElementInfo.cs`
