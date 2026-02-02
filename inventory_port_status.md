@@ -33,7 +33,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `playerInventoryCategoriesListManager.cs`
 - [x] `useInventoryObject.cs`
 - [x] `weaponAttachmentInventoryPrefabCreationSystem.cs`
-- [ ] `weaponInventoryPrefabCreationSystem.cs`
+- [x] `weaponInventoryPrefabCreationSystem.cs`
 
 ## Inventory Pickups Behaviour
 - [ ] `ammoOnInventory.cs`
