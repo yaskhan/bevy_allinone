@@ -8,6 +8,7 @@ pub mod ik_driving_system;
 pub mod launch_trajectory;
 pub mod player_hud_manager;
 pub mod ship_interface_info;
+pub mod vehicle_builder;
 
 pub use types::*;
 pub use spawn::*;
@@ -16,6 +17,7 @@ pub use ik_driving_system::IKDrivingSystem;
 pub use launch_trajectory::LaunchTrajectory;
 pub use player_hud_manager::PlayerHudManager;
 pub use ship_interface_info::ShipInterfaceInfo;
+pub use vehicle_builder::VehicleBuilder;
 
 use systems::*;
 
@@ -46,6 +48,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<LaunchTrajectory>()
             .register_type::<PlayerHudManager>()
             .register_type::<ShipInterfaceInfo>()
+            .register_type::<VehicleBuilder>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -73,6 +76,7 @@ impl Plugin for VehiclesPlugin {
                 ik_driving_system::update_ik_driving,
                 launch_trajectory::update_launch_trajectory,
                 player_hud_manager::update_player_hud_manager,
+                vehicle_builder::update_vehicle_builder,
             ));
     }
 }

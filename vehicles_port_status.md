@@ -9,7 +9,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `playerHUDManager.cs`
 - [x] `shipInterfaceInfo.cs`
 - [x] `skidsManager.cs`
-- [ ] `vehicleBuilder.cs`
+- [x] `vehicleBuilder.cs`
 - [ ] `vehicleDamageReceiver.cs`
 - [ ] `vehicleHUDManager.cs`
 - [ ] `vehicleInterface.cs`
