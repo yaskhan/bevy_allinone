@@ -26,7 +26,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability-specific systems from GKC: `magicSpellActionSystem`
 - [x] Ability-specific systems from GKC: `oxygenSystem`
 - [x] Ability-specific systems from GKC: `staminaSystem`
-- [ ] Ability-specific systems from GKC: `throwObjectTrayectorySystem`
+- [x] Ability-specific systems from GKC: `throwObjectTrayectorySystem`
 - [ ] Ability-specific systems from GKC: `wallRunningZoneSystem`
 - [ ] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
 - [ ] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
