@@ -287,6 +287,12 @@ pub fn update_action_system(
                                 player_action.state = ActionState::WalkingToTargetAfter;
                                 player_action.walk_timer = 0.0;
                                 player_action.walk_state = WalkToTargetState::Idle;
+                            } else if action.wait_for_input_to_continue {
+                                player_action.state = ActionState::WaitingForInput;
+                                info!("Action System: Waiting for input to continue");
+                            } else if action.stay_in_state_after_finish {
+                                player_action.state = ActionState::StayingInState;
+                                info!("Action System: Staying in state");
                             } else {
                                 player_action.state = ActionState::Finished;
                             }
@@ -295,12 +301,42 @@ pub fn update_action_system(
                     ActionState::WalkingToTargetAfter => {
                         // Walk-to-target is handled by update_walk_to_target_system
                         if player_action.walk_state == WalkToTargetState::ReachedTarget {
-                            player_action.state = ActionState::Finished;
-                            info!("Action System: Reached walk target after action");
+                            if action.wait_for_input_to_continue {
+                                player_action.state = ActionState::WaitingForInput;
+                                info!("Action System: Reached walk target, waiting for input");
+                            } else if action.stay_in_state_after_finish {
+                                player_action.state = ActionState::StayingInState;
+                                info!("Action System: Reached walk target, staying in state");
+                            } else {
+                                player_action.state = ActionState::Finished;
+                            }
                         } else if player_action.walk_state == WalkToTargetState::TimedOut {
                             warn!("Action System: Walk after action timed out");
                             player_action.state = ActionState::Finished;
                         }
+                    }
+                    ActionState::WaitingForInput => {
+                        // Check if required input is pressed
+                        let input_pressed = match action.input_to_continue.as_str() {
+                            "Interact" => input.interact_pressed,
+                            "Jump" => input.jump_pressed,
+                            "Fire" => input.fire_pressed,
+                            "Aim" => input.aim_pressed,
+                            _ => input.interact_pressed, // Default to interact
+                        };
+                        
+                        if input_pressed {
+                            if action.stay_in_state_after_finish {
+                                player_action.state = ActionState::StayingInState;
+                            } else {
+                                player_action.state = ActionState::Finished;
+                            }
+                            info!("Action System: Input received, continuing");
+                        }
+                    }
+                    ActionState::StayingInState => {
+                        // This state persists until interrupted by another action or manual stop
+                        // No automatic transition to Finished
                     }
                     ActionState::Finished => {
                         action_ended = true;
@@ -530,11 +566,32 @@ pub fn update_animator_parameters_system(
                     }
                 }
             }
+        } else if player_action.is_action_active && 
+                 (player_action.state == ActionState::WaitingForInput || player_action.state == ActionState::StayingInState) {
+            // Keep animator flags during waiting/staying states
+            // We don't have the action here without querying, but we can assume if it's active we keep flags
+            // Refinement: if we need action settings (like upper body), we'd need to query it.
+            // For now, let's just make sure they don't reset.
         } else {
             // Reset animator parameters when no action is active
             animator_params.action_active = false;
             animator_params.action_active_upper_body = false;
             animator_params.action_id = 0;
+        }
+    }
+}
+
+/// System to automatically reset sequence indices for custom actions
+pub fn update_custom_action_index_reset_system(
+    mut query: Query<&mut CustomActionInfo>,
+    time: Res<Time>,
+) {
+    for mut action_info in query.iter_mut() {
+        if action_info.reset_index_after_delay && action_info.current_action_index > 0 {
+            if time.elapsed_secs() - action_info.last_time_used > action_info.index_reset_delay {
+                action_info.current_action_index = 0;
+                info!("Action index reset for {}", action_info.name);
+            }
         }
     }
 }
@@ -611,20 +668,21 @@ pub fn handle_custom_action_activation_system(
     mut interrupted_queue: ResMut<ActionInterruptedEventQueue>,
     custom_action_manager: Res<CustomActionManager>,
     mut player_query: Query<&mut PlayerActionSystem>,
-    custom_action_query: Query<&CustomActionInfo>,
+    mut custom_action_query: Query<&mut CustomActionInfo>,
     action_query: Query<&ActionSystem>,
     ground_query: Query<&GroundDetection>,
     char_movement_query: Query<&CharacterMovementState>,
     ragdoll_query: Query<&Ragdoll>,
     camera_target_query: Query<&CameraTargetState>,
     weapon_manager_query: Query<&WeaponManager>,
+    time: Res<Time>,
 ) {
     for event in activate_queue.0.drain(..) {
         let action_name_lower = event.action_name.to_lowercase();
         
         // Look up action by name
         if let Some(&custom_action_entity) = custom_action_manager.action_lookup.get(&action_name_lower) {
-            if let Ok(custom_action_info) = custom_action_query.get(custom_action_entity) {
+            if let Ok(mut custom_action_info) = custom_action_query.get_mut(custom_action_entity) {
                 if !custom_action_info.enabled {
                     continue;
                 }
@@ -739,7 +797,15 @@ pub fn handle_custom_action_activation_system(
                     }
                     
                     if can_start {
-                        // Set category
+                    // Update sequencing info
+                    custom_action_info.last_time_used = time.elapsed_secs();
+                    
+                    // Increment index if using random/ordered list
+                    if custom_action_info.use_random_action_list && custom_action_info.follow_actions_order {
+                        custom_action_info.current_action_index += 1;
+                    }
+
+                    // Set category
                         player_action.current_action_category = Some(custom_action_info.category.name.clone());
                         
                         // Start the action

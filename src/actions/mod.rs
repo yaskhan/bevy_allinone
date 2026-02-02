@@ -45,6 +45,7 @@ impl Plugin for ActionSystemPlugin {
                 systems::apply_match_target_system,
                 systems::update_walk_to_target_system,
                 systems::handle_custom_action_activation_system,
+                systems::update_custom_action_index_reset_system,
                 systems::update_custom_action_manager_system,
                 systems::block_action_inputs_system,
                 weapon_integration::process_weapon_events,

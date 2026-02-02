@@ -9,6 +9,8 @@ pub enum ActionState {
     AdjustingTransform,
     PlayingAnimation,
     WalkingToTargetAfter,
+    WaitingForInput,
+    StayingInState,
     Finished,
 }
 
@@ -436,6 +438,11 @@ pub struct CustomActionInfo {
     pub check_ragdoll_state: bool,
     pub required_ragdoll_state: bool,
     
+    // Sequencing
+    pub reset_index_after_delay: bool,
+    pub index_reset_delay: f32,
+    pub last_time_used: f32,
+    
     // Action on air
     pub use_action_on_air: bool,
     pub action_system_on_air_entity: Option<Entity>,
@@ -468,6 +475,9 @@ impl Default for CustomActionInfo {
             required_crouch_state: false,
             check_ragdoll_state: false,
             required_ragdoll_state: false,
+            reset_index_after_delay: false,
+            index_reset_delay: 2.0,
+            last_time_used: 0.0,
             use_action_on_air: false,
             action_system_on_air_entity: None,
         }
@@ -542,6 +552,11 @@ pub struct ActionSystem {
     pub raycast_layer_mask: u32,
     pub activate_dynamic_obstacle_detection: bool,
     pub dynamic_obstacle_distance_threshold: f32,
+    
+    // Chaining & Sequencing
+    pub stay_in_state_after_finish: bool,
+    pub wait_for_input_to_continue: bool,
+    pub input_to_continue: String,
     
     // Event system
     pub use_event_list: bool,
@@ -624,6 +639,9 @@ impl Default for ActionSystem {
             required_locked_camera_state: false,
             check_aiming_state: false,
             required_aiming_state: false,
+            stay_in_state_after_finish: false,
+            wait_for_input_to_continue: false,
+            input_to_continue: "Interact".to_string(),
         }
     }
 }
