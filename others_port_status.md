@@ -6,7 +6,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `addForceToObjectSystem.cs`
 - [x] `animatorTriggerEnterExitEvent.cs`
 - [x] `animatorTriggerEvent.cs`
-- [ ] `audioSourceInfo.cs`
+- [x] `audioSourceInfo.cs`
 - [ ] `BezierSpline.cs`
 - [ ] `changeObjectColors.cs`
 - [ ] `checkCollisionType.cs`
