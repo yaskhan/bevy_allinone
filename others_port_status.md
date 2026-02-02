@@ -42,7 +42,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `scanElementInfo.cs`
 - [x] `setFixedRotation.cs`
 - [x] `setGameObjectActiveState.cs`
-- [ ] `setObjectParentSystem.cs`
+- [x] `setObjectParentSystem.cs`
 - [ ] `setObjectScaleSystem.cs`
 - [ ] `setRigidbodyStateSystem.cs`
 - [ ] `showGameInfoHud.cs`
