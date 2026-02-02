@@ -13,7 +13,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryBankManager.cs`
 - [x] `inventoryBankSystem.cs`
 - [x] `inventoryBankUISystem.cs`
-- [ ] `inventoryCaptureManager.cs`
+- [x] `inventoryCaptureManager.cs`
 - [ ] `inventoryCaptureManagerTransparent.cs`
 - [ ] `inventoryCategoryInfo.cs`
 - [ ] `inventoryInfo.cs`
