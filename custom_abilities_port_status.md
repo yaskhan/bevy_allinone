@@ -11,7 +11,7 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 
 ## Other Custom Abilities
 - [x] `customAbilitySystem.cs`
-- [ ] `drainStatSystem.cs`
+- [x] `drainStatSystem.cs`
 - [ ] `laserVisionSystem.cs`
 - [ ] `manualDetonationMineSystem.cs`
 - [ ] `playerGravitySystem.cs`

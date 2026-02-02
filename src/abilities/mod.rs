@@ -20,6 +20,7 @@ pub mod grappling_hook_target;
 pub mod grappling_hook_targets_system;
 pub mod object_to_attract_with_grappling_hook;
 pub mod custom_ability_system;
+pub mod drain_stat_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -44,6 +45,7 @@ use grappling_hook_target::*;
 use grappling_hook_targets_system::*;
 use object_to_attract_with_grappling_hook::*;
 use custom_ability_system::*;
+use drain_stat_system::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -96,6 +98,7 @@ pub use custom_ability_system::{
     CustomAbilityDisableEventQueue,
     CustomAbilityDeactivateEventQueue,
 };
+pub use drain_stat_system::{DrainStatSystem, DrainStatInfo};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -152,6 +155,7 @@ impl Plugin for AbilitiesPlugin {
                 update_grappling_hook_forces,
                 update_grappling_hook_targets,
                 update_custom_ability_system,
+                update_drain_stat_system,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
