@@ -38,7 +38,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `railMechanism.cs`
 - [x] `replaceMaterialSystem.cs`
 - [x] `rotateObjects.cs`
-- [ ] `rotatoryGear.cs`
+- [x] `rotatoryGear.cs`
 - [ ] `scanElementInfo.cs`
 - [ ] `setFixedRotation.cs`
 - [ ] `setGameObjectActiveState.cs`

@@ -35,6 +35,7 @@ pub mod put_gear;
 pub mod rail_mechanism;
 pub mod replace_material_system;
 pub mod rotate_objects;
+pub mod rotatory_gear;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -75,6 +76,7 @@ pub use put_gear::PutGear;
 pub use rail_mechanism::RailMechanism;
 pub use replace_material_system::ReplaceMaterialSystem;
 pub use rotate_objects::RotateObjects;
+pub use rotatory_gear::RotatoryGear;
 
 pub struct OthersPlugin;
 
@@ -113,6 +115,7 @@ impl Plugin for OthersPlugin {
                 rail_mechanism::update_rail_mechanism,
                 replace_material_system::update_replace_material_system,
                 rotate_objects::update_rotate_objects,
+                rotatory_gear::update_rotatory_gear,
             ));
     }
 }
