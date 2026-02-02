@@ -165,3 +165,37 @@ pub struct CharacterAnimationState {
     pub forward: f32,
     pub turn: f32,
 }
+
+/// Component for foot IK positioning and placement
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct FootIk {
+    pub enabled: bool,
+    pub weight: f32,
+}
+
+impl Default for FootIk {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            weight: 1.0,
+        }
+    }
+}
+
+/// Component for hand IK positioning and target tracking
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct HandIk {
+    pub enabled: bool,
+    pub weight: f32,
+}
+
+impl Default for HandIk {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            weight: 1.0,
+        }
+    }
+}

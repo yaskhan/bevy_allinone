@@ -689,6 +689,7 @@ pub struct WeaponIkState {
     pub bob_offset: Vec3,
     pub recoil_offset: Vec3,
     pub recoil_rotation: Quat,
+    pub weight: f32,
 }
 
 /// Component for surfaces that can catch and return projectiles

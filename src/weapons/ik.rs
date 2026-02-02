@@ -100,11 +100,15 @@ pub fn handle_weapon_ik(
         state.recoil_offset = state.recoil_offset.lerp(Vec3::ZERO, 5.0 * dt);
         state.recoil_rotation = state.recoil_rotation.slerp(Quat::IDENTITY, 5.0 * dt);
 
-        // 6. Combine everything into the final transform
-        // Note: We modify the local transform of the weapon entity.
-        // It's assumed the weapon is a child of the camera or a hand bone.
-        transform.translation = state.current_offset.translation + state.sway_offset + state.bob_offset + state.recoil_offset;
-        transform.rotation = state.current_offset.rotation * state.recoil_rotation;
+        // 6. Combine everything into the final transform with weight
+        let weight = state.weight;
+        if weight > 0.001 {
+            transform.translation = (state.current_offset.translation + state.sway_offset + state.bob_offset + state.recoil_offset) * weight;
+            transform.rotation = Quat::IDENTITY.slerp(state.current_offset.rotation * state.recoil_rotation, weight);
+        } else {
+            transform.translation = Vec3::ZERO;
+            transform.rotation = Quat::IDENTITY;
+        }
     }
 }
 

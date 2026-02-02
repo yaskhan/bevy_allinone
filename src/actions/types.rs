@@ -190,6 +190,12 @@ pub struct PlayerStateControl {
     pub friction_override: Option<f32>,
     pub pause_headbob: bool,
     pub drop_held_object: bool,
+
+    // IK and tracking control
+    pub foot_ik_pause: bool,
+    pub hand_ik_pause: bool,
+    pub head_track_pause: bool,
+    pub weapon_ik_weight: Option<f32>,
 }
 
 impl Default for PlayerStateControl {
@@ -217,6 +223,10 @@ impl Default for PlayerStateControl {
             friction_override: None,
             pause_headbob: false,
             drop_held_object: false,
+            foot_ik_pause: false,
+            hand_ik_pause: false,
+            head_track_pause: false,
+            weapon_ik_weight: None,
         }
     }
 }
@@ -701,6 +711,12 @@ pub struct PlayerActionSystem {
     pub saved_camera_state_name: String,
     pub saved_camera_enabled: bool,
     
+    // Saved IK/Tracking state
+    pub saved_foot_ik_enabled: bool,
+    pub saved_hand_ik_enabled: bool,
+    pub saved_head_track_enabled: bool,
+    pub saved_weapon_ik_weight: f32,
+
     // Parenting state
     pub parented_objects: Vec<ParentedObject>,
 }
@@ -742,6 +758,10 @@ impl Default for PlayerActionSystem {
             saved_camera_mode: String::new(),
             saved_camera_state_name: String::new(),
             saved_camera_enabled: true,
+            saved_foot_ik_enabled: true,
+            saved_hand_ik_enabled: true,
+            saved_head_track_enabled: true,
+            saved_weapon_ik_weight: 1.0,
             parented_objects: Vec::new(),
         }
     }

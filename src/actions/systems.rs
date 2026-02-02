@@ -11,6 +11,9 @@ use crate::grab::types::{Grabber, GrabEventQueue, GrabEvent};
 use crate::player::player_modes::PlayerModesSystem;
 use avian3d::prelude::Friction;
 use bevy::ecs::system::SystemParam;
+use crate::character::types::{FootIk, HandIk};
+use crate::head_track::types::HeadTrack;
+use crate::weapons::WeaponIkState;
 
 #[derive(SystemParam)]
 pub struct ActionSystemParams<'w, 's> {
@@ -29,6 +32,10 @@ pub struct ActionSystemParams<'w, 's> {
     pub bob_query: Query<'w, 's, &'static mut CameraBobState>,
     pub friction_query: Query<'w, 's, &'static mut Friction>,
     pub grabber_query: Query<'w, 's, &'static mut Grabber>,
+    pub foot_ik_query: Query<'w, 's, &'static mut FootIk>,
+    pub hand_ik_query: Query<'w, 's, &'static mut HandIk>,
+    pub head_track_query: Query<'w, 's, &'static mut HeadTrack>,
+    pub weapon_ik_query: Query<'w, 's, &'static mut WeaponIkState>,
     pub grab_events: ResMut<'w, GrabEventQueue>,
     pub time: Res<'w, Time>,
     pub input: Res<'w, InputState>,
@@ -217,6 +224,41 @@ pub fn update_action_system(
                         
                         // Note: disable_camera_zoom is handled by blocking inputs, but we could also 
                         // add a flag to CameraController if needed.
+                    }
+                }
+                
+                // Save and Apply IK/Tracking control
+                if let Ok(mut foot_ik) = params.foot_ik_query.get_mut(event.player_entity) {
+                    player_action.saved_foot_ik_enabled = foot_ik.enabled;
+                    if control.foot_ik_pause {
+                        foot_ik.enabled = false;
+                        info!("Foot IK paused during action");
+                    }
+                }
+                if let Ok(mut hand_ik) = params.hand_ik_query.get_mut(event.player_entity) {
+                    player_action.saved_hand_ik_enabled = hand_ik.enabled;
+                    if control.hand_ik_pause {
+                        hand_ik.enabled = false;
+                        info!("Hand IK paused during action");
+                    }
+                }
+                if let Ok(mut head_track) = params.head_track_query.get_mut(event.player_entity) {
+                    player_action.saved_head_track_enabled = head_track.enabled;
+                    if control.head_track_pause {
+                        head_track.enabled = false;
+                        info!("Head tracking paused during action");
+                    }
+                }
+                // Weapon IK weight control
+                if let Ok(weapon_manager) = params.weapon_manager_query.get(event.player_entity) {
+                    for &weapon_ent in &weapon_manager.weapons_list {
+                        if let Ok(mut weapon_ik) = params.weapon_ik_query.get_mut(weapon_ent) {
+                            player_action.saved_weapon_ik_weight = weapon_ik.weight;
+                            if let Some(weight) = control.weapon_ik_weight {
+                                weapon_ik.weight = weight;
+                                info!("Hand/Weapon IK weight set to {} during action", weight);
+                            }
+                        }
                     }
                 }
                 
@@ -472,6 +514,24 @@ pub fn update_action_system(
                         if action.destroy_action_on_end {
                             commands.entity(action_entity).despawn_recursive();
                             info!("Action entity {:?} destroyed on end", action_entity);
+                        }
+
+                        // Restore IK/Tracking state
+                        if let Ok(mut foot_ik) = params.foot_ik_query.get_mut(event.player_entity) {
+                            foot_ik.enabled = player_action.saved_foot_ik_enabled;
+                        }
+                        if let Ok(mut hand_ik) = params.hand_ik_query.get_mut(event.player_entity) {
+                            hand_ik.enabled = player_action.saved_hand_ik_enabled;
+                        }
+                        if let Ok(mut head_track) = params.head_track_query.get_mut(event.player_entity) {
+                            head_track.enabled = player_action.saved_head_track_enabled;
+                        }
+                        if let Ok(weapon_manager) = params.weapon_manager_query.get(event.player_entity) {
+                            for &weapon_ent in &weapon_manager.weapons_list {
+                                if let Ok(mut weapon_ik) = params.weapon_ik_query.get_mut(weapon_ent) {
+                                    weapon_ik.weight = player_action.saved_weapon_ik_weight;
+                                }
+                            }
                         }
 
                         // Restore preserved states

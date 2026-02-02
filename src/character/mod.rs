@@ -18,6 +18,8 @@ impl Plugin for CharacterPlugin {
             .register_type::<CharacterController>()
             .register_type::<CharacterMovementState>()
             .register_type::<CharacterAnimationState>()
+            .register_type::<FootIk>()
+            .register_type::<HandIk>()
             .add_systems(Update, (
                 movement::update_character_movement,
                 rotation::update_character_rotation,
