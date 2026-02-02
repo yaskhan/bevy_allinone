@@ -49,7 +49,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `showMessageOnHUDSystem.cs`
 - [x] `simpleActionButton.cs`
 - [x] `simpleAnimationSystem.cs`
-- [ ] `simpleAudioPlay.cs`
+- [x] `simpleAudioPlay.cs`
 - [ ] `simpleEventSystem.cs`
 - [ ] `SimpleFPSCounter.cs`
 - [ ] `simpleLamp.cs`
