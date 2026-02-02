@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Reflect)]
 pub enum ActionState {
@@ -9,12 +10,156 @@ pub enum ActionState {
     Finished,
 }
 
+/// Animator parameters for action system
+#[derive(Component, Debug, Reflect, Clone)]
+#[reflect(Component)]
+pub struct AnimatorParameters {
+    pub action_active: bool,
+    pub action_id: i32,
+    pub action_active_upper_body: bool,
+    pub horizontal: f32,
+    pub vertical: f32,
+    pub raw_horizontal: i32,
+    pub raw_vertical: i32,
+    pub last_horizontal_direction: i32,
+    pub last_vertical_direction: i32,
+}
+
+impl Default for AnimatorParameters {
+    fn default() -> Self {
+        Self {
+            action_active: false,
+            action_id: 0,
+            action_active_upper_body: false,
+            horizontal: 0.0,
+            vertical: 0.0,
+            raw_horizontal: 0,
+            raw_vertical: 0,
+            last_horizontal_direction: 0,
+            last_vertical_direction: 0,
+        }
+    }
+}
+
+/// Match target configuration for precise positioning during animations
+#[derive(Component, Debug, Reflect, Clone)]
+#[reflect(Component)]
+pub struct MatchTargetConfig {
+    pub enabled: bool,
+    pub target_position: Vec3,
+    pub target_rotation: Quat,
+    pub position_weight: Vec3, // XYZ weights 0-1
+    pub rotation_weight: f32,  // 0-1
+    pub start_time: f32,       // normalized 0-1
+    pub end_time: f32,         // normalized 0-1
+    pub current_normalized_time: f32,
+}
+
+impl Default for MatchTargetConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            target_position: Vec3::ZERO,
+            target_rotation: Quat::IDENTITY,
+            position_weight: Vec3::ONE,
+            rotation_weight: 1.0,
+            start_time: 0.0,
+            end_time: 1.0,
+            current_normalized_time: 0.0,
+        }
+    }
+}
+
+/// Action category for grouping and priority management
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub struct ActionCategory {
+    pub name: String,
+    pub priority: i32,
+}
+
+impl Default for ActionCategory {
+    fn default() -> Self {
+        Self {
+            name: "Default".to_string(),
+            priority: 0,
+        }
+    }
+}
+
+/// Custom action information for named actions with advanced features
+#[derive(Component, Debug, Reflect, Clone)]
+#[reflect(Component)]
+pub struct CustomActionInfo {
+    pub name: String,
+    pub category: ActionCategory,
+    pub enabled: bool,
+    pub action_system_entity: Option<Entity>,
+    
+    // Interruption settings
+    pub can_interrupt_other_actions: bool,
+    pub use_category_to_check_interrupt: bool,
+    pub action_categories_to_interrupt: Vec<String>,
+    pub action_names_to_interrupt: Vec<String>,
+    pub can_force_interrupt: bool,
+    
+    // Probability
+    pub use_probability: bool,
+    pub probability: f32, // 0.0 - 1.0
+    
+    // Random actions
+    pub use_random_action_list: bool,
+    pub random_action_entities: Vec<Entity>,
+    pub follow_actions_order: bool,
+    pub current_action_index: usize,
+    
+    // Conditions
+    pub check_locked_camera_state: bool,
+    pub required_locked_camera_state: bool,
+    pub check_aiming_state: bool,
+    pub required_aiming_state: bool,
+    pub check_on_ground: bool,
+    
+    // Action on air
+    pub use_action_on_air: bool,
+    pub action_system_on_air_entity: Option<Entity>,
+}
+
+impl Default for CustomActionInfo {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            category: ActionCategory::default(),
+            enabled: true,
+            action_system_entity: None,
+            can_interrupt_other_actions: false,
+            use_category_to_check_interrupt: false,
+            action_categories_to_interrupt: Vec::new(),
+            action_names_to_interrupt: Vec::new(),
+            can_force_interrupt: false,
+            use_probability: false,
+            probability: 1.0,
+            use_random_action_list: false,
+            random_action_entities: Vec::new(),
+            follow_actions_order: false,
+            current_action_index: 0,
+            check_locked_camera_state: false,
+            required_locked_camera_state: false,
+            check_aiming_state: false,
+            required_aiming_state: false,
+            check_on_ground: false,
+            use_action_on_air: false,
+            action_system_on_air_entity: None,
+        }
+    }
+}
+
 /// Main component for an interactive action (e.g., sitting, vaulting)
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ActionSystem {
     pub action_name: String,
     pub is_active: bool,
+    pub category_name: String,
     
     // Activation Conditions
     pub use_min_distance: bool,
@@ -24,19 +169,43 @@ pub struct ActionSystem {
     
     // Player Adjustment
     pub use_position_to_adjust_player: bool,
-    // Target transform to match player against
     pub match_target_transform: Option<Transform>, 
     pub adjust_player_position_speed: f32,
     pub rotate_player_to_face_target: bool,
 
     pub duration: f32,
     pub animation_speed: f32,
-    pub animation_clip: Option<Handle<AnimationClip>>, // Placeholder for animation asset
+    pub animation_clip: Option<Handle<AnimationClip>>,
+    
+    // Animation settings
+    pub use_action_id: bool,
+    pub action_id: i32,
+    pub remove_action_id_immediately: bool,
+    pub animation_used_on_upper_body: bool,
+    pub disable_regular_action_active_state: bool,
+    
+    // Root motion
+    pub use_root_motion: bool,
+    pub apply_root_position: bool,
+    pub apply_root_rotation: bool,
+    
+    // Match target
+    pub use_match_target: bool,
+    pub match_target_config: Option<MatchTargetConfig>,
     
     // State Overrides
     pub disable_physics: bool,
     pub disable_gravity: bool,
     pub disable_input: bool,
+    
+    // Chaining
+    pub activate_custom_action_after_complete: bool,
+    pub custom_action_name_after_complete: String,
+    
+    // Interruption
+    pub can_stop_previous_action: bool,
+    pub can_interrupt_other_action_active: bool,
+    pub use_event_on_interrupted_action: bool,
     
     // Internal state
     pub player_detected: bool,
@@ -47,6 +216,7 @@ impl Default for ActionSystem {
         Self {
             action_name: "Action".to_string(),
             is_active: true,
+            category_name: String::new(),
             use_min_distance: true,
             min_distance: 2.0,
             use_min_angle: true,
@@ -58,9 +228,24 @@ impl Default for ActionSystem {
             duration: 1.0,
             animation_speed: 1.0,
             animation_clip: None,
+            use_action_id: false,
+            action_id: 0,
+            remove_action_id_immediately: false,
+            animation_used_on_upper_body: false,
+            disable_regular_action_active_state: false,
+            use_root_motion: false,
+            apply_root_position: true,
+            apply_root_rotation: true,
+            use_match_target: false,
+            match_target_config: None,
             disable_physics: true,
             disable_gravity: true,
             disable_input: true,
+            activate_custom_action_after_complete: false,
+            custom_action_name_after_complete: String::new(),
+            can_stop_previous_action: true,
+            can_interrupt_other_action_active: false,
+            use_event_on_interrupted_action: false,
             player_detected: false,
         }
     }
@@ -76,6 +261,10 @@ pub struct PlayerActionSystem {
     pub state: ActionState,
     pub action_timer: f32,
     
+    // Current action info
+    pub current_action_category: Option<String>,
+    pub action_waiting_to_resume: Option<Entity>,
+    
     // State backup to restore after action
     pub previous_gravity_state: bool,
     pub previous_physics_state: bool,
@@ -88,10 +277,25 @@ impl Default for PlayerActionSystem {
             is_action_active: false,
             state: ActionState::Idle,
             action_timer: 0.0,
+            current_action_category: None,
+            action_waiting_to_resume: None,
             previous_gravity_state: true,
             previous_physics_state: true,
         }
     }
+}
+
+/// Resource for managing custom actions
+#[derive(Resource, Default)]
+pub struct CustomActionManager {
+    // Name -> Entity lookup (lowercase)
+    pub action_lookup: HashMap<String, Entity>,
+    
+    // Category -> Actions lookup
+    pub category_lookup: HashMap<String, Vec<Entity>>,
+    
+    // Queue of actions waiting to be played
+    pub stored_action_queue: Vec<Entity>,
 }
 
 /// Event to trigger an action
@@ -113,3 +317,34 @@ pub struct EndActionEvent {
 
 #[derive(Resource, Default)]
 pub struct EndActionEventQueue(pub Vec<EndActionEvent>);
+
+/// Event to activate a custom action by name
+#[derive(Debug, Clone)]
+pub struct ActivateCustomActionEvent {
+    pub player_entity: Entity,
+    pub action_name: String,
+}
+
+#[derive(Resource, Default)]
+pub struct ActivateCustomActionEventQueue(pub Vec<ActivateCustomActionEvent>);
+
+/// Event to stop a custom action by name
+#[derive(Debug, Clone)]
+pub struct StopCustomActionEvent {
+    pub player_entity: Entity,
+    pub action_name: String,
+}
+
+#[derive(Resource, Default)]
+pub struct StopCustomActionEventQueue(pub Vec<StopCustomActionEvent>);
+
+/// Event when an action is interrupted
+#[derive(Debug, Clone, Copy)]
+pub struct ActionInterruptedEvent {
+    pub player_entity: Entity,
+    pub interrupted_action_entity: Entity,
+    pub new_action_entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct ActionInterruptedEventQueue(pub Vec<ActionInterruptedEvent>);

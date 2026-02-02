@@ -170,3 +170,243 @@ pub fn update_action_system(
          }
     }
 }
+
+/// System to update animator parameters based on player action state
+pub fn update_animator_parameters_system(
+    mut query: Query<(&PlayerActionSystem, &mut AnimatorParameters)>,
+    action_query: Query<&ActionSystem>,
+) {
+    for (player_action, mut animator_params) in query.iter_mut() {
+        if player_action.is_action_active {
+            if let Some(action_entity) = player_action.current_action {
+                if let Ok(action) = action_query.get(action_entity) {
+                    // Set action active flags
+                    if action.animation_used_on_upper_body {
+                        animator_params.action_active_upper_body = true;
+                        if action.disable_regular_action_active_state {
+                            animator_params.action_active = false;
+                        }
+                    } else {
+                        animator_params.action_active = true;
+                    }
+                    
+                    // Set action ID
+                    if action.use_action_id {
+                        animator_params.action_id = action.action_id;
+                    }
+                }
+            }
+        } else {
+            // Reset animator parameters when no action is active
+            animator_params.action_active = false;
+            animator_params.action_active_upper_body = false;
+            animator_params.action_id = 0;
+        }
+    }
+}
+
+/// System to apply match target during actions
+pub fn apply_match_target_system(
+    mut query: Query<(&mut PlayerActionSystem, &mut Transform)>,
+    mut action_query: Query<&mut ActionSystem>,
+    time: Res<Time>,
+) {
+    for (player_action, mut player_transform) in query.iter_mut() {
+        if !player_action.is_action_active {
+            continue;
+        }
+        
+        if let Some(action_entity) = player_action.current_action {
+            if let Ok(mut action) = action_query.get_mut(action_entity) {
+                if !action.use_match_target {
+                    continue;
+                }
+                
+                // Clone the match config to avoid borrow issues
+                if let Some(match_config) = action.match_target_config.clone() {
+                    if !match_config.enabled {
+                        continue;
+                    }
+                    
+                    // Update normalized time (assuming duration-based)
+                    let normalized_time = (player_action.action_timer / action.duration).clamp(0.0, 1.0);
+                    
+                    // Update the config's normalized time
+                    if let Some(ref mut config) = action.match_target_config {
+                        config.current_normalized_time = normalized_time;
+                    }
+                    
+                    // Check if we're in the match target time window
+                    if normalized_time >= match_config.start_time && normalized_time <= match_config.end_time {
+                        // Calculate interpolation factor within the window
+                        let window_duration = match_config.end_time - match_config.start_time;
+                        let window_progress = if window_duration > 0.0 {
+                            (normalized_time - match_config.start_time) / window_duration
+                        } else {
+                            1.0
+                        };
+                        
+                        // Apply position matching with weights
+                        let target_pos = match_config.target_position;
+                        let current_pos = player_transform.translation;
+                        let weighted_target = Vec3::new(
+                            current_pos.x + (target_pos.x - current_pos.x) * match_config.position_weight.x,
+                            current_pos.y + (target_pos.y - current_pos.y) * match_config.position_weight.y,
+                            current_pos.z + (target_pos.z - current_pos.z) * match_config.position_weight.z,
+                        );
+                        player_transform.translation = player_transform.translation.lerp(weighted_target, window_progress);
+                        
+                        // Apply rotation matching with weight
+                        if match_config.rotation_weight > 0.0 {
+                            player_transform.rotation = player_transform.rotation.slerp(
+                                match_config.target_rotation,
+                                window_progress * match_config.rotation_weight
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// System to handle custom action activation requests
+pub fn handle_custom_action_activation_system(
+    mut activate_queue: ResMut<ActivateCustomActionEventQueue>,
+    mut start_action_queue: ResMut<StartActionEventQueue>,
+    mut interrupted_queue: ResMut<ActionInterruptedEventQueue>,
+    custom_action_manager: Res<CustomActionManager>,
+    mut player_query: Query<&mut PlayerActionSystem>,
+    custom_action_query: Query<&CustomActionInfo>,
+    action_query: Query<&ActionSystem>,
+) {
+    for event in activate_queue.0.drain(..) {
+        let action_name_lower = event.action_name.to_lowercase();
+        
+        // Look up action by name
+        if let Some(&custom_action_entity) = custom_action_manager.action_lookup.get(&action_name_lower) {
+            if let Ok(custom_action_info) = custom_action_query.get(custom_action_entity) {
+                if !custom_action_info.enabled {
+                    continue;
+                }
+                
+                // Check conditions
+                // TODO: Add locked camera state, aiming state, on ground checks when those systems exist
+                
+                // Handle probability
+                if custom_action_info.use_probability {
+                    use rand::Rng;
+                    let mut rng = rand::thread_rng();
+                    let roll: f32 = rng.gen();
+                    if roll > custom_action_info.probability {
+                        info!("Action {} failed probability check ({} > {})", custom_action_info.name, roll, custom_action_info.probability);
+                        continue;
+                    }
+                }
+                
+                // Determine which action entity to use
+                let action_entity_to_use = if custom_action_info.use_random_action_list {
+                    if custom_action_info.random_action_entities.is_empty() {
+                        continue;
+                    }
+                    
+                    if custom_action_info.follow_actions_order {
+                        // Use current index (would need to be mutable in real implementation)
+                        let index = custom_action_info.current_action_index % custom_action_info.random_action_entities.len();
+                        custom_action_info.random_action_entities[index]
+                    } else {
+                        // Random selection
+                        use rand::Rng;
+                        let mut rng = rand::thread_rng();
+                        let index = rng.gen_range(0..custom_action_info.random_action_entities.len());
+                        custom_action_info.random_action_entities[index]
+                    }
+                } else {
+                    custom_action_info.action_system_entity.unwrap_or(Entity::PLACEHOLDER)
+                };
+                
+                if action_entity_to_use == Entity::PLACEHOLDER {
+                    continue;
+                }
+                
+                // Check if we need to interrupt current action
+                if let Ok(mut player_action) = player_query.get_mut(event.player_entity) {
+                    let mut can_start = true;
+                    
+                    if player_action.is_action_active {
+                        if let Some(current_action_entity) = player_action.current_action {
+                            if let Ok(current_action) = action_query.get(current_action_entity) {
+                                // Check if current action can be stopped
+                                if !current_action.can_stop_previous_action {
+                                    // Check if new action can force interrupt
+                                    if custom_action_info.can_interrupt_other_actions {
+                                        let can_interrupt = if custom_action_info.use_category_to_check_interrupt {
+                                            custom_action_info.action_categories_to_interrupt.contains(&current_action.category_name)
+                                        } else {
+                                            custom_action_info.action_names_to_interrupt.contains(&current_action.action_name)
+                                        };
+                                        
+                                        if can_interrupt || custom_action_info.can_force_interrupt {
+                                            // Interrupt the current action
+                                            interrupted_queue.0.push(ActionInterruptedEvent {
+                                                player_entity: event.player_entity,
+                                                interrupted_action_entity: current_action_entity,
+                                                new_action_entity: action_entity_to_use,
+                                            });
+                                            
+                                            info!("Action {} interrupted by {}", current_action.action_name, custom_action_info.name);
+                                        } else {
+                                            // Queue for later
+                                            player_action.action_waiting_to_resume = Some(action_entity_to_use);
+                                            can_start = false;
+                                        }
+                                    } else {
+                                        // Queue for later
+                                        player_action.action_waiting_to_resume = Some(action_entity_to_use);
+                                        can_start = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if can_start {
+                        // Set category
+                        player_action.current_action_category = Some(custom_action_info.category.name.clone());
+                        
+                        // Start the action
+                        start_action_queue.0.push(StartActionEvent {
+                            player_entity: event.player_entity,
+                            action_entity: action_entity_to_use,
+                        });
+                        
+                        info!("Starting custom action: {}", custom_action_info.name);
+                    }
+                }
+            }
+        } else {
+            warn!("Custom action '{}' not found in manager", event.action_name);
+        }
+    }
+}
+
+/// System to update custom action manager lookup tables
+pub fn update_custom_action_manager_system(
+    mut manager: ResMut<CustomActionManager>,
+    query: Query<(Entity, &CustomActionInfo), Changed<CustomActionInfo>>,
+) {
+    for (entity, custom_action_info) in query.iter() {
+        let name_lower = custom_action_info.name.to_lowercase();
+        
+        // Update name lookup
+        manager.action_lookup.insert(name_lower, entity);
+        
+        // Update category lookup
+        let category_name = custom_action_info.category.name.clone();
+        manager.category_lookup
+            .entry(category_name)
+            .or_insert_with(Vec::new)
+            .push(entity);
+    }
+}
+
