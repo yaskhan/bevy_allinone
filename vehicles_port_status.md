@@ -6,7 +6,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `hoverBoardWayPoints.cs`
 - [x] `IKDrivingSystem.cs`
 - [x] `launchTrayectory.cs`
-- [ ] `playerHUDManager.cs`
+- [x] `playerHUDManager.cs`
 - [ ] `shipInterfaceInfo.cs`
 - [ ] `skidsManager.cs`
 - [ ] `vehicleBuilder.cs`
