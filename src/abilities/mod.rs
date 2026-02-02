@@ -19,6 +19,7 @@ pub mod grappling_hook_system;
 pub mod grappling_hook_target;
 pub mod grappling_hook_targets_system;
 pub mod object_to_attract_with_grappling_hook;
+pub mod custom_ability_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -42,6 +43,7 @@ use grappling_hook_system::*;
 use grappling_hook_target::*;
 use grappling_hook_targets_system::*;
 use object_to_attract_with_grappling_hook::*;
+use custom_ability_system::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -81,6 +83,19 @@ pub use grappling_hook_system::GrapplingHookSystem;
 pub use grappling_hook_target::GrapplingHookTarget;
 pub use grappling_hook_targets_system::GrapplingHookTargetsSystem;
 pub use object_to_attract_with_grappling_hook::ObjectToAttractWithGrapplingHook;
+pub use custom_ability_system::{
+    CustomAbilitySystem,
+    CustomAbilityEvent,
+    CustomAbilityPressDownEventQueue,
+    CustomAbilityPressHoldEventQueue,
+    CustomAbilityPressUpEventQueue,
+    CustomAbilityPressUpBeforeEventQueue,
+    CustomAbilityPressUpAfterEventQueue,
+    CustomAbilityUpdateEventQueue,
+    CustomAbilityEnableEventQueue,
+    CustomAbilityDisableEventQueue,
+    CustomAbilityDeactivateEventQueue,
+};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -100,6 +115,15 @@ impl Plugin for AbilitiesPlugin {
             .init_resource::<MagicSpellCastEventQueue>()
             .init_resource::<TeleportStartEventQueue>()
             .init_resource::<TeleportEndEventQueue>()
+            .init_resource::<CustomAbilityPressDownEventQueue>()
+            .init_resource::<CustomAbilityPressHoldEventQueue>()
+            .init_resource::<CustomAbilityPressUpEventQueue>()
+            .init_resource::<CustomAbilityPressUpBeforeEventQueue>()
+            .init_resource::<CustomAbilityPressUpAfterEventQueue>()
+            .init_resource::<CustomAbilityUpdateEventQueue>()
+            .init_resource::<CustomAbilityEnableEventQueue>()
+            .init_resource::<CustomAbilityDisableEventQueue>()
+            .init_resource::<CustomAbilityDeactivateEventQueue>()
             .init_resource::<ParticleCollisionEventQueue>()
             .init_resource::<ParticleTriggerEventQueue>()
             // Add systems
@@ -127,6 +151,7 @@ impl Plugin for AbilitiesPlugin {
                 handle_grappling_hook_input,
                 update_grappling_hook_forces,
                 update_grappling_hook_targets,
+                update_custom_ability_system,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,

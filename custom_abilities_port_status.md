@@ -10,7 +10,7 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 - [x] `objectToAttractWithGrapplingHook.cs`
 
 ## Other Custom Abilities
-- [ ] `customAbilitySystem.cs`
+- [x] `customAbilitySystem.cs`
 - [ ] `drainStatSystem.cs`
 - [ ] `laserVisionSystem.cs`
 - [ ] `manualDetonationMineSystem.cs`
