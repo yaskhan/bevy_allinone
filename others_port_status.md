@@ -11,7 +11,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `changeObjectColors.cs`
 - [x] `checkCollisionType.cs`
 - [x] `consoleLogOnScreenSystem.cs`
-- [ ] `destroyGameObject.cs`
+- [x] `destroyGameObject.cs`
 - [ ] `dissolveObject.cs`
 - [ ] `eventObjectFoundOnRaycastSystem.cs`
 - [ ] `fadeObject.cs`
