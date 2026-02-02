@@ -20,7 +20,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Energy system is local to `PlayerAbilitiesSystem` (not connected to Stats/Stamina systems)
 
 ## Not Implemented Yet (GKC Parity)
-- [ ] Ability UI wheel + slot elements (`abilitySlotElement`, `playerAbilitiesUISystem`)
+- [x] Ability UI wheel + slot elements (`abilitySlotElement`, `playerAbilitiesUISystem`)
 - [ ] Ability input buffering/mapping integration with the input system
 - [ ] Ability-specific systems from GKC: `dashSystem`
 - [ ] Ability-specific systems from GKC: `magicSpellActionSystem`

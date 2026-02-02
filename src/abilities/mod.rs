@@ -2,12 +2,14 @@ pub mod types;
 pub mod systems;
 pub mod ability_info;
 pub mod player_abilities;
+pub mod ui;
 
 use bevy::prelude::*;
 use types::*;
 use systems::*;
 use ability_info::*;
 use player_abilities::*;
+use ui::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -21,6 +23,7 @@ pub use types::AbilityCooldownEvent;
 pub use types::AbilityTimeLimitEvent;
 
 pub use player_abilities::PlayerAbilitiesSystem;
+pub use ui::{AbilityWheelUI, AbilitySlotElement};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -41,6 +44,8 @@ impl Plugin for AbilitiesPlugin {
             .add_systems(Update, (
                 update_player_abilities_context,
                 update_abilities,
+                update_ability_wheel_ui,
+                update_ability_slot_elements,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
