@@ -3,7 +3,7 @@
 Source: `gkit/Scripts/Vehicles/`
 
 ## Core Vehicle Systems
-- [ ] `hoverBoardWayPoints.cs`
+- [x] `hoverBoardWayPoints.cs`
 - [ ] `IKDrivingSystem.cs`
 - [ ] `launchTrayectory.cs`
 - [ ] `playerHUDManager.cs`

@@ -3,9 +3,11 @@ use bevy::prelude::*;
 pub mod types;
 pub mod systems;
 pub mod spawn;
+pub mod hoverboard_waypoints;
 
 pub use types::*;
 pub use spawn::*;
+pub use hoverboard_waypoints::HoverBoardWaypoints;
 
 use systems::*;
 
@@ -31,6 +33,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleHudAmmo>()
             .register_type::<VehicleIKTargets>()
             .register_type::<VehiclePassengerStability>()
+            .register_type::<HoverBoardWaypoints>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -54,6 +57,7 @@ impl Plugin for VehiclesPlugin {
                 chassis::update_vehicle_chassis,
                 audio::update_vehicle_audio,
                 hud::update_vehicle_hud,
+                hoverboard_waypoints::update_hoverboard_waypoints,
             ));
     }
 }
