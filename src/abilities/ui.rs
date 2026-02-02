@@ -31,7 +31,7 @@ pub fn update_ability_wheel_ui(
     mut text_query: Query<(&AbilityWheelUI, &mut Text)>,
 ) {
     let Some((ui, mut text)) = text_query.iter_mut().next() else { return };
-    if text.sections.is_empty() {
+    if text.0.is_empty() {
         return;
     }
 
@@ -59,7 +59,7 @@ pub fn update_ability_wheel_ui(
         output.push_str(&format!("{} {} ({})\n", marker, ability.name, status));
     }
 
-    text.sections[0].value = output;
+    text.0[0].value = output;
 }
 
 /// Update individual ability slot elements.
@@ -83,9 +83,9 @@ pub fn update_ability_slot_elements(
             None => format!("{}: (empty)", slot.slot_index),
         };
 
-        if text.sections.is_empty() {
+        if text.0.is_empty() {
             continue;
         }
-        text.sections[0].value = label;
+        text.0[0].value = label;
     }
 }

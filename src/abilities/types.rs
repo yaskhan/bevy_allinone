@@ -74,3 +74,28 @@ pub struct AbilityTimeLimitEvent {
     pub ability_name: String,
     pub started: bool,
 }
+
+#[derive(Resource, Default)]
+pub struct ActivateAbilityEventQueue(pub Vec<ActivateAbilityEvent>);
+
+#[derive(Resource, Default)]
+pub struct DeactivateAbilityEventQueue(pub Vec<DeactivateAbilityEvent>);
+
+#[derive(Resource, Default)]
+pub struct SetAbilityEnabledEventQueue(pub Vec<SetAbilityEnabledEvent>);
+
+#[derive(Resource, Default)]
+pub struct AbilityCooldownEventQueue(pub Vec<AbilityCooldownEvent>);
+
+#[derive(Resource, Default)]
+pub struct AbilityTimeLimitEventQueue(pub Vec<AbilityTimeLimitEvent>);
+
+/// Event emitted when a magic spell is cast.
+#[derive(Event, Debug, Clone)]
+pub struct MagicSpellCastEvent {
+    pub caster: Entity,
+    pub ability_name: String,
+}
+
+#[derive(Resource, Default)]
+pub struct MagicSpellCastEventQueue(pub Vec<MagicSpellCastEvent>);

@@ -1,12 +1,6 @@
 use bevy::prelude::*;
 use super::ability_info::AbilityInfo;
-
-/// Event emitted when a magic spell is cast.
-#[derive(Event, Debug, Clone)]
-pub struct MagicSpellCastEvent {
-    pub caster: Entity,
-    pub ability_name: String,
-}
+use super::types::*;
 
 /// Magic spell ability settings.
 ///
@@ -50,7 +44,7 @@ pub fn start_magic_spell_cast(
 /// Finish casts and emit events.
 pub fn update_magic_spell_cast(
     time: Res<Time>,
-    mut events: EventWriter<MagicSpellCastEvent>,
+    mut events: ResMut<MagicSpellCastEventQueue>,
     mut query: Query<(Entity, &mut MagicSpellAbility)>,
 ) {
     for (entity, mut spell) in query.iter_mut() {
@@ -61,7 +55,7 @@ pub fn update_magic_spell_cast(
         spell.cast_timer -= time.delta_secs();
         if spell.cast_timer <= 0.0 {
             spell.active = false;
-            events.send(MagicSpellCastEvent {
+            events.0.push(MagicSpellCastEvent {
                 caster: entity,
                 ability_name: spell.ability_name.clone(),
             });

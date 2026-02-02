@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::physics::LinearVelocity;
+use avian3d::prelude::LinearVelocity;
 use super::ability_info::AbilityInfo;
 
 /// Dash ability controller.
