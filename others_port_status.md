@@ -32,7 +32,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `pauseAnimationSystem.cs`
 - [x] `placeObjectInCameraEditorPositionSystem.cs`
 - [x] `playerOptionsEditorSystem.cs`
-- [ ] `playSoundOnCollision.cs`
+- [x] `playSoundOnCollision.cs`
 - [ ] `playSoundOnTriggerEnter.cs`
 - [ ] `putGear.cs`
 - [ ] `railMechanism.cs`
