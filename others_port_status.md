@@ -10,7 +10,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `BezierSpline.cs`
 - [x] `changeObjectColors.cs`
 - [x] `checkCollisionType.cs`
-- [ ] `consoleLogOnScreenSystem.cs`
+- [x] `consoleLogOnScreenSystem.cs`
 - [ ] `destroyGameObject.cs`
 - [ ] `dissolveObject.cs`
 - [ ] `eventObjectFoundOnRaycastSystem.cs`
