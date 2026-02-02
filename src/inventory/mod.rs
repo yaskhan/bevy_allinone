@@ -14,6 +14,7 @@ pub mod inventory_bank_ui_system;
 pub mod inventory_capture_manager;
 pub mod inventory_capture_manager_transparent;
 pub mod inventory_category_info;
+pub mod inventory_info;
 
 use bevy::prelude::*;
 use types::*;
@@ -36,6 +37,7 @@ pub use inventory_bank_ui_system::InventoryBankUIRoot;
 pub use inventory_capture_manager::InventoryCaptureManager;
 pub use inventory_capture_manager_transparent::InventoryCaptureManagerTransparent;
 pub use inventory_category_info::InventoryCategoryInfo;
+pub use inventory_info::InventoryInfo;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;

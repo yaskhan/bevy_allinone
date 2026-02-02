@@ -16,7 +16,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryCaptureManager.cs`
 - [x] `inventoryCaptureManagerTransparent.cs`
 - [x] `inventoryCategoryInfo.cs`
-- [ ] `inventoryInfo.cs`
+- [x] `inventoryInfo.cs`
 - [ ] `inventoryListElement.cs`
 - [ ] `inventoryListManager.cs`
 - [x] `inventoryManager.cs`
