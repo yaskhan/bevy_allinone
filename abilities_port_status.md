@@ -24,7 +24,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability input buffering/mapping integration with the input system
 - [x] Ability-specific systems from GKC: `dashSystem`
 - [x] Ability-specific systems from GKC: `magicSpellActionSystem`
-- [ ] Ability-specific systems from GKC: `oxygenSystem`
+- [x] Ability-specific systems from GKC: `oxygenSystem`
 - [ ] Ability-specific systems from GKC: `staminaSystem`
 - [ ] Ability-specific systems from GKC: `throwObjectTrayectorySystem`
 - [ ] Ability-specific systems from GKC: `wallRunningZoneSystem`
