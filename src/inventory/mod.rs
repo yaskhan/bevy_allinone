@@ -24,6 +24,7 @@ pub mod inventory_prefab_creation_system;
 pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
+pub mod melee_weapon_inventory_prefab_creation_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -56,6 +57,7 @@ pub use inventory_prefab_creation_system::InventoryPrefabCreationSystem;
 pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
+pub use melee_weapon_inventory_prefab_creation_system::MeleeWeaponInventoryPrefabCreationSystem;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -89,6 +91,7 @@ impl Plugin for InventoryPlugin {
             inventory_prefab_creation_system::update_inventory_prefab_creation_system,
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
+            melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
