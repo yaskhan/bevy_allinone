@@ -56,6 +56,7 @@ pub mod spawn_object;
 pub mod spline_walker;
 pub mod tag_layer_system;
 pub mod task_counter_system;
+pub mod ui_mouse_hover_event;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -117,6 +118,7 @@ pub use spawn_object::SpawnObject;
 pub use spline_walker::SplineWalker;
 pub use tag_layer_system::TagLayerSystem;
 pub use task_counter_system::TaskCounterSystem;
+pub use ui_mouse_hover_event::{UIMouseHoverEvent, UIMouseHoverChangedEvent};
 
 pub struct OthersPlugin;
 
@@ -133,6 +135,7 @@ impl Plugin for OthersPlugin {
             .add_event::<ShowHudMessageEvent>()
             .add_event::<SimpleActionButtonEvent>()
             .add_event::<SimpleEvent>()
+            .add_event::<UIMouseHoverChangedEvent>()
             .add_systems(Update, (
                 add_force_to_object_system::update_add_force_to_object_system,
                 animator_trigger_enter_exit_event::update_animator_trigger_enter_exit_event,

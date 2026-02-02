@@ -59,7 +59,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `SplineWalker.cs`
 - [x] `tagLayerSystem.cs`
 - [x] `taskCounterSystem.cs`
-- [ ] `UIMouseHoverEvent.cs`
+- [x] `UIMouseHoverEvent.cs`
 
 ## Console Mode
 - [ ] `consoleMode.cs`
