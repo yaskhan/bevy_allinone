@@ -32,7 +32,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
 - [x] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
 - [x] Ability pickup/enable hooks from inventory/pickups
-- [ ] Editor tooling equivalents (Unity inspectors) not applicable / not ported
+- [x] Editor tooling equivalents (Unity inspectors) not applicable / not ported (N/A in Bevy)
 
 ## Next Suggested Steps
 - [ ] Wire ability events and add `add_event` registrations in the plugin
