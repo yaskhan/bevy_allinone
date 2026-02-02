@@ -39,5 +39,5 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Connect ability activation to input actions (press/hold/release)
 - [x] Implement hold behavior (continuous use + energy drain)
 - [x] Integrate grounded / first-person constraints with character/camera systems
-- [ ] Port stamina/energy to shared Stats system (or a dedicated Energy resource)
+- [x] Port stamina/energy to shared Stats system (or a dedicated Energy resource)
 - [ ] Build minimal UI indicators (current ability + cooldown/limit)
