@@ -4,6 +4,7 @@ use super::ability_info::AbilityInfo;
 use super::player_abilities::PlayerAbilitiesSystem;
 use crate::camera::{CameraController, CameraMode};
 use crate::physics::GroundDetection;
+use crate::stats::StatsSystem;
 
 /// System to update ability timers
 pub fn update_abilities(
@@ -69,12 +70,16 @@ pub fn handle_ability_activation(
 
 /// Update cached grounded/first-person state for abilities
 pub fn update_player_abilities_context(
-    mut query: Query<(Entity, &mut PlayerAbilitiesSystem, Option<&GroundDetection>)>,
+    mut query: Query<(Entity, &mut PlayerAbilitiesSystem, Option<&GroundDetection>, Option<&StatsSystem>)>,
     camera_query: Query<&CameraController>,
 ) {
-    for (entity, mut system, ground) in query.iter_mut() {
+    for (entity, mut system, ground, stats) in query.iter_mut() {
         if let Some(ground_detection) = ground {
             system.is_on_ground = ground_detection.is_grounded;
+        }
+
+        if let Some(stats_system) = stats {
+            system.sync_energy_from_stats(stats_system);
         }
 
         let mut is_first_person = false;

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::ecs::query::QueryFilter;
 use super::types::{AbilityStatus, AbilityInputType};
 use super::ability_info::AbilityInfo;
+use crate::stats::StatsSystem;
 
 /// Component that manages the player's abilities system.
 ///
@@ -160,6 +161,23 @@ impl PlayerAbilitiesSystem {
         self.current_energy = (self.current_energy - amount).max(0.0);
     }
 
+    /// Sync energy values from stats system, if available
+    pub fn sync_energy_from_stats(&mut self, stats: &StatsSystem) {
+        if let Some(current) = stats.get_derived_stat_by_name(&self.energy_stat_name) {
+            self.current_energy = current;
+        } else if let Some(current) = stats.get_custom_stat_amount(&self.energy_stat_name) {
+            self.current_energy = current;
+        }
+
+        if let Some(max_name) = Self::resolve_max_energy_name(&self.energy_stat_name) {
+            if let Some(max) = stats.get_derived_stat_by_name(&max_name) {
+                self.max_energy = max;
+            } else if let Some(max) = stats.get_custom_stat_amount(&max_name) {
+                self.max_energy = max;
+            }
+        }
+    }
+
     /// Checks if there is energy available
     pub fn is_there_energy_available(&self) -> bool {
         self.current_energy > 0.0
@@ -192,7 +210,7 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Presses down to use the current ability
-    pub fn input_press_down_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool) {
+    pub fn input_press_down_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool, stats: Option<&mut StatsSystem>) {
         if !self.enabled {
             return;
         }
@@ -227,7 +245,7 @@ impl PlayerAbilitiesSystem {
         
         if !ability.active_from_press_down || !ability.use_energy_once_on_press_down {
             if ability.use_energy_on_press_down {
-                self.check_ability_use_energy(ability);
+                self.check_ability_use_energy(ability, stats);
             }
         }
         
@@ -240,7 +258,7 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Holds the current ability
-    pub fn input_press_hold_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool) {
+    pub fn input_press_hold_use_current_ability(&mut self, ability: &mut AbilityInfo, is_on_ground: bool, stats: Option<&mut StatsSystem>) {
         if !self.enabled {
             return;
         }
@@ -266,12 +284,12 @@ impl PlayerAbilitiesSystem {
         }
         
         if ability.use_energy_on_press_hold {
-            self.check_ability_use_energy(ability);
+            self.check_ability_use_energy(ability, stats);
         }
     }
 
     /// Releases the current ability
-    pub fn input_press_up_use_current_ability(&mut self, ability: &mut AbilityInfo, _is_on_ground: bool) {
+    pub fn input_press_up_use_current_ability(&mut self, ability: &mut AbilityInfo, _is_on_ground: bool, stats: Option<&mut StatsSystem>) {
         if !self.enabled {
             return;
         }
@@ -312,7 +330,7 @@ impl PlayerAbilitiesSystem {
         
         if ability.active_from_press_up || !ability.use_energy_once_on_press_up {
             if ability.use_energy_on_press_up {
-                self.check_ability_use_energy(ability);
+                self.check_ability_use_energy(ability, stats);
             }
         }
         
@@ -320,9 +338,21 @@ impl PlayerAbilitiesSystem {
     }
 
     /// Checks and uses energy for the ability
-    pub fn check_ability_use_energy(&mut self, ability: &AbilityInfo) {
+    pub fn check_ability_use_energy(&mut self, ability: &AbilityInfo, mut stats: Option<&mut StatsSystem>) {
         if ability.use_energy {
-            self.use_power_bar(ability.energy_amount);
+            if let Some(stats_system) = stats.as_deref_mut() {
+                if stats_system.get_derived_stat_by_name(&self.energy_stat_name).is_some() {
+                    stats_system.use_stat_by_name(&self.energy_stat_name, ability.energy_amount);
+                } else if stats_system.get_custom_stat(&self.energy_stat_name).is_some() {
+                    stats_system.use_custom_stat(&self.energy_stat_name, ability.energy_amount);
+                } else {
+                    self.use_power_bar(ability.energy_amount);
+                }
+
+                self.sync_energy_from_stats(stats_system);
+            } else {
+                self.use_power_bar(ability.energy_amount);
+            }
         }
     }
 
@@ -387,7 +417,7 @@ impl PlayerAbilitiesSystem {
         self.set_current_ability_by_name(ability_name, abilities);
         
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
-            self.input_press_down_use_current_ability(&mut ability, is_on_ground);
+            self.input_press_down_use_current_ability(&mut ability, is_on_ground, None);
         }
     }
 
@@ -423,17 +453,34 @@ impl PlayerAbilitiesSystem {
     /// Selects and holds a new separated ability
     pub fn input_select_and_press_hold_new_separated_ability(&mut self, abilities: &mut Query<&mut AbilityInfo>, is_on_ground: bool) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
-            self.input_press_hold_use_current_ability(&mut ability, is_on_ground);
+            self.input_press_hold_use_current_ability(&mut ability, is_on_ground, None);
         }
     }
 
     /// Selects and releases a new separated ability
     pub fn input_select_and_press_up_new_separated_ability(&mut self, abilities: &mut Query<&mut AbilityInfo>, is_on_ground: bool) {
         if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
-            self.input_press_up_use_current_ability(&mut ability, is_on_ground);
+            self.input_press_up_use_current_ability(&mut ability, is_on_ground, None);
         }
         
         self.check_previous_ability_active(abilities);
+    }
+
+    fn resolve_max_energy_name(name: &str) -> Option<String> {
+        let lower = name.to_lowercase();
+        if lower.contains("current") {
+            return Some(lower.replace("current", "max"));
+        }
+        if lower.contains("stamina") {
+            return Some("max_stamina".to_string());
+        }
+        if lower.contains("mana") {
+            return Some("max_mana".to_string());
+        }
+        if lower.contains("energy") {
+            return Some("max_energy".to_string());
+        }
+        None
     }
 
     /// Checks and restores the previous ability

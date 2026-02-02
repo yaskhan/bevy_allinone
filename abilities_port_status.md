@@ -17,7 +17,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] `PressHold` behavior is a placeholder (no hold-timer or continuous action logic)
 - [x] Grounded / first-person checks are TODOs (no integration with character/camera yet)
 - [x] Ability cooldown/limit side-effects (e.g., UI, FX, events) are not triggered
-- [ ] Energy system is local to `PlayerAbilitiesSystem` (not connected to Stats/Stamina systems)
+- [x] Energy system is local to `PlayerAbilitiesSystem` (not connected to Stats/Stamina systems)
 
 ## Not Implemented Yet (GKC Parity)
 - [ ] Ability UI wheel + slot elements (`abilitySlotElement`, `playerAbilitiesUISystem`)
