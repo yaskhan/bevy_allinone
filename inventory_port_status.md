@@ -52,7 +52,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `weaponOnInventory.cs`
 
 ## Inventory Quick Access System
-- [ ] `inventoryQuickAccessSlotElement.cs`
+- [x] `inventoryQuickAccessSlotElement.cs`
 - [ ] `inventoryQuickAccessSlotsSystem.cs`
 
 ## Scriptable Objects
