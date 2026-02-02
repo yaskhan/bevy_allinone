@@ -13,6 +13,7 @@ pub mod particle_detection;
 pub mod template_ability;
 pub mod weapon_integration;
 pub mod ability_pickups;
+pub mod player_teleport;
 
 use bevy::prelude::*;
 use types::*;
@@ -30,6 +31,7 @@ use particle_detection::*;
 use template_ability::*;
 use weapon_integration::*;
 use ability_pickups::*;
+use player_teleport::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -62,6 +64,7 @@ pub use particle_detection::{
 pub use template_ability::TemplateAbilitySystem;
 pub use weapon_integration::AbilityWeaponIntegration;
 pub use ability_pickups::AbilityPickup;
+pub use player_teleport::PlayerTeleportAbility;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -100,6 +103,8 @@ impl Plugin for AbilitiesPlugin {
                 handle_particle_trigger_events,
                 update_template_ability,
                 update_weapon_ability_hooks,
+                update_teleport_target,
+                handle_teleport_input,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,

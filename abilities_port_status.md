@@ -30,6 +30,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability-specific systems from GKC: `wallRunningZoneSystem`
 - [x] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
 - [x] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
+- [x] Custom ability: `playerTeleportSystem`
 - [x] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
 - [x] Ability pickup/enable hooks from inventory/pickups
 - [x] Editor tooling equivalents (Unity inspectors) not applicable / not ported (N/A in Bevy)
