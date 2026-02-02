@@ -24,6 +24,7 @@ pub use vehicle_builder::VehicleBuilder;
 pub use vehicle_interface::VehicleInterface;
 pub use vehicle_laser::VehicleLaser;
 pub use controllers::AirCraftController;
+pub use controllers::CarController;
 
 use systems::*;
 
@@ -58,6 +59,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleInterface>()
             .register_type::<VehicleLaser>()
             .register_type::<AirCraftController>()
+            .register_type::<CarController>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,

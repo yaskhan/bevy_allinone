@@ -18,7 +18,7 @@ Source: `gkit/Scripts/Vehicles/`
 
 ## Vehicle Controllers
 - [x] `airCraftController.cs`
-- [ ] `carController.cs`
+- [x] `carController.cs`
 - [ ] `dummyVehicleController.cs`
 - [ ] `emptyVehicleController.cs`
 - [ ] `flyingController.cs`
