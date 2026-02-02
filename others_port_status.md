@@ -39,7 +39,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `replaceMaterialSystem.cs`
 - [x] `rotateObjects.cs`
 - [x] `rotatoryGear.cs`
-- [ ] `scanElementInfo.cs`
+- [x] `scanElementInfo.cs`
 - [ ] `setFixedRotation.cs`
 - [ ] `setGameObjectActiveState.cs`
 - [ ] `setObjectParentSystem.cs`
