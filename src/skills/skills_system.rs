@@ -14,6 +14,8 @@ pub struct SkillsSystem {
     pub save_to_file: bool,
     /// Is game loading
     pub is_loading_game: bool,
+    /// Have skill effects been applied
+    pub effects_initialized: bool,
     /// Initialize values when not loading from template
     pub initialize_when_not_loading_from_template: bool,
     /// Skill tree
@@ -32,6 +34,7 @@ impl Default for SkillsSystem {
             initialize_only_when_loading: false,
             save_to_file: false,
             is_loading_game: false,
+            effects_initialized: false,
             initialize_when_not_loading_from_template: true,
             skill_tree: SkillTree::new(),
             current_skill: None,

@@ -46,25 +46,25 @@ pub enum SkillEffect {
 #[derive(Debug, Event, Reflect, Clone)]
 pub enum SkillSystemEvent {
     /// Skill initialized
-    SkillInitialized { skill_name: String, value: f32 },
+    SkillInitialized { entity: Entity, skill_name: String, value: f32 },
     /// Skill increased
-    SkillIncreased { skill_name: String, amount: f32 },
+    SkillIncreased { entity: Entity, skill_name: String, amount: f32 },
     /// Skill used
-    SkillUsed { skill_name: String, value: f32 },
+    SkillUsed { entity: Entity, skill_name: String, value: f32 },
     /// Skill added
-    SkillAdded { skill_name: String, amount: f32 },
+    SkillAdded { entity: Entity, skill_name: String, amount: f32 },
     /// Boolean skill initialized
-    BoolSkillInitialized { skill_name: String, state: bool },
+    BoolSkillInitialized { entity: Entity, skill_name: String, state: bool },
     /// Boolean skill activated
-    BoolSkillActivated { skill_name: String, state: bool },
+    BoolSkillActivated { entity: Entity, skill_name: String, state: bool },
     /// Skill unlocked
-    SkillUnlocked { skill_name: String },
+    SkillUnlocked { entity: Entity, skill_name: String },
     /// Skill completed
-    SkillCompleted { skill_name: String },
+    SkillCompleted { entity: Entity, skill_name: String },
     /// Skill points used
-    SkillPointsUsed { skill_name: String, points: u32 },
+    SkillPointsUsed { entity: Entity, skill_name: String, points: u32 },
     /// Not enough skill points
-    NotEnoughSkillPoints { skill_name: String },
+    NotEnoughSkillPoints { entity: Entity, skill_name: String },
     /// Request to purchase skill
     PurchaseSkillRequest {
         player_entity: Entity,
