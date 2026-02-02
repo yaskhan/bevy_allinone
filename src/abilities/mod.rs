@@ -6,6 +6,7 @@ pub mod ui;
 pub mod dash;
 pub mod magic_spell;
 pub mod oxygen;
+pub mod stamina;
 
 use bevy::prelude::*;
 use types::*;
@@ -16,6 +17,7 @@ use ui::*;
 use dash::*;
 use magic_spell::*;
 use oxygen::*;
+use stamina::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -33,6 +35,7 @@ pub use ui::{AbilityWheelUI, AbilitySlotElement};
 pub use dash::DashAbility;
 pub use magic_spell::{MagicSpellAbility, MagicSpellCastEvent};
 pub use oxygen::OxygenSystem;
+pub use stamina::StaminaSystem;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -62,6 +65,7 @@ impl Plugin for AbilitiesPlugin {
                 start_magic_spell_cast,
                 update_magic_spell_cast,
                 update_oxygen_system,
+                update_stamina_system,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
