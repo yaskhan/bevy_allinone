@@ -4,7 +4,7 @@ Source: `gkit/Scripts/Others/`
 
 ## Core
 - [x] `addForceToObjectSystem.cs`
-- [ ] `animatorTriggerEnterExitEvent.cs`
+- [x] `animatorTriggerEnterExitEvent.cs`
 - [ ] `animatorTriggerEvent.cs`
 - [ ] `audioSourceInfo.cs`
 - [ ] `BezierSpline.cs`
