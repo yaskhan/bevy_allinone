@@ -35,6 +35,7 @@ impl Plugin for AbilitiesPlugin {
             .add_event::<SetAbilityEnabledEvent>()
             // Add systems
             .add_systems(Update, (
+                update_player_abilities_context,
                 update_abilities,
                 handle_ability_activation,
                 handle_ability_deactivation,

@@ -24,6 +24,12 @@ pub struct PlayerAbilitiesSystem {
     
     /// Whether to disable the system in first person mode
     pub disable_on_first_person: bool,
+
+    /// Cached grounded state from physics
+    pub is_on_ground: bool,
+
+    /// Cached camera mode state
+    pub is_first_person_mode: bool,
     
     /// Whether the player can move
     pub can_move: bool,
@@ -55,6 +61,8 @@ impl Default for PlayerAbilitiesSystem {
             current_ability_index: 0,
             energy_stat_name: String::from("Current Energy"),
             disable_on_first_person: false,
+            is_on_ground: true,
+            is_first_person_mode: false,
             can_move: true,
             player_busy: false,
             ability_input_in_use: false,
@@ -190,10 +198,13 @@ impl PlayerAbilitiesSystem {
         }
         
         if self.disable_on_first_person {
-            // Check if in first person mode (would need character controller integration)
-            return;
+            if self.is_first_person_mode {
+                return;
+            }
         }
-        
+
+        self.is_on_ground = is_on_ground;
+
         if self.player_busy {
             return;
         }
@@ -235,10 +246,13 @@ impl PlayerAbilitiesSystem {
         }
         
         if self.disable_on_first_person {
-            // Check if in first person mode (would need character controller integration)
-            return;
+            if self.is_first_person_mode {
+                return;
+            }
         }
-        
+
+        self.is_on_ground = is_on_ground;
+
         if self.player_busy {
             return;
         }
@@ -263,10 +277,13 @@ impl PlayerAbilitiesSystem {
         }
         
         if self.disable_on_first_person {
-            // Check if in first person mode (would need character controller integration)
-            return;
+            if self.is_first_person_mode {
+                return;
+            }
         }
-        
+
+        self.is_on_ground = _is_on_ground;
+
         if self.player_busy {
             return;
         }
