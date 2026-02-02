@@ -5,6 +5,7 @@ pub mod ammo_inventory_prefab_creation_system;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
+pub mod general_item_on_inventory;
 
 use bevy::prelude::*;
 use types::*;
@@ -18,6 +19,7 @@ pub use ammo_inventory_prefab_creation_system::AmmoInventoryPrefabCreationSystem
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
+pub use general_item_on_inventory::GeneralItemOnInventory;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -34,6 +36,7 @@ impl Plugin for InventoryPlugin {
             carry_physically_object_from_inventory::update_carry_physically_object_from_inventory,
             consumable_inventory_prefab_creation_system::update_consumable_inventory_prefab_creation_system,
             currency_system::update_currency_system,
+            general_item_on_inventory::update_general_item_on_inventory,
         ))
         .add_systems(Startup, setup_inventory_ui);
     }

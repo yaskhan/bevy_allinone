@@ -7,7 +7,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `carryPhysicallyObjectFromInventory.cs`
 - [x] `consumableInventoryPrefabCreationSystem.cs`
 - [x] `currencySystem.cs`
-- [ ] `generalItemOnInventory.cs`
+- [x] `generalItemOnInventory.cs`
 - [ ] `getInventoryObjectSystem.cs`
 - [ ] `getObjectFromInventorySystem.cs`
 - [ ] `inventoryBankManager.cs`
