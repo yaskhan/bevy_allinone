@@ -48,7 +48,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `shieldOnInventory.cs`
 - [x] `staminaOnInventory.cs`
 - [x] `vehicleFuelOnInventory.cs`
-- [ ] `weaponAttachmentOnInventory.cs`
+- [x] `weaponAttachmentOnInventory.cs`
 - [ ] `weaponOnInventory.cs`
 
 ## Inventory Quick Access System
