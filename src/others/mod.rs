@@ -15,6 +15,7 @@ pub mod fade_object;
 pub mod features_manager;
 pub mod flying_turret_system;
 pub mod follow_object_position_system;
+pub mod follow_object_position_update_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -35,6 +36,7 @@ pub use fade_object::FadeObject;
 pub use features_manager::FeaturesManager;
 pub use flying_turret_system::FlyingTurretSystem;
 pub use follow_object_position_system::FollowObjectPositionSystem;
+pub use follow_object_position_update_system::FollowObjectPositionUpdateSystem;
 
 pub struct OthersPlugin;
 
@@ -58,6 +60,7 @@ impl Plugin for OthersPlugin {
                 fade_object::update_fade_object,
                 flying_turret_system::update_flying_turret_system,
                 follow_object_position_system::update_follow_object_position_system,
+                follow_object_position_update_system::update_follow_object_position_update_system,
             ));
     }
 }
