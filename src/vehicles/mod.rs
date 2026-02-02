@@ -27,6 +27,7 @@ pub use controllers::AirCraftController;
 pub use controllers::CarController;
 pub use controllers::DummyVehicleController;
 pub use controllers::EmptyVehicleController;
+pub use controllers::FlyingController;
 
 use systems::*;
 
@@ -64,6 +65,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<CarController>()
             .register_type::<DummyVehicleController>()
             .register_type::<EmptyVehicleController>()
+            .register_type::<FlyingController>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,

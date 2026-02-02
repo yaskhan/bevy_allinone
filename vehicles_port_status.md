@@ -21,7 +21,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `carController.cs`
 - [x] `dummyVehicleController.cs`
 - [x] `emptyVehicleController.cs`
-- [ ] `flyingController.cs`
+- [x] `flyingController.cs`
 - [ ] `hoverBoardAnimationSystem.cs`
 - [ ] `hoverBoardController.cs`
 - [ ] `hoverCraftController.cs`
