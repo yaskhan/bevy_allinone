@@ -32,7 +32,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `meleeWeaponInventoryPrefabCreationSystem.cs`
 - [x] `playerInventoryCategoriesListManager.cs`
 - [x] `useInventoryObject.cs`
-- [ ] `weaponAttachmentInventoryPrefabCreationSystem.cs`
+- [x] `weaponAttachmentInventoryPrefabCreationSystem.cs`
 - [ ] `weaponInventoryPrefabCreationSystem.cs`
 
 ## Inventory Pickups Behaviour
