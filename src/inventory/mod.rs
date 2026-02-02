@@ -1,6 +1,7 @@
 pub mod types;
 pub mod components;
 pub mod systems;
+pub mod ammo_inventory_prefab_creation_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -10,6 +11,7 @@ use systems::*;
 pub use types::{InventoryItem, ItemType};
 pub use components::{Inventory, Equipment, PhysicalItem, InventoryUIRoot, InventoryUISlot, InventorySlotIcon, InventorySlotCount};
 pub use systems::*;
+pub use ammo_inventory_prefab_creation_system::AmmoInventoryPrefabCreationSystem;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -21,6 +23,7 @@ impl Plugin for InventoryPlugin {
             handle_pickup_events,
             toggle_inventory_ui,
             update_inventory_ui,
+            ammo_inventory_prefab_creation_system::update_ammo_inventory_prefab_creation_system,
         ))
         .add_systems(Startup, setup_inventory_ui);
     }
