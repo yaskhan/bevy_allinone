@@ -3,6 +3,7 @@ pub mod components;
 pub mod systems;
 pub mod ammo_inventory_prefab_creation_system;
 pub mod ammo_on_inventory;
+pub mod energy_on_inventory;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
@@ -41,6 +42,7 @@ pub use components::{Inventory, Equipment, PhysicalItem, InventoryUIRoot, Invent
 pub use systems::*;
 pub use ammo_inventory_prefab_creation_system::AmmoInventoryPrefabCreationSystem;
 pub use ammo_on_inventory::AmmoOnInventory;
+pub use energy_on_inventory::EnergyOnInventory;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
