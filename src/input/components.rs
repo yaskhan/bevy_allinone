@@ -33,6 +33,11 @@ pub struct InputState {
     pub reset_camera_pressed: bool,
     pub zoom_in_pressed: bool,
     pub zoom_out_pressed: bool,
+
+    pub ability_use_pressed: bool,
+    pub ability_use_released: bool,
+    pub ability_use_held: bool,
+    pub select_ability: Option<usize>,
     
     pub select_weapon: Option<usize>,
     pub enabled: bool,
@@ -67,6 +72,10 @@ impl Default for InputState {
             reset_camera_pressed: false,
             zoom_in_pressed: false,
             zoom_out_pressed: false,
+            ability_use_pressed: false,
+            ability_use_released: false,
+            ability_use_held: false,
+            select_ability: None,
             select_weapon: None,
             enabled: true,
         }
@@ -103,6 +112,10 @@ impl InputState {
             self.reset_camera_pressed = false;
             self.zoom_in_pressed = false;
             self.zoom_out_pressed = false;
+            self.ability_use_pressed = false;
+            self.ability_use_released = false;
+            self.ability_use_held = false;
+            self.select_ability = None;
             self.select_weapon = None;
         }
     }

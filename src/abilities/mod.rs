@@ -46,6 +46,7 @@ impl Plugin for AbilitiesPlugin {
                 update_abilities,
                 update_ability_wheel_ui,
                 update_ability_slot_elements,
+                handle_ability_input,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,

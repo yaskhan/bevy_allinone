@@ -38,11 +38,23 @@ pub fn update_input_state(
         }
     };
 
+    let check_action_just_released = |action: InputAction| -> bool {
+        if let Some(bindings) = input_map.bindings.get(&action) {
+            bindings.iter().any(|binding| match binding {
+                InputBinding::Key(code) => keyboard.just_released(code.clone()),
+                InputBinding::Mouse(button) => mouse_buttons.just_released(button.clone()),
+            })
+        } else {
+            false
+        }
+    };
+
     // Buffer certain actions
     let actions_to_buffer = [
         InputAction::Jump,
         InputAction::Interact,
         InputAction::LockOn,
+        InputAction::AbilityUse,
     ];
 
     for action in actions_to_buffer {
@@ -91,6 +103,9 @@ pub fn update_input_state(
     input_state.corner_lean_pressed = check_action_just_pressed(InputAction::CornerLean);
     input_state.zoom_in_pressed = check_action_just_pressed(InputAction::ZoomIn);
     input_state.zoom_out_pressed = check_action_just_pressed(InputAction::ZoomOut);
+    input_state.ability_use_pressed = check_action_just_pressed(InputAction::AbilityUse);
+    input_state.ability_use_released = check_action_just_released(InputAction::AbilityUse);
+    input_state.ability_use_held = check_action(InputAction::AbilityUse);
 
     // Weapon Selection
     input_state.select_weapon = None;
@@ -104,6 +119,17 @@ pub fn update_input_state(
     else if check_action_just_pressed(InputAction::SelectWeapon8) { input_state.select_weapon = Some(7); }
     else if check_action_just_pressed(InputAction::SelectWeapon9) { input_state.select_weapon = Some(8); }
     else if check_action_just_pressed(InputAction::SelectWeapon0) { input_state.select_weapon = Some(9); }
+
+    // Ability Selection
+    input_state.select_ability = None;
+    if check_action_just_pressed(InputAction::AbilitySelect1) { input_state.select_ability = Some(0); }
+    else if check_action_just_pressed(InputAction::AbilitySelect2) { input_state.select_ability = Some(1); }
+    else if check_action_just_pressed(InputAction::AbilitySelect3) { input_state.select_ability = Some(2); }
+    else if check_action_just_pressed(InputAction::AbilitySelect4) { input_state.select_ability = Some(3); }
+    else if check_action_just_pressed(InputAction::AbilitySelect5) { input_state.select_ability = Some(4); }
+    else if check_action_just_pressed(InputAction::AbilitySelect6) { input_state.select_ability = Some(5); }
+    else if check_action_just_pressed(InputAction::AbilitySelect7) { input_state.select_ability = Some(6); }
+    else if check_action_just_pressed(InputAction::AbilitySelect8) { input_state.select_ability = Some(7); }
 
     // Look (handled by mouse events typically, but for this system we'll need to re-enable it if needed)
     // input_state.look = ...

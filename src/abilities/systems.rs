@@ -3,6 +3,7 @@ use super::types::*;
 use super::ability_info::AbilityInfo;
 use super::player_abilities::PlayerAbilitiesSystem;
 use crate::camera::{CameraController, CameraMode};
+use crate::input::InputState;
 use crate::physics::GroundDetection;
 use crate::stats::StatsSystem;
 
@@ -91,6 +92,61 @@ pub fn update_player_abilities_context(
         }
 
         system.is_first_person_mode = is_first_person;
+    }
+}
+
+/// Handle ability input from the input system (selection + use).
+pub fn handle_ability_input(
+    mut player_query: Query<(&InputState, &mut PlayerAbilitiesSystem, Option<&mut StatsSystem>)>,
+    mut abilities: Query<&mut AbilityInfo>,
+) {
+    for (input, mut system, mut stats) in player_query.iter_mut() {
+        if !system.enabled || !system.abilities_mode_active || !input.enabled {
+            continue;
+        }
+
+        if let Some(index) = input.select_ability {
+            let mut ability_names: Vec<String> = abilities
+                .iter()
+                .filter(|a| a.enabled)
+                .map(|a| a.name.clone())
+                .collect();
+            ability_names.sort();
+
+            if let Some(name) = ability_names.get(index) {
+                system.set_current_ability_by_name(name, &mut abilities);
+            }
+        }
+
+        if input.ability_use_pressed {
+            if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
+                system.input_press_down_use_current_ability(
+                    &mut ability,
+                    system.is_on_ground,
+                    stats.as_deref_mut(),
+                );
+            }
+        }
+
+        if input.ability_use_held {
+            if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
+                system.input_press_hold_use_current_ability(
+                    &mut ability,
+                    system.is_on_ground,
+                    stats.as_deref_mut(),
+                );
+            }
+        }
+
+        if input.ability_use_released {
+            if let Some(mut ability) = abilities.iter_mut().find(|a| a.is_current) {
+                system.input_press_up_use_current_ability(
+                    &mut ability,
+                    system.is_on_ground,
+                    stats.as_deref_mut(),
+                );
+            }
+        }
     }
 }
 

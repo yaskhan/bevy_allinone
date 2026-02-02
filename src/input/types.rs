@@ -42,6 +42,15 @@ pub enum InputAction {
     ZoomIn,
     ZoomOut,
     SideSwitch,
+    AbilityUse,
+    AbilitySelect1,
+    AbilitySelect2,
+    AbilitySelect3,
+    AbilitySelect4,
+    AbilitySelect5,
+    AbilitySelect6,
+    AbilitySelect7,
+    AbilitySelect8,
 }
 
 /// Input binding types

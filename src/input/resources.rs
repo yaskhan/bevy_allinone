@@ -52,6 +52,15 @@ impl Default for InputMap {
         bindings.insert(InputAction::ZoomIn, vec![InputBinding::Key(KeyCode::NumpadAdd)]);
         bindings.insert(InputAction::ZoomOut, vec![InputBinding::Key(KeyCode::NumpadSubtract)]);
         bindings.insert(InputAction::SideSwitch, vec![InputBinding::Key(KeyCode::KeyV)]);
+        bindings.insert(InputAction::AbilityUse, vec![InputBinding::Key(KeyCode::KeyG)]);
+        bindings.insert(InputAction::AbilitySelect1, vec![InputBinding::Key(KeyCode::F1)]);
+        bindings.insert(InputAction::AbilitySelect2, vec![InputBinding::Key(KeyCode::F2)]);
+        bindings.insert(InputAction::AbilitySelect3, vec![InputBinding::Key(KeyCode::F3)]);
+        bindings.insert(InputAction::AbilitySelect4, vec![InputBinding::Key(KeyCode::F4)]);
+        bindings.insert(InputAction::AbilitySelect5, vec![InputBinding::Key(KeyCode::F5)]);
+        bindings.insert(InputAction::AbilitySelect6, vec![InputBinding::Key(KeyCode::F6)]);
+        bindings.insert(InputAction::AbilitySelect7, vec![InputBinding::Key(KeyCode::F7)]);
+        bindings.insert(InputAction::AbilitySelect8, vec![InputBinding::Key(KeyCode::F8)]);
         Self { bindings }
     }
 }
