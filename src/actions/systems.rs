@@ -541,6 +541,7 @@ pub fn process_action_events_system(
     mut event_queue: ResMut<ActionEventTriggeredQueue>,
     mut remote_queue: ResMut<RemoteActionEventQueue>,
     mut camera_queue: ResMut<CameraEventQueue>,
+    mut physics_queue: ResMut<PhysicsEventQueue>,
     time: Res<Time>,
 ) {
     for (mut player_action, player_entity, player_transform) in player_query.iter_mut() {
@@ -595,7 +596,7 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue);
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue, &mut physics_queue);
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -634,7 +635,7 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue);
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue, &mut physics_queue);
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -656,6 +657,7 @@ fn fire_action_event(
     event_queue: &mut ActionEventTriggeredQueue,
     remote_queue: &mut RemoteActionEventQueue,
     camera_queue: &mut CameraEventQueue,
+    physics_queue: &mut PhysicsEventQueue,
 ) {
     if event.use_bevy_event {
         event_queue.0.push(ActionEventTriggered {
@@ -681,6 +683,21 @@ fn fire_action_event(
             action_entity,
         });
         info!("Camera Event: {:?} triggered", event.camera_event_type);
+    }
+    
+    if event.use_physics_event {
+        let target_entity = if event.physics_target_self {
+            player_entity
+        } else {
+            action_entity  // Target is the action entity
+        };
+        
+        physics_queue.0.push(PhysicsEventTriggered {
+            event_type: event.physics_event_type.clone(),
+            target_entity,
+            source_entity: player_entity,
+        });
+        info!("Physics Event: {:?} triggered on entity {:?}", event.physics_event_type, target_entity);
     }
 }
 

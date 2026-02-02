@@ -38,6 +38,23 @@ impl Default for CameraEventType {
     }
 }
 
+/// Physics event types for physical effects
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum PhysicsEventType {
+    None,
+    ApplyForce { direction: Vec3, magnitude: f32 },
+    ApplyImpulse { direction: Vec3, magnitude: f32 },
+    SetVelocity { velocity: Vec3, additive: bool },
+    EnableCollider { enabled: bool },
+    ApplyTorque { axis: Vec3, magnitude: f32 },
+}
+
+impl Default for PhysicsEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Condition that must be met for an event to fire
 #[derive(Debug, Clone, Reflect, PartialEq)]
 pub enum EventCondition {
@@ -89,6 +106,11 @@ pub struct ActionEvent {
     // Camera events
     pub use_camera_event: bool,
     pub camera_event_type: CameraEventType,
+    
+    // Physics events
+    pub use_physics_event: bool,
+    pub physics_event_type: PhysicsEventType,
+    pub physics_target_self: bool,  // Apply to player (true) or target (false)
 }
 
 impl Default for ActionEvent {
@@ -108,6 +130,9 @@ impl Default for ActionEvent {
             animation_normalized_time: 0.0,
             use_camera_event: false,
             camera_event_type: CameraEventType::None,
+            use_physics_event: false,
+            physics_event_type: PhysicsEventType::None,
+            physics_target_self: true,
         }
     }
 }
@@ -532,3 +557,14 @@ pub struct CameraEventTriggered {
 
 #[derive(Resource, Default)]
 pub struct CameraEventQueue(pub Vec<CameraEventTriggered>);
+
+/// Physics event triggered during action
+#[derive(Debug, Clone)]
+pub struct PhysicsEventTriggered {
+    pub event_type: PhysicsEventType,
+    pub target_entity: Entity,
+    pub source_entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct PhysicsEventQueue(pub Vec<PhysicsEventTriggered>);
