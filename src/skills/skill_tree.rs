@@ -248,6 +248,27 @@ impl SkillTree {
         }
     }
 
+    /// Check if all prerequisites for a skill are met
+    pub fn prerequisites_met(&self, skill_name: &str) -> bool {
+        let skill = match self.get_skill(skill_name) {
+            Some(s) => s,
+            None => return false,
+        };
+
+        for prereq in &skill.prerequisites {
+            let prereq_skill = match self.get_skill(prereq) {
+                Some(s) => s,
+                None => return false, // Prerequisite skill doesn't exist
+            };
+
+            if !prereq_skill.complete && prereq_skill.current_level == 0 {
+                return false; // Prerequisite not met
+            }
+        }
+
+        true
+    }
+
     /// Use skill points to level up
     pub fn use_skill_points(
         &mut self,
@@ -262,6 +283,12 @@ impl SkillTree {
         };
 
         if !skill.enabled || !skill.unlocked {
+            return None;
+        }
+
+        // Check prerequisites
+        let skill_name = skill.name.clone();
+        if !self.prerequisites_met(&skill_name) {
             return None;
         }
 

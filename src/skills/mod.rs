@@ -14,6 +14,7 @@ use systems::*;
 pub use types::{SkillType, SkillEvent, SkillSystemEvent};
 pub use skill::{Skill, SkillLevel};
 pub use skill_tree::{SkillCategory, SkillTree, SkillTemplate, SkillTemplateCategory, SkillTemplateInfo};
+pub use types::{SkillEffect};
 pub use skills_system::SkillsSystem;
 pub use systems::*;
 
@@ -28,10 +29,12 @@ impl Plugin for SkillsPlugin {
            .register_type::<SkillCategory>()
            .register_type::<SkillTree>()
            .register_type::<SkillTemplate>()
+           .register_type::<SkillEffect>()
            .register_type::<SkillsSystem>();
 
         // Add events
-        app.register_type::<SkillSystemEvent>();
+        app.init_resource::<SkillSystemEventQueue>()
+           .register_type::<SkillSystemEvent>();
 
         // Add systems
         app.add_systems(Update, skills_system_update);

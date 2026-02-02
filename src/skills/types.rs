@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::stats::types::DerivedStat;
 
 /// Skill type - determines how skill affects character
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
@@ -12,9 +13,9 @@ pub enum SkillType {
 }
 
 /// Skill event
-#[derive(Debug, Clone, Component, Reflect)]
+#[derive(Debug, Clone, Component, Reflect, Default)]
 pub enum SkillEvent {
-    /// No event
+    #[default]
     None,
     /// Event with numeric value
     WithValue(f32),
@@ -24,8 +25,25 @@ pub enum SkillEvent {
     Simple,
 }
 
+/// Skill effect - what the skill actually does
+#[derive(Debug, Clone, Reflect, Default)]
+pub enum SkillEffect {
+    #[default]
+    None,
+    /// Apply a permanent stat modifier
+    StatModifier {
+        stat: DerivedStat,
+        amount: f32,
+        is_percentage: bool,
+    },
+    /// Unlock or enable an ability
+    UnlockAbility(String),
+    /// Custom event to trigger
+    CustomEvent(String),
+}
+
 /// Skills system events
-#[derive(Debug, Event, Reflect)]
+#[derive(Debug, Event, Reflect, Clone)]
 pub enum SkillSystemEvent {
     /// Skill initialized
     SkillInitialized { skill_name: String, value: f32 },
@@ -47,4 +65,13 @@ pub enum SkillSystemEvent {
     SkillPointsUsed { skill_name: String, points: u32 },
     /// Not enough skill points
     NotEnoughSkillPoints { skill_name: String },
+    /// Request to purchase skill
+    PurchaseSkillRequest {
+        player_entity: Entity,
+        category_index: usize,
+        skill_index: usize,
+    },
 }
+
+#[derive(Resource, Default)]
+pub struct SkillSystemEventQueue(pub Vec<SkillSystemEvent>);

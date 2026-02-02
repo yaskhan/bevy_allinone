@@ -407,6 +407,9 @@ pub struct AddModifierEvent {
     pub modifier: StatModifier,
 }
 
+#[derive(Resource, Default)]
+pub struct AddModifierEventQueue(pub Vec<AddModifierEvent>);
+
 /// Event for removing a modifier
 #[derive(Event)]
 pub struct RemoveModifierEvent {

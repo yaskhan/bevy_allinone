@@ -16,6 +16,8 @@ pub struct SkillLevel {
     pub on_initialize: SkillEvent,
     /// Activation event (called when skill is applied)
     pub on_activate: SkillEvent,
+    /// Effects applied when this level is reached
+    pub effects: Vec<SkillEffect>,
 }
 
 /// Skill
@@ -65,6 +67,10 @@ pub struct Skill {
     pub on_initialize_active: SkillEvent,
     /// Initialization event for inactive state
     pub on_initialize_not_active: SkillEvent,
+    /// Effects applied when skill is unlocked/activated
+    pub effects: Vec<SkillEffect>,
+    /// Skill names required to unlock this skill
+    pub prerequisites: Vec<String>,
     /// Template for save/load
     pub template_id: Option<u32>,
 }
@@ -94,6 +100,8 @@ impl Default for Skill {
             use_two_events: false,
             on_initialize_active: SkillEvent::None,
             on_initialize_not_active: SkillEvent::None,
+            effects: Vec::new(),
+            prerequisites: Vec::new(),
             template_id: None,
         }
     }
