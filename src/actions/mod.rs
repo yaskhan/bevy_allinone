@@ -5,6 +5,7 @@ pub mod types;
 pub mod systems;
 pub mod weapon_integration;
 pub mod camera_integration;
+pub mod parenting_integration;
 
 pub struct ActionSystemPlugin;
 
@@ -16,6 +17,8 @@ impl Plugin for ActionSystemPlugin {
             .register_type::<types::PlayerActionSystem>()
             .register_type::<types::AnimatorParameters>()
             .register_type::<types::MatchTargetConfig>()
+            .register_type::<types::BoneParentingConfig>()
+            .register_type::<types::ParentedObject>()
             .register_type::<types::CustomActionInfo>()
             
             // Register resources
@@ -31,6 +34,7 @@ impl Plugin for ActionSystemPlugin {
             .init_resource::<types::StateChangeEventQueue>()
             .init_resource::<types::WeaponEventQueue>()
             .init_resource::<types::PowerEventQueue>()
+            .init_resource::<types::ParentingEventQueue>()
             .init_resource::<types::CustomActionManager>()
             
             // Register systems
@@ -46,6 +50,8 @@ impl Plugin for ActionSystemPlugin {
                 weapon_integration::process_weapon_events,
                 weapon_integration::process_power_events,
                 camera_integration::process_camera_events,
+                parenting_integration::process_parenting_events,
+                parenting_integration::update_bone_parenting_system,
             ).chain());
     }
 }

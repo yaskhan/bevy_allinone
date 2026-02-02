@@ -100,6 +100,55 @@ pub enum PowerEventType {
     RequirePower { minimum_amount: f32 },
 }
 
+/// Bone parenting event types
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum BoneParentingEventType {
+    None,
+    ParentToBone {
+        object_entity: Option<Entity>, // If None, can be determined by context (e.g., current weapon)
+        bone_name: String,
+        config: BoneParentingConfig,
+    },
+    Unparent {
+        object_entity: Option<Entity>,
+        restore_original_parent: bool,
+    },
+}
+
+impl Default for BoneParentingEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+/// Configuration for bone parenting and smooth transitions
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub struct BoneParentingConfig {
+    pub enabled: bool,
+    pub local_offset: Vec3,
+    pub local_rotation: Quat,
+    pub use_smooth_transition: bool,
+    pub transition_speed: f32,
+    pub position_weight: Vec3,
+    pub rotation_weight: f32,
+    pub maintain_offset: bool,
+}
+
+impl Default for BoneParentingConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            local_offset: Vec3::ZERO,
+            local_rotation: Quat::IDENTITY,
+            use_smooth_transition: true,
+            transition_speed: 10.0,
+            position_weight: Vec3::ONE,
+            rotation_weight: 1.0,
+            maintain_offset: true,
+        }
+    }
+}
+
 impl Default for PowerEventType {
     fn default() -> Self {
         Self::None
@@ -234,6 +283,10 @@ pub struct ActionEvent {
     pub use_power_event: bool,
     pub power_event_type: PowerEventType,
     pub power_event_affects_player: bool,
+    
+    // Parenting events
+    pub use_parenting_event: bool,
+    pub parenting_event_type: BoneParentingEventType,
 }
 
 impl Default for ActionEvent {
@@ -264,6 +317,8 @@ impl Default for ActionEvent {
             use_power_event: false,
             power_event_type: PowerEventType::None,
             power_event_affects_player: true,
+            use_parenting_event: false,
+            parenting_event_type: BoneParentingEventType::None,
         }
     }
 }
@@ -583,6 +638,20 @@ pub struct PlayerActionSystem {
     pub saved_camera_mode: String,
     pub saved_camera_state_name: String,
     pub saved_camera_enabled: bool,
+    
+    // Parenting state
+    pub parented_objects: Vec<ParentedObject>,
+}
+
+/// Information about an object parented to a bone
+#[derive(Debug, Clone, Reflect)]
+pub struct ParentedObject {
+    pub entity: Entity,
+    pub bone_entity: Entity,
+    pub original_parent: Option<Entity>,
+    pub config: BoneParentingConfig,
+    pub is_transitioning: bool,
+    pub current_lerp: f32,
 }
 
 impl Default for PlayerActionSystem {
@@ -611,6 +680,7 @@ impl Default for PlayerActionSystem {
             saved_camera_mode: String::new(),
             saved_camera_state_name: String::new(),
             saved_camera_enabled: true,
+            parented_objects: Vec::new(),
         }
     }
 }
@@ -756,6 +826,15 @@ pub struct PowerEventTriggered {
     pub amount: f32,
 }
 
-/// Queue for power events triggered during actions
 #[derive(Resource, Default)]
 pub struct PowerEventQueue(pub Vec<PowerEventTriggered>);
+
+/// Event triggered when a parenting event occurs
+#[derive(Debug, Clone)]
+pub struct ParentingEventTriggered {
+    pub event_type: BoneParentingEventType,
+    pub player_entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct ParentingEventQueue(pub Vec<ParentingEventTriggered>);

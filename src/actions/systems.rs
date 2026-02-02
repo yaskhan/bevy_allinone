@@ -728,6 +728,7 @@ pub fn process_action_events_system(
     mut state_change_queue: ResMut<StateChangeEventQueue>,
     mut weapon_queue: ResMut<WeaponEventQueue>,
     mut power_queue: ResMut<PowerEventQueue>,
+    mut parenting_queue: ResMut<ParentingEventQueue>,
     time: Res<Time>,
 ) {
     for (mut player_action, player_entity, player_transform) in player_query.iter_mut() {
@@ -794,6 +795,7 @@ pub fn process_action_events_system(
                                         &mut state_change_queue,
                                         &mut weapon_queue,
                                         &mut power_queue,
+                                        &mut parenting_queue,
                                         power_multiplier,
                                     );
                                     event.event_triggered = true;
@@ -845,6 +847,7 @@ pub fn process_action_events_system(
                                         &mut state_change_queue,
                                         &mut weapon_queue,
                                         &mut power_queue,
+                                        &mut parenting_queue,
                                         power_multiplier,
                                     );
                                     event.event_triggered = true;
@@ -872,6 +875,7 @@ fn fire_action_event(
     state_change_queue: &mut StateChangeEventQueue,
     weapon_queue: &mut WeaponEventQueue,
     power_queue: &mut PowerEventQueue,
+    parenting_queue: &mut ResMut<ParentingEventQueue>,
     power_multiplier: f32,
 ) {
     if event.use_bevy_event {
@@ -955,6 +959,14 @@ fn fire_action_event(
             amount,
         });
         info!("Power Event: {:?} triggered with amount {} (mult: {})", event.power_event_type, amount, power_multiplier);
+    }
+
+    if event.use_parenting_event {
+        parenting_queue.0.push(ParentingEventTriggered {
+            event_type: event.parenting_event_type.clone(),
+            player_entity,
+        });
+        info!("Parenting Event: {:?} triggered", event.parenting_event_type);
     }
 }
 
