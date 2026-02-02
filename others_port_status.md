@@ -58,7 +58,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `spawnObject.cs`
 - [x] `SplineWalker.cs`
 - [x] `tagLayerSystem.cs`
-- [ ] `taskCounterSystem.cs`
+- [x] `taskCounterSystem.cs`
 - [ ] `UIMouseHoverEvent.cs`
 
 ## Console Mode
