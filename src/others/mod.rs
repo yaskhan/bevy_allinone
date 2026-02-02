@@ -42,6 +42,7 @@ pub mod set_game_object_active_state;
 pub mod set_object_parent_system;
 pub mod set_object_scale_system;
 pub mod set_rigidbody_state_system;
+pub mod show_game_info_hud;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -89,6 +90,7 @@ pub use set_game_object_active_state::SetGameObjectActiveState;
 pub use set_object_parent_system::SetObjectParentSystem;
 pub use set_object_scale_system::SetObjectScaleSystem;
 pub use set_rigidbody_state_system::SetRigidbodyStateSystem;
+pub use show_game_info_hud::ShowGameInfoHud;
 
 pub struct OthersPlugin;
 

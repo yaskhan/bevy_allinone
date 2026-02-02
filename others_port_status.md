@@ -45,7 +45,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `setObjectParentSystem.cs`
 - [x] `setObjectScaleSystem.cs`
 - [x] `setRigidbodyStateSystem.cs`
-- [ ] `showGameInfoHud.cs`
+- [x] `showGameInfoHud.cs`
 - [ ] `showMessageOnHUDSystem.cs`
 - [ ] `simpleActionButton.cs`
 - [ ] `simpleAnimationSystem.cs`
