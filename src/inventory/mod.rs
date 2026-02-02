@@ -9,6 +9,7 @@ pub mod general_item_on_inventory;
 pub mod get_inventory_object_system;
 pub mod get_object_from_inventory_system;
 pub mod inventory_bank_manager;
+pub mod inventory_bank_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -26,6 +27,7 @@ pub use general_item_on_inventory::GeneralItemOnInventory;
 pub use get_inventory_object_system::GetInventoryObjectEvent;
 pub use get_object_from_inventory_system::GetObjectFromInventoryEvent;
 pub use inventory_bank_manager::InventoryBankManager;
+pub use inventory_bank_system::InventoryBankTransferEvent;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -35,6 +37,7 @@ impl Plugin for InventoryPlugin {
         app.add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
+        .add_event::<InventoryBankTransferEvent>()
         .add_systems(Update, (
             update_inventory,
             handle_pickup_events,
@@ -48,6 +51,7 @@ impl Plugin for InventoryPlugin {
             get_inventory_object_system::update_get_inventory_object_system,
             get_object_from_inventory_system::update_get_object_from_inventory_system,
             inventory_bank_manager::update_inventory_bank_manager,
+            inventory_bank_system::update_inventory_bank_system,
         ))
         .add_systems(Startup, setup_inventory_ui);
     }
