@@ -17,6 +17,7 @@ pub mod inventory_category_info;
 pub mod inventory_info;
 pub mod inventory_list_element;
 pub mod inventory_list_manager;
+pub mod inventory_menu_icon_element;
 
 use bevy::prelude::*;
 use types::*;
@@ -42,6 +43,7 @@ pub use inventory_category_info::InventoryCategoryInfo;
 pub use inventory_info::InventoryInfo;
 pub use inventory_list_element::InventoryListElement;
 pub use inventory_list_manager::InventoryListManager;
+pub use inventory_menu_icon_element::InventoryMenuIconElement;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;

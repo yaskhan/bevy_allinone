@@ -20,7 +20,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryListElement.cs`
 - [x] `inventoryListManager.cs`
 - [x] `inventoryManager.cs`
-- [ ] `inventoryMenuIconElement.cs`
+- [x] `inventoryMenuIconElement.cs`
 - [ ] `inventoryMenuPanelsSystem.cs`
 - [x] `inventoryObject.cs`
 - [ ] `inventoryObjectToEquipInfo.cs`
