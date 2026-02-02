@@ -22,6 +22,38 @@ pub enum WalkToTargetState {
     TimedOut,
 }
 
+/// Action event that triggers at a specific time during action
+#[derive(Debug, Clone, Reflect)]
+pub struct ActionEvent {
+    pub delay_to_activate: f32,
+    pub event_triggered: bool,
+    
+    // Event types
+    pub use_bevy_event: bool,
+    pub bevy_event_name: String,
+    
+    pub use_remote_event: bool,
+    pub remote_event_name: String,
+    
+    pub send_player_entity: bool,
+    pub call_if_action_stopped: bool,
+}
+
+impl Default for ActionEvent {
+    fn default() -> Self {
+        Self {
+            delay_to_activate: 0.0,
+            event_triggered: false,
+            use_bevy_event: false,
+            bevy_event_name: String::new(),
+            use_remote_event: false,
+            remote_event_name: String::new(),
+            send_player_entity: false,
+            call_if_action_stopped: false,
+        }
+    }
+}
+
 /// Animator parameters for action system
 #[derive(Component, Debug, Reflect, Clone)]
 #[reflect(Component)]
@@ -223,6 +255,11 @@ pub struct ActionSystem {
     pub activate_dynamic_obstacle_detection: bool,
     pub dynamic_obstacle_distance_threshold: f32,
     
+    // Event system
+    pub use_event_list: bool,
+    pub use_accumulative_delay: bool,
+    pub event_list: Vec<ActionEvent>,
+    
     // Chaining
     pub activate_custom_action_after_complete: bool,
     pub custom_action_name_after_complete: String,
@@ -277,6 +314,9 @@ impl Default for ActionSystem {
             raycast_layer_mask: 0,
             activate_dynamic_obstacle_detection: false,
             dynamic_obstacle_distance_threshold: 2.0,
+            use_event_list: false,
+            use_accumulative_delay: false,
+            event_list: Vec::new(),
             activate_custom_action_after_complete: false,
             custom_action_name_after_complete: String::new(),
             can_stop_previous_action: true,
@@ -306,6 +346,10 @@ pub struct PlayerActionSystem {
     pub walk_timer: f32,
     pub previous_navmesh_active: bool,
     
+    // Event tracking
+    pub events_active: bool,
+    pub event_start_time: f32,
+    
     // State backup to restore after action
     pub previous_gravity_state: bool,
     pub previous_physics_state: bool,
@@ -323,6 +367,8 @@ impl Default for PlayerActionSystem {
             walk_state: WalkToTargetState::Idle,
             walk_timer: 0.0,
             previous_navmesh_active: false,
+            events_active: false,
+            event_start_time: 0.0,
             previous_gravity_state: true,
             previous_physics_state: true,
         }
@@ -392,3 +438,28 @@ pub struct ActionInterruptedEvent {
 
 #[derive(Resource, Default)]
 pub struct ActionInterruptedEventQueue(pub Vec<ActionInterruptedEvent>);
+
+// ============================================================================
+// Event System
+// ============================================================================
+
+/// Event triggered during action execution
+#[derive(Debug, Clone)]
+pub struct ActionEventTriggered {
+    pub action_entity: Entity,
+    pub player_entity: Entity,
+    pub event_name: String,
+}
+
+#[derive(Resource, Default)]
+pub struct ActionEventTriggeredQueue(pub Vec<ActionEventTriggered>);
+
+/// Remote event for cross-system communication
+#[derive(Debug, Clone)]
+pub struct RemoteActionEvent {
+    pub event_name: String,
+    pub player_entity: Option<Entity>,
+}
+
+#[derive(Resource, Default)]
+pub struct RemoteActionEventQueue(pub Vec<RemoteActionEvent>);

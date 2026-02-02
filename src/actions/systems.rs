@@ -27,6 +27,10 @@ pub fn update_action_system(
                 player_action.walk_timer = 0.0;
                 player_action.walk_state = WalkToTargetState::Idle;
                 
+                // Initialize event system
+                player_action.events_active = false;
+                player_action.event_start_time = 0.0;
+                
                 // Determine initial state
                 if action.use_walk_to_target_before_action {
                     player_action.state = ActionState::WalkingToTargetBefore;
@@ -526,3 +530,90 @@ pub fn update_walk_to_target_system(
     }
 }
 
+
+/// System to process timed events during actions
+pub fn process_action_events_system(
+    mut player_query: Query<(&mut PlayerActionSystem, Entity)>,
+    mut action_query: Query<&mut ActionSystem>,
+    mut event_queue: ResMut<ActionEventTriggeredQueue>,
+    mut remote_queue: ResMut<RemoteActionEventQueue>,
+    time: Res<Time>,
+) {
+    for (mut player_action, player_entity) in player_query.iter_mut() {
+        if !player_action.is_action_active {
+            continue;
+        }
+        
+        if let Some(action_entity) = player_action.current_action {
+            if let Ok(mut action) = action_query.get_mut(action_entity) {
+                if !action.use_event_list || action.event_list.is_empty() {
+                    continue;
+                }
+                
+                // Initialize events on first frame
+                if !player_action.events_active {
+                    player_action.events_active = true;
+                    player_action.event_start_time = time.elapsed_secs();
+                    
+                    // Reset all event triggered flags
+                    for event in action.event_list.iter_mut() {
+                        event.event_triggered = false;
+                    }
+                }
+                
+                let elapsed = time.elapsed_secs() - player_action.event_start_time;
+                
+                if action.use_accumulative_delay {
+                    // Accumulative mode: Sequential events
+                    let mut accumulated_time = 0.0;
+                    for event in action.event_list.iter_mut() {
+                        if !event.event_triggered {
+                            accumulated_time += event.delay_to_activate;
+                            if elapsed >= accumulated_time {
+                                fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                event.event_triggered = true;
+                            } else {
+                                break; // Stop checking further events
+                            }
+                        } else {
+                            accumulated_time += event.delay_to_activate;
+                        }
+                    }
+                } else {
+                    // Parallel mode: All events check independently
+                    for event in action.event_list.iter_mut() {
+                        if !event.event_triggered && elapsed >= event.delay_to_activate {
+                            fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                            event.event_triggered = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn fire_action_event(
+    event: &ActionEvent,
+    action_entity: Entity,
+    player_entity: Entity,
+    event_queue: &mut ActionEventTriggeredQueue,
+    remote_queue: &mut RemoteActionEventQueue,
+) {
+    if event.use_bevy_event {
+        event_queue.0.push(ActionEventTriggered {
+            action_entity,
+            player_entity,
+            event_name: event.bevy_event_name.clone(),
+        });
+        info!("Action Event: {} triggered", event.bevy_event_name);
+    }
+    
+    if event.use_remote_event {
+        remote_queue.0.push(RemoteActionEvent {
+            event_name: event.remote_event_name.clone(),
+            player_entity: if event.send_player_entity { Some(player_entity) } else { None },
+        });
+        info!("Remote Event: {} triggered", event.remote_event_name);
+    }
+}

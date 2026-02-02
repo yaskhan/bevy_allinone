@@ -22,11 +22,14 @@ impl Plugin for ActionSystemPlugin {
             .init_resource::<types::ActivateCustomActionEventQueue>()
             .init_resource::<types::StopCustomActionEventQueue>()
             .init_resource::<types::ActionInterruptedEventQueue>()
+            .init_resource::<types::ActionEventTriggeredQueue>()
+            .init_resource::<types::RemoteActionEventQueue>()
             .init_resource::<types::CustomActionManager>()
             
             // Register systems
             .add_systems(Update, (
                 systems::update_action_system,
+                systems::process_action_events_system,
                 systems::update_animator_parameters_system,
                 systems::apply_match_target_system,
                 systems::update_walk_to_target_system,
