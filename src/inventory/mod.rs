@@ -25,6 +25,7 @@ pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
 pub mod melee_weapon_inventory_prefab_creation_system;
+pub mod player_inventory_categories_list_manager;
 
 use bevy::prelude::*;
 use types::*;
@@ -58,6 +59,7 @@ pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
 pub use melee_weapon_inventory_prefab_creation_system::MeleeWeaponInventoryPrefabCreationSystem;
+pub use player_inventory_categories_list_manager::PlayerInventoryCategoriesListManager;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
