@@ -65,6 +65,7 @@ pub use template_ability::TemplateAbilitySystem;
 pub use weapon_integration::AbilityWeaponIntegration;
 pub use ability_pickups::AbilityPickup;
 pub use player_teleport::PlayerTeleportAbility;
+pub use player_teleport::{TeleportStartEvent, TeleportEndEvent, TeleportStartEventQueue, TeleportEndEventQueue};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -82,6 +83,8 @@ impl Plugin for AbilitiesPlugin {
             .init_resource::<AbilityCooldownEventQueue>()
             .init_resource::<AbilityTimeLimitEventQueue>()
             .init_resource::<MagicSpellCastEventQueue>()
+            .init_resource::<TeleportStartEventQueue>()
+            .init_resource::<TeleportEndEventQueue>()
             .init_resource::<ParticleCollisionEventQueue>()
             .init_resource::<ParticleTriggerEventQueue>()
             // Add systems

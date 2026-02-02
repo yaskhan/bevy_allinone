@@ -2,7 +2,26 @@ use bevy::prelude::*;
 use avian3d::prelude::{LayerMask, SpatialQuery, SpatialQueryFilter};
 use super::ability_info::AbilityInfo;
 use super::player_abilities::PlayerAbilitiesSystem;
+use crate::camera::CameraState;
+use crate::character::CharacterController;
 use crate::input::InputState;
+
+#[derive(Debug, Clone)]
+pub struct TeleportStartEvent {
+    pub entity: Entity,
+    pub position: Vec3,
+}
+
+#[derive(Debug, Clone)]
+pub struct TeleportEndEvent {
+    pub entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct TeleportStartEventQueue(pub Vec<TeleportStartEvent>);
+
+#[derive(Resource, Default)]
+pub struct TeleportEndEventQueue(pub Vec<TeleportEndEvent>);
 
 /// Teleport ability controller.
 ///
@@ -21,9 +40,19 @@ pub struct PlayerTeleportAbility {
     pub hold_button_time_to_activate: f32,
     pub stop_teleport_if_moving: bool,
 
+    pub can_teleport_on_zero_gravity: bool,
+
     pub teleport_speed: f32,
     pub rotate_toward_teleport_position: bool,
+    pub min_angle_to_rotate: f32,
     pub teleport_instantly: bool,
+
+    pub use_teleport_mark: bool,
+    pub teleport_mark: Option<Entity>,
+
+    pub change_camera_fov_on_teleport: bool,
+    pub camera_fov_on_teleport: f32,
+    pub camera_fov_on_teleport_speed: f32,
 
     pub searching_for_teleport: bool,
     pub teleport_can_be_executed: bool,
@@ -33,6 +62,9 @@ pub struct PlayerTeleportAbility {
     pub last_time_button_pressed: f32,
     pub current_teleport_position: Vec3,
     pub current_teleport_normal: Vec3,
+
+    pub cached_fov_override: Option<f32>,
+    pub cached_fov_speed: Option<f32>,
 }
 
 impl Default for PlayerTeleportAbility {
@@ -46,9 +78,16 @@ impl Default for PlayerTeleportAbility {
             max_distance_to_teleport_air: 10.0,
             hold_button_time_to_activate: 0.4,
             stop_teleport_if_moving: false,
+            can_teleport_on_zero_gravity: false,
             teleport_speed: 10.0,
             rotate_toward_teleport_position: true,
+            min_angle_to_rotate: 15.0,
             teleport_instantly: true,
+            use_teleport_mark: false,
+            teleport_mark: None,
+            change_camera_fov_on_teleport: false,
+            camera_fov_on_teleport: 40.0,
+            camera_fov_on_teleport_speed: 8.0,
             searching_for_teleport: false,
             teleport_can_be_executed: false,
             teleport_surface_found: false,
@@ -56,6 +95,8 @@ impl Default for PlayerTeleportAbility {
             last_time_button_pressed: 0.0,
             current_teleport_position: Vec3::ZERO,
             current_teleport_normal: Vec3::Y,
+            cached_fov_override: None,
+            cached_fov_speed: None,
         }
     }
 }
@@ -66,6 +107,7 @@ pub fn update_teleport_target(
     spatial_query: SpatialQuery,
     camera_query: Query<&GlobalTransform, With<Camera3d>>,
     mut query: Query<&mut PlayerTeleportAbility>,
+    mut mark_query: Query<(&mut Transform, &mut Visibility)>,
 ) {
     let Some(camera) = camera_query.iter().next() else { return };
     let cam_pos = camera.translation();
@@ -100,6 +142,19 @@ pub fn update_teleport_target(
             teleport.current_teleport_normal = Vec3::Y;
             teleport.teleport_surface_found = false;
         }
+
+        if teleport.use_teleport_mark {
+            if let Some(mark_entity) = teleport.teleport_mark {
+                if let Ok((mut mark_transform, mut visibility)) = mark_query.get_mut(mark_entity) {
+                    if teleport.use_teleport_if_surface_not_found || teleport.teleport_surface_found {
+                        mark_transform.translation = teleport.current_teleport_position;
+                        *visibility = Visibility::Visible;
+                    } else {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -107,9 +162,20 @@ pub fn update_teleport_target(
 pub fn handle_teleport_input(
     time: Res<Time>,
     input: Res<InputState>,
-    mut query: Query<(&mut Transform, &mut PlayerTeleportAbility, &mut AbilityInfo, &PlayerAbilitiesSystem)>,
+    mut query: Query<(
+        Entity,
+        &mut Transform,
+        &mut PlayerTeleportAbility,
+        &mut AbilityInfo,
+        &PlayerAbilitiesSystem,
+        Option<&CharacterController>,
+    )>,
+    mut camera_query: Query<&mut CameraState>,
+    mut mark_query: Query<(&mut Transform, &mut Visibility)>,
+    mut start_events: ResMut<TeleportStartEventQueue>,
+    mut end_events: ResMut<TeleportEndEventQueue>,
 ) {
-    for (mut transform, mut teleport, mut ability, system) in query.iter_mut() {
+    for (entity, mut transform, mut teleport, mut ability, system, controller) in query.iter_mut() {
         if ability.name != teleport.ability_name {
             continue;
         }
@@ -118,10 +184,25 @@ pub fn handle_teleport_input(
             continue;
         }
 
+        if let Some(controller) = controller {
+            if controller.zero_gravity_mode && !teleport.can_teleport_on_zero_gravity {
+                continue;
+            }
+        }
+
         if teleport.stop_teleport_if_moving && input.movement.length_squared() > 0.01 {
             teleport.searching_for_teleport = false;
             teleport.teleport_can_be_executed = false;
-            teleport.teleport_in_process = false;
+            if teleport.teleport_in_process {
+                teleport.teleport_in_process = false;
+                if teleport.change_camera_fov_on_teleport {
+                    if let Ok(mut cam_state) = camera_query.get_single_mut() {
+                        cam_state.fov_override = teleport.cached_fov_override;
+                        cam_state.fov_override_speed = teleport.cached_fov_speed;
+                    }
+                }
+                end_events.0.push(TeleportEndEvent { entity });
+            }
             continue;
         }
 
@@ -133,9 +214,30 @@ pub fn handle_teleport_input(
         if input.ability_use_released && ability.is_current {
             if teleport.teleport_can_be_executed {
                 if teleport.use_teleport_if_surface_not_found || teleport.teleport_surface_found {
+                    if teleport.change_camera_fov_on_teleport {
+                        if let Ok(mut cam_state) = camera_query.get_single_mut() {
+                            teleport.cached_fov_override = cam_state.fov_override;
+                            teleport.cached_fov_speed = cam_state.fov_override_speed;
+                            cam_state.fov_override = Some(teleport.camera_fov_on_teleport);
+                            cam_state.fov_override_speed = Some(teleport.camera_fov_on_teleport_speed);
+                        }
+                    }
+
+                    start_events.0.push(TeleportStartEvent {
+                        entity,
+                        position: teleport.current_teleport_position,
+                    });
+
                     if teleport.teleport_instantly {
                         transform.translation = teleport.current_teleport_position;
                         teleport.teleport_in_process = false;
+                        if teleport.change_camera_fov_on_teleport {
+                            if let Ok(mut cam_state) = camera_query.get_single_mut() {
+                                cam_state.fov_override = teleport.cached_fov_override;
+                                cam_state.fov_override_speed = teleport.cached_fov_speed;
+                            }
+                        }
+                        end_events.0.push(TeleportEndEvent { entity });
                     } else {
                         teleport.teleport_in_process = true;
                     }
@@ -145,6 +247,14 @@ pub fn handle_teleport_input(
             teleport.teleport_can_be_executed = false;
             teleport.searching_for_teleport = false;
             ability.deactivate();
+
+            if teleport.use_teleport_mark {
+                if let Some(mark_entity) = teleport.teleport_mark {
+                    if let Ok((_, mut visibility)) = mark_query.get_mut(mark_entity) {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
+            }
         }
 
         if teleport.teleport_in_process && !teleport.teleport_instantly {
@@ -153,6 +263,13 @@ pub fn handle_teleport_input(
             if distance <= 0.05 {
                 transform.translation = teleport.current_teleport_position;
                 teleport.teleport_in_process = false;
+                if teleport.change_camera_fov_on_teleport {
+                    if let Ok(mut cam_state) = camera_query.get_single_mut() {
+                        cam_state.fov_override = teleport.cached_fov_override;
+                        cam_state.fov_override_speed = teleport.cached_fov_speed;
+                    }
+                }
+                end_events.0.push(TeleportEndEvent { entity });
             } else {
                 let dir = to_target / distance;
                 transform.translation += dir * teleport.teleport_speed * time.delta_secs();
@@ -161,7 +278,10 @@ pub fn handle_teleport_input(
                     let flat_dir = Vec3::new(dir.x, 0.0, dir.z).normalize_or_zero();
                     if flat_dir.length_squared() > 0.001 {
                         let target_rot = Quat::from_rotation_arc(Vec3::Z, flat_dir);
-                        transform.rotation = transform.rotation.slerp(target_rot, time.delta_secs() * 6.0);
+                        let angle = transform.forward().angle_between(flat_dir).to_degrees();
+                        if angle >= teleport.min_angle_to_rotate {
+                            transform.rotation = transform.rotation.slerp(target_rot, time.delta_secs() * 6.0);
+                        }
                     }
                 }
             }
