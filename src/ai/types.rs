@@ -18,6 +18,7 @@ pub struct AiController {
     pub wander_radius: f32,
     pub wander_center: Vec3,
     pub target_last_position: Option<Vec3>,
+    pub is_paused: bool,
 }
 
 impl Default for AiController {
@@ -38,6 +39,7 @@ impl Default for AiController {
             wander_radius: 10.0,
             wander_center: Vec3::ZERO,
             target_last_position: None,
+            is_paused: false,
         }
     }
 }

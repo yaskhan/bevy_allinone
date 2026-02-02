@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy::app::App;
 use crate::vehicles::types::{VehicleAI, WaypointPath};
 
-mod types;
+pub mod types;
 mod systems;
 mod faction;
 mod patrol;

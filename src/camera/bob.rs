@@ -39,6 +39,7 @@ pub struct CameraBobState {
     pub walk: BobPreset,
     pub sprint: BobPreset,
     pub aim: BobPreset,
+    pub active: bool,
 }
 
 impl Default for CameraBobState {
@@ -76,6 +77,7 @@ impl Default for CameraBobState {
                 rot_speed: Vec3::new(1.0, 1.0, 1.0),
                 ..default()
             },
+            active: true,
         }
     }
 }
@@ -88,6 +90,8 @@ pub fn update_camera_bob(
     let dt = time.delta_secs();
     
     for (controller, mut state, mut bob) in query.iter_mut() {
+        if !bob.active { continue; }
+        
         let Some(target_ent) = controller.follow_target else { continue };
         let Ok(movement) = target_query.get(target_ent) else { continue };
 

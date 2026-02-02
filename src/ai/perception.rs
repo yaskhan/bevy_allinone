@@ -9,6 +9,7 @@ pub fn update_ai_perception(
     spatial_query: SpatialQuery,
 ) {
     for (entity, transform, mut ai, _perception, ai_faction, settings) in ai_query.iter_mut() {
+        if ai.is_paused { continue; }
         if ai.state == AiBehaviorState::Flee || ai.state == AiBehaviorState::Dead { continue; }
 
         let mut closest_target = None;
@@ -75,6 +76,7 @@ pub fn update_ai_hearing(
 ) {
     for event in queue.0.iter() {
         for (transform, mut ai, settings) in ai_query.iter_mut() {
+            if ai.is_paused { continue; }
             let dist = transform.translation().distance(event.position);
             if dist <= settings.hearing_range * event.volume {
                 // Investigate noise

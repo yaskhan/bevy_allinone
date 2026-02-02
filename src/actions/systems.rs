@@ -4,8 +4,35 @@ use super::types::*;
 use crate::physics::GroundDetection;
 use crate::character::types::CharacterMovementState;
 use crate::player::ragdoll::{Ragdoll, RagdollState};
-use crate::camera::{CameraController, CameraTargetState};
+use crate::camera::{CameraController, CameraTargetState, CameraBobState};
 use crate::weapons::WeaponManager;
+use crate::ai::types::AiController;
+use crate::grab::types::{Grabber, GrabEventQueue, GrabEvent};
+use crate::player::player_modes::PlayerModesSystem;
+use avian3d::prelude::Friction;
+use bevy::ecs::system::SystemParam;
+
+#[derive(SystemParam)]
+pub struct ActionSystemParams<'w, 's> {
+    pub start_queue: ResMut<'w, StartActionEventQueue>,
+    pub end_queue: ResMut<'w, EndActionEventQueue>,
+    pub player_query: Query<'w, 's, (Entity, &'static mut PlayerActionSystem, &'static mut Transform)>,
+    pub action_query: Query<'w, 's, (Entity, &'static mut ActionSystem, &'static GlobalTransform)>,
+    pub movement_query: Query<'w, 's, &'static mut CharacterMovementState>,
+    pub modes_query: Query<'w, 's, &'static mut PlayerModesSystem>,
+    pub weapon_manager_query: Query<'w, 's, &'static mut WeaponManager>,
+    pub camera_query: Query<'w, 's, &'static mut CameraController>,
+    pub ground_query: Query<'w, 's, &'static GroundDetection>,
+    pub ragdoll_query: Query<'w, 's, &'static Ragdoll>,
+    pub camera_target_query: Query<'w, 's, &'static CameraTargetState>,
+    pub ai_query: Query<'w, 's, (Entity, &'static GlobalTransform, &'static mut AiController)>,
+    pub bob_query: Query<'w, 's, &'static mut CameraBobState>,
+    pub friction_query: Query<'w, 's, &'static mut Friction>,
+    pub grabber_query: Query<'w, 's, &'static mut Grabber>,
+    pub grab_events: ResMut<'w, GrabEventQueue>,
+    pub time: Res<'w, Time>,
+    pub input: Res<'w, InputState>,
+}
 
 /// Helper to validate if player meets action requirement conditions
 pub fn validate_action_requirements(
@@ -75,30 +102,18 @@ pub fn validate_action_requirements(
 }
 
 pub fn update_action_system(
-    mut start_action_queue: ResMut<StartActionEventQueue>,
-    mut end_action_queue: ResMut<EndActionEventQueue>,
-    mut player_query: Query<(Entity, &mut PlayerActionSystem, &mut Transform)>,
-    mut action_query: Query<(Entity, &mut ActionSystem, &GlobalTransform)>,
-    mut char_state_query: Query<&mut CharacterMovementState>,
-    mut player_modes_query: Query<&mut crate::player::player_modes::PlayerModesSystem>,
-    mut weapon_manager_query: Query<&mut WeaponManager>,
-    mut camera_query: Query<&mut CameraController>,
-    ground_query: Query<&GroundDetection>,
-    ragdoll_query: Query<&Ragdoll>,
-    camera_target_query: Query<&CameraTargetState>,
+    mut params: ActionSystemParams,
     mut commands: Commands,
-    time: Res<Time>,
-    input: Res<InputState>,
 ) {
     // 1. Handle Start Action
-    for event in start_action_queue.0.drain(..) {
-        if let Ok((_player_entity, mut player_action, _)) = player_query.get_mut(event.player_entity) {
+    for event in params.start_queue.0.drain(..) {
+        if let Ok((_player_entity, mut player_action, _)) = params.player_query.get_mut(event.player_entity) {
              // Only start if not already active
             if player_action.is_action_active {
-                 continue;
+                  continue;
             }
 
-            if let Ok((action_entity, action, _action_transform)) = action_query.get_mut(event.action_entity) {
+            if let Ok((action_entity, action, _action_transform)) = params.action_query.get_mut(event.action_entity) {
                 // Set Player State
                 player_action.current_action = Some(action_entity);
                 player_action.is_action_active = true;
@@ -125,14 +140,14 @@ pub fn update_action_system(
                 // Save current states if preservation is enabled
                 if control.preserve_crouch {
                     // Query actual crouch state from CharacterControllerState
-                    if let Ok(char_state) = char_state_query.get(event.player_entity) {
+                    if let Ok(char_state) = params.movement_query.get(event.player_entity) {
                         player_action.saved_crouch_state = char_state.is_crouching;
                         info!("Saved crouch state: {}", char_state.is_crouching);
                     }
                 }
                 if control.preserve_strafe {
                     // Query actual strafe mode from PlayerModesSystem
-                    if let Ok(player_modes) = player_modes_query.get(event.player_entity) {
+                    if let Ok(player_modes) = params.modes_query.get(event.player_entity) {
                         // Check if current mode is strafe-related (e.g., contains "Strafe" in name)
                         player_action.saved_strafe_state = player_modes.current_players_mode_name.contains("Strafe");
                         info!("Saved strafe state: {}", player_action.saved_strafe_state);
@@ -141,7 +156,7 @@ pub fn update_action_system(
                 
                 // Save weapon states
                 if control.preserve_aim_state {
-                    if let Ok(weapon_manager) = weapon_manager_query.get(event.player_entity) {
+                    if let Ok(weapon_manager) = params.weapon_manager_query.get(event.player_entity) {
                         player_action.saved_aim_state = weapon_manager.aiming_in_third_person;
                         info!("Saved aim state: {}", player_action.saved_aim_state);
                     }
@@ -149,14 +164,14 @@ pub fn update_action_system(
                 
                 // Apply immediate weapon control
                 if control.disable_weapon_input {
-                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                    if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                         weapon_manager.player_currently_busy = true;
                         info!("Weapon input disabled during action");
                     }
                 }
                 
                 if control.force_aim {
-                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                    if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                         weapon_manager.aiming_in_third_person = true;
                         weapon_manager.aiming_in_first_person = true;
                         info!("Forced aim state during action");
@@ -164,7 +179,7 @@ pub fn update_action_system(
                 }
                 
                 if control.disable_weapon_switching {
-                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                    if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                         player_action.saved_change_keys = weapon_manager.change_weapons_with_keys;
                         player_action.saved_change_wheel = weapon_manager.change_weapons_with_mouse_wheel;
                         player_action.saved_change_number = weapon_manager.change_weapons_with_number_keys;
@@ -177,7 +192,7 @@ pub fn update_action_system(
                 }
                 
                 // Camera controls
-                for mut camera in camera_query.iter_mut() {
+                for mut camera in params.camera_query.iter_mut() {
                     if camera.follow_target == Some(event.player_entity) {
                         // Save current camera state
                         player_action.saved_camera_mode = format!("{:?}", camera.mode);
@@ -213,13 +228,13 @@ pub fn update_action_system(
     }
     
     // 2. Update Active Actions
-    for (player_entity, mut player_action, mut player_transform) in player_query.iter_mut() {
+    for (player_entity, mut player_action, mut player_transform) in params.player_query.iter_mut() {
         if !player_action.is_action_active { continue; }
         
         let mut action_ended = false;
 
         if let Some(action_entity) = player_action.current_action {
-             if let Ok((_, action, action_glob_transform)) = action_query.get(action_entity) {
+             if let Ok((_, action, action_glob_transform)) = params.action_query.get(action_entity) {
                  
                  match player_action.state {
                     ActionState::WalkingToTargetBefore => {
@@ -254,7 +269,7 @@ pub fn update_action_system(
                             let target_translation = action_translation + action_rotation * target_local.translation;
                             
                             // Interpolate
-                            let speed = action.adjust_player_position_speed * time.delta_secs();
+                            let speed = action.adjust_player_position_speed * params.time.delta_secs();
                             
                             let new_pos = player_transform.translation.lerp(target_translation, speed);
                             let new_rot = player_transform.rotation.slerp(target_rotation, speed);
@@ -279,8 +294,60 @@ pub fn update_action_system(
                          }
                     }
                     ActionState::PlayingAnimation => {
-                        player_action.action_timer += time.delta_secs();
+                        if player_action.action_timer == 0.0 {
+                            // First frame of action start
+                            // AI Pause
+                            if action.pause_ai_in_radius {
+                                let player_pos = player_transform.translation;
+                                for (_, ai_xf, mut ai) in params.ai_query.iter_mut() {
+                                    if ai_xf.translation().distance(player_pos) <= action.ai_pause_radius {
+                                        ai.is_paused = true;
+                                    }
+                                }
+                            }
+                            
+                            // Headbob
+                            if action.player_state_control.pause_headbob {
+                               for mut bob in params.bob_query.iter_mut() {
+                                   bob.active = false;
+                               }
+                            }
+                            
+                            // Friction
+                            if let Some(f_override) = action.player_state_control.friction_override {
+                                if let Ok(mut friction) = params.friction_query.get_mut(player_entity) {
+                                    player_action.saved_friction = Some(friction.static_coefficient);
+                                    friction.static_coefficient = f_override;
+                                    friction.dynamic_coefficient = f_override;
+                                }
+                            }
+                            
+                            // Drop Grabbed Object
+                            if action.player_state_control.drop_held_object {
+                                if let Ok(mut grabber) = params.grabber_query.get_mut(player_entity) {
+                                    if let Some(held) = grabber.held_object {
+                                        params.grab_events.0.push(GrabEvent::Drop(player_entity, held));
+                                        grabber.held_object = None;
+                                        info!("Action System: Force-dropped held object {:?}", held);
+                                    }
+                                }
+                            }
+                        }
                         
+                        player_action.action_timer += params.time.delta_secs();
+                        
+                        // Jump Interruption
+                        if action.can_interrupted_by_jump && params.input.jump_pressed {
+                            player_action.state = ActionState::Interrupted;
+                            info!("Action Interrupted by Jump");
+                            // Trigger end-action logic via queue
+                            params.end_queue.0.push(EndActionEvent {
+                                player_entity,
+                                action_entity,
+                            });
+                            return;
+                        }
+
                         if player_action.action_timer >= action.duration {
                             // Check if we need to walk after action
                             if action.use_walk_to_target_after_action {
@@ -318,11 +385,11 @@ pub fn update_action_system(
                     ActionState::WaitingForInput => {
                         // Check if required input is pressed
                         let input_pressed = match action.input_to_continue.as_str() {
-                            "Interact" => input.interact_pressed,
-                            "Jump" => input.jump_pressed,
-                            "Fire" => input.fire_pressed,
-                            "Aim" => input.aim_pressed,
-                            _ => input.interact_pressed, // Default to interact
+                            "Interact" => params.input.interact_pressed,
+                            "Jump" => params.input.jump_pressed,
+                            "Fire" => params.input.fire_pressed,
+                            "Aim" => params.input.aim_pressed,
+                            _ => params.input.interact_pressed, // Default to interact
                         };
                         
                         if input_pressed {
@@ -356,7 +423,7 @@ pub fn update_action_system(
         }
         
         if action_ended {
-            end_action_queue.0.push(EndActionEvent {
+            params.end_queue.0.push(EndActionEvent {
                 player_entity,
                 action_entity: player_action.current_action.unwrap_or(Entity::PLACEHOLDER),
             });
@@ -364,28 +431,60 @@ pub fn update_action_system(
     }
     
     // 3. Handle End Action
-    for event in end_action_queue.0.drain(..) {
-        if let Ok((_, mut player_action, _)) = player_query.get_mut(event.player_entity) {
+    for event in params.end_queue.0.drain(..) {
+        if let Ok((_ent, mut player_action, player_transform)) = params.player_query.get_mut(event.player_entity) {
             // Validate it's the correct action ending
             let is_matching_action = player_action.current_action == Some(event.action_entity) || event.action_entity == Entity::PLACEHOLDER;
             
             if is_matching_action && player_action.is_action_active {
                 // Get action to check if we need to restore states
                 let should_restore_states = if let Some(action_entity) = player_action.current_action {
-                    if let Ok((_entity, action, _transform)) = action_query.get(action_entity) {
+                    if let Ok((_entity, action, _transform)) = params.action_query.get(action_entity) {
                         let control = &action.player_state_control;
                         
+                        // AI Resume
+                        if action.pause_ai_in_radius {
+                            let player_pos = player_transform.translation;
+                            for (_, ai_xf, mut ai) in params.ai_query.iter_mut() {
+                                if ai_xf.translation().distance(player_pos) <= action.ai_pause_radius {
+                                    ai.is_paused = false;
+                                }
+                            }
+                        }
+                        
+                        // Headbob Resume
+                        if control.pause_headbob {
+                            for mut bob in params.bob_query.iter_mut() {
+                                bob.active = true;
+                            }
+                        }
+                        
+                        // Friction Resume
+                        if let Some(saved_f) = player_action.saved_friction {
+                            if let Ok(mut friction) = params.friction_query.get_mut(event.player_entity) {
+                                friction.static_coefficient = saved_f;
+                                friction.dynamic_coefficient = saved_f;
+                            }
+                            player_action.saved_friction = None;
+                        }
+
+                        // Destroy action
+                        if action.destroy_action_on_end {
+                            commands.entity(action_entity).despawn_recursive();
+                            info!("Action entity {:?} destroyed on end", action_entity);
+                        }
+
                         // Restore preserved states
                         if control.preserve_crouch && player_action.saved_crouch_state {
                             // Restore crouch state to CharacterControllerState
-                            if let Ok(mut char_state) = char_state_query.get_mut(event.player_entity) {
+                            if let Ok(mut char_state) = params.movement_query.get_mut(event.player_entity) {
                                 char_state.is_crouching = true;
                                 info!("Restored crouch state to: true");
                             }
                         }
                         if control.preserve_strafe && player_action.saved_strafe_state {
                             // Restore strafe mode to PlayerModesSystem
-                            if let Ok(mut player_modes) = player_modes_query.get_mut(event.player_entity) {
+                            if let Ok(mut player_modes) = params.modes_query.get_mut(event.player_entity) {
                                 // Find strafe mode name first
                                 let strafe_mode_name = player_modes.player_modes.iter()
                                     .find(|mode| mode.name.contains("Strafe"))
@@ -401,7 +500,7 @@ pub fn update_action_system(
                         
                         // Restore weapon states
                         if control.preserve_aim_state && player_action.saved_aim_state {
-                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                            if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                                 weapon_manager.aiming_in_third_person = true;
                                 weapon_manager.aiming_in_first_person = true;
                                 info!("Restored aim state to: true");
@@ -410,7 +509,7 @@ pub fn update_action_system(
                         
                         // Reset busy flag if it was disabled
                         if control.disable_weapon_input {
-                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                            if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                                 weapon_manager.player_currently_busy = false;
                                 info!("Weapon input re-enabled");
                             }
@@ -418,7 +517,7 @@ pub fn update_action_system(
                         
                         // Restore switching flags
                         if control.disable_weapon_switching {
-                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                            if let Ok(mut weapon_manager) = params.weapon_manager_query.get_mut(event.player_entity) {
                                 weapon_manager.change_weapons_with_keys = player_action.saved_change_keys;
                                 weapon_manager.change_weapons_with_mouse_wheel = player_action.saved_change_wheel;
                                 weapon_manager.change_weapons_with_number_keys = player_action.saved_change_number;
@@ -427,7 +526,7 @@ pub fn update_action_system(
                         }
                         
                         // Restore camera state
-                        for mut camera in camera_query.iter_mut() {
+                        for mut camera in params.camera_query.iter_mut() {
                             if camera.follow_target == Some(event.player_entity) {
                                 // Restoration logic: we need to parse the mode string back or just save the enum if possible
                                 // For now, let's assume we can restore mode if it was forced
@@ -476,24 +575,24 @@ pub fn update_action_system(
     
     // 4. Input Detection (Simple Proximity Check for now)
     // In a real implementation this would be more optimized or use the existing spatial query system
-    if input.interact_pressed {
-         for (player_entity, player_action, player_transform) in player_query.iter() {
+    if params.input.interact_pressed {
+         for (player_entity, player_action, player_transform) in params.player_query.iter() {
              if player_action.is_action_active { continue; }
              
-             for (action_entity, action, action_transform) in action_query.iter() {
+             for (action_entity, action, action_transform) in params.action_query.iter() {
                  if !action.is_active { continue; }
                  
                  let dist = player_transform.translation.distance(action_transform.translation());
                  if dist <= action.min_distance {
                      // Advanced Validation
-                     let ground = ground_query.get(player_entity).ok();
-                     let cms = char_state_query.get(player_entity).ok();
-                     let ragdoll = ragdoll_query.get(player_entity).ok();
-                     let weapon_manager = weapon_manager_query.get(player_entity).ok();
+                     let ground = params.ground_query.get(player_entity).ok();
+                     let cms = params.movement_query.get(player_entity).ok();
+                     let ragdoll = params.ragdoll_query.get(player_entity).ok();
+                     let weapon_manager = params.weapon_manager_query.get(player_entity).ok();
                      
                      // Find active camera for this player
                      let mut camera_target = None;
-                     for target_state in camera_target_query.iter() {
+                     for target_state in params.camera_target_query.iter() {
                          // This is a bit simplified, usually you'd link camera to player
                          camera_target = Some(target_state);
                          break;
@@ -529,7 +628,7 @@ pub fn update_action_system(
                      let angle_threshold = if action.use_min_angle { action.min_angle.to_radians().cos() } else { -1.0 };
                      
                      if dot >= angle_threshold {
-                         start_action_queue.0.push(StartActionEvent {
+                         params.start_queue.0.push(StartActionEvent {
                              player_entity,
                              action_entity,
                          });

@@ -185,7 +185,11 @@ pub struct PlayerStateControl {
     pub force_third_person: bool,
     pub camera_state_name: Option<String>,
     pub pause_camera_rotation: bool,
-    pub disable_camera_zoom: bool,
+    
+    // Advanced overrides
+    pub friction_override: Option<f32>,
+    pub pause_headbob: bool,
+    pub drop_held_object: bool,
 }
 
 impl Default for PlayerStateControl {
@@ -210,7 +214,9 @@ impl Default for PlayerStateControl {
             force_third_person: false,
             camera_state_name: None,
             pause_camera_rotation: false,
-            disable_camera_zoom: false,
+            friction_override: None,
+            pause_headbob: false,
+            drop_held_object: false,
         }
     }
 }
@@ -558,6 +564,11 @@ pub struct ActionSystem {
     pub wait_for_input_to_continue: bool,
     pub input_to_continue: String,
     
+    pub can_interrupted_by_jump: bool,
+    pub destroy_action_on_end: bool,
+    pub pause_ai_in_radius: bool,
+    pub ai_pause_radius: f32,
+    
     // Event system
     pub use_event_list: bool,
     pub use_accumulative_delay: bool,
@@ -642,6 +653,10 @@ impl Default for ActionSystem {
             stay_in_state_after_finish: false,
             wait_for_input_to_continue: false,
             input_to_continue: "Interact".to_string(),
+            can_interrupted_by_jump: false,
+            destroy_action_on_end: false,
+            pause_ai_in_radius: false,
+            ai_pause_radius: 10.0,
         }
     }
 }
@@ -664,6 +679,7 @@ pub struct PlayerActionSystem {
     pub walk_state: WalkToTargetState,
     pub walk_timer: f32,
     pub previous_navmesh_active: bool,
+    pub saved_friction: Option<f32>,
     
     // Event tracking
     pub events_active: bool,
