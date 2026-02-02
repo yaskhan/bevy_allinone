@@ -17,6 +17,7 @@ pub mod vehicle_fuel_on_inventory;
 pub mod weapon_attachment_on_inventory;
 pub mod weapon_on_inventory;
 pub mod inventory_quick_access_slot_element;
+pub mod inventory_quick_access_slots_system;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
 pub mod currency_system;
@@ -69,6 +70,7 @@ pub use vehicle_fuel_on_inventory::VehicleFuelOnInventory;
 pub use weapon_attachment_on_inventory::WeaponAttachmentOnInventory;
 pub use weapon_on_inventory::WeaponOnInventory;
 pub use inventory_quick_access_slot_element::InventoryQuickAccessSlotElement;
+pub use inventory_quick_access_slots_system::InventoryQuickAccessSlotsSystem;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
 pub use currency_system::{CurrencyBalance, CurrencyTransactionEvent};
@@ -135,6 +137,7 @@ impl Plugin for InventoryPlugin {
             use_inventory_object::update_use_inventory_object,
             weapon_attachment_inventory_prefab_creation_system::update_weapon_attachment_inventory_prefab_creation_system,
             weapon_inventory_prefab_creation_system::update_weapon_inventory_prefab_creation_system,
+            inventory_quick_access_slots_system::update_inventory_quick_access_slots_system,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,

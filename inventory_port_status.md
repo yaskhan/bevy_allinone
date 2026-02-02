@@ -53,7 +53,7 @@ Source: `gkit/Scripts/Inventory/`
 
 ## Inventory Quick Access System
 - [x] `inventoryQuickAccessSlotElement.cs`
-- [ ] `inventoryQuickAccessSlotsSystem.cs`
+- [x] `inventoryQuickAccessSlotsSystem.cs`
 
 ## Scriptable Objects
 - [ ] `inventoryListManagerData.cs`
