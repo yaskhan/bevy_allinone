@@ -54,6 +54,7 @@ pub mod simple_lens_flare_system;
 pub mod simple_set_quaternion_rotation;
 pub mod spawn_object;
 pub mod spline_walker;
+pub mod tag_layer_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -113,6 +114,7 @@ pub use simple_lens_flare_system::SimpleLensFlareSystem;
 pub use simple_set_quaternion_rotation::SimpleSetQuaternionRotation;
 pub use spawn_object::SpawnObject;
 pub use spline_walker::SplineWalker;
+pub use tag_layer_system::TagLayerSystem;
 
 pub struct OthersPlugin;
 
