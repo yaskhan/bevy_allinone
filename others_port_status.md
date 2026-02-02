@@ -66,4 +66,4 @@ Source: `gkit/Scripts/Others/`
 
 ## Scanner System
 - [x] `scannerSystem.cs`
-- [ ] `simpleScannerSystem.cs`
+- [x] `simpleScannerSystem.cs`
