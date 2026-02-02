@@ -10,6 +10,7 @@ pub fn update_action_system(
     mut char_state_query: Query<&mut crate::character::types::CharacterMovementState>,
     mut player_modes_query: Query<&mut crate::player::player_modes::PlayerModesSystem>,
     mut weapon_manager_query: Query<&mut crate::weapons::WeaponManager>,
+    mut camera_query: Query<&mut crate::camera::CameraController>,
     mut commands: Commands,
     time: Res<Time>,
     input: Res<InputState>,
@@ -97,6 +98,35 @@ pub fn update_action_system(
                         weapon_manager.change_weapons_with_mouse_wheel = false;
                         weapon_manager.change_weapons_with_number_keys = false;
                         info!("Weapon switching disabled during action");
+                    }
+                }
+                
+                // Camera controls
+                for mut camera in camera_query.iter_mut() {
+                    if camera.follow_target == Some(event.player_entity) {
+                        // Save current camera state
+                        player_action.saved_camera_mode = format!("{:?}", camera.mode);
+                        player_action.saved_camera_state_name = camera.current_state_name.clone();
+                        player_action.saved_camera_enabled = camera.enabled;
+                        
+                        // Apply controls
+                        if control.force_third_person {
+                            camera.mode = crate::camera::CameraMode::ThirdPerson;
+                            info!("Forced third person view");
+                        }
+                        
+                        if let Some(ref state_name) = control.camera_state_name {
+                            camera.current_state_name = state_name.clone();
+                            info!("Set camera state to: {}", state_name);
+                        }
+                        
+                        if control.pause_camera_rotation {
+                            camera.enabled = false;
+                            info!("Paused camera rotation/follow");
+                        }
+                        
+                        // Note: disable_camera_zoom is handled by blocking inputs, but we could also 
+                        // add a flag to CameraController if needed.
                     }
                 }
                 
@@ -282,6 +312,33 @@ pub fn update_action_system(
                                 weapon_manager.change_weapons_with_mouse_wheel = player_action.saved_change_wheel;
                                 weapon_manager.change_weapons_with_number_keys = player_action.saved_change_number;
                                 info!("Weapon switching restored");
+                            }
+                        }
+                        
+                        // Restore camera state
+                        for mut camera in camera_query.iter_mut() {
+                            if camera.follow_target == Some(event.player_entity) {
+                                // Restoration logic: we need to parse the mode string back or just save the enum if possible
+                                // For now, let's assume we can restore mode if it was forced
+                                if control.force_third_person {
+                                    // This is a bit tricky without the enum, but we can match on the saved string
+                                    camera.mode = match player_action.saved_camera_mode.as_str() {
+                                        "FirstPerson" => crate::camera::CameraMode::FirstPerson,
+                                        "Locked" => crate::camera::CameraMode::Locked,
+                                        "SideScroller" => crate::camera::CameraMode::SideScroller,
+                                        "TopDown" => crate::camera::CameraMode::TopDown,
+                                        _ => crate::camera::CameraMode::ThirdPerson,
+                                    };
+                                }
+                                
+                                if control.camera_state_name.is_some() {
+                                    camera.current_state_name = player_action.saved_camera_state_name.clone();
+                                }
+                                
+                                if control.pause_camera_rotation {
+                                    camera.enabled = player_action.saved_camera_enabled;
+                                }
+                                info!("Camera state restored");
                             }
                         }
                         
@@ -1037,6 +1094,23 @@ fn check_event_condition(
                 warn!("CustomCondition '{}': PlayerStateSystem not found", name);
                 true
             }
+        }
+    }
+}
+
+/// System to block specific inputs during actions
+pub fn block_action_inputs_system(
+    mut player_query: Query<(&PlayerActionSystem, &mut InputState)>,
+    action_query: Query<&ActionSystem>,
+) {
+    for (player_action, mut input) in player_query.iter_mut() {
+        if !player_action.is_action_active { continue; }
+        let Some(action_ent) = player_action.current_action else { continue };
+        let Ok(action) = action_query.get(action_ent) else { continue };
+        
+        if action.player_state_control.disable_camera_zoom {
+            input.zoom_in_pressed = false;
+            input.zoom_out_pressed = false;
         }
     }
 }

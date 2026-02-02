@@ -4,6 +4,7 @@ use bevy::app::App;
 pub mod types;
 pub mod systems;
 pub mod weapon_integration;
+pub mod camera_integration;
 
 pub struct ActionSystemPlugin;
 
@@ -41,8 +42,10 @@ impl Plugin for ActionSystemPlugin {
                 systems::update_walk_to_target_system,
                 systems::handle_custom_action_activation_system,
                 systems::update_custom_action_manager_system,
+                systems::block_action_inputs_system,
                 weapon_integration::process_weapon_events,
                 weapon_integration::process_power_events,
+                camera_integration::process_camera_events,
             ).chain());
     }
 }

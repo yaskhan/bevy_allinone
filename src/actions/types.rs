@@ -30,6 +30,8 @@ pub enum CameraEventType {
     Zoom { target_fov: f32, duration: f32 },
     Focus { target_position: Vec3, duration: f32 },
     Offset { offset: Vec3, duration: f32 },
+    SetCameraMode { mode: String }, // Using String to avoid circular dependency if needed, or we can use the enum
+    SetCameraState { state_name: String },
 }
 
 impl Default for CameraEventType {
@@ -127,6 +129,12 @@ pub struct PlayerStateControl {
     // Power control
     pub disable_power_usage: bool,
     pub power_drain_multiplier: f32,
+    
+    // Camera control
+    pub force_third_person: bool,
+    pub camera_state_name: Option<String>,
+    pub pause_camera_rotation: bool,
+    pub disable_camera_zoom: bool,
 }
 
 impl Default for PlayerStateControl {
@@ -148,6 +156,10 @@ impl Default for PlayerStateControl {
             preserve_aim_state: false,
             disable_power_usage: false,
             power_drain_multiplier: 1.0,
+            force_third_person: false,
+            camera_state_name: None,
+            pause_camera_rotation: false,
+            disable_camera_zoom: false,
         }
     }
 }
@@ -568,6 +580,9 @@ pub struct PlayerActionSystem {
     pub saved_change_keys: bool,
     pub saved_change_wheel: bool,
     pub saved_change_number: bool,
+    pub saved_camera_mode: String,
+    pub saved_camera_state_name: String,
+    pub saved_camera_enabled: bool,
 }
 
 impl Default for PlayerActionSystem {
@@ -593,6 +608,9 @@ impl Default for PlayerActionSystem {
             saved_change_keys: true,
             saved_change_wheel: true,
             saved_change_number: true,
+            saved_camera_mode: String::new(),
+            saved_camera_state_name: String::new(),
+            saved_camera_enabled: true,
         }
     }
 }
