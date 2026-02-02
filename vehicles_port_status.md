@@ -10,7 +10,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `shipInterfaceInfo.cs`
 - [x] `skidsManager.cs`
 - [x] `vehicleBuilder.cs`
-- [ ] `vehicleDamageReceiver.cs`
+- [x] `vehicleDamageReceiver.cs`
 - [ ] `vehicleHUDManager.cs`
 - [ ] `vehicleInterface.cs`
 - [ ] `vehicleLaser.cs`
