@@ -23,7 +23,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `headExplodeExample.cs`
 - [x] `hideBodyPartOnCharacterSystem.cs`
 - [x] `ignoreCollisionHelper.cs`
-- [ ] `ignoreCollisionSystem.cs`
+- [x] `ignoreCollisionSystem.cs`
 - [ ] `initialPopUpWindow.cs`
 - [ ] `mechanismPart.cs`
 - [ ] `moveObjectSmoothlySystem.cs`
