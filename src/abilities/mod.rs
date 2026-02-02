@@ -26,6 +26,7 @@ pub mod manual_detonation_mine_system;
 pub mod player_gravity_system;
 pub mod player_shield_system;
 pub mod player_stealth_system;
+pub mod remove_gravity_from_character_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -56,6 +57,7 @@ use manual_detonation_mine_system::*;
 use player_gravity_system::*;
 use player_shield_system::*;
 use player_stealth_system::*;
+use remove_gravity_from_character_system::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -123,6 +125,7 @@ pub use manual_detonation_mine_system::{
 pub use player_gravity_system::PlayerGravityAbility;
 pub use player_shield_system::PlayerShieldSystem;
 pub use player_stealth_system::{PlayerStealthSystem, PlayerStealthEventQueue};
+pub use remove_gravity_from_character_system::{RemoveGravityFromCharacterSystem, RemoveGravityEventQueue};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -155,6 +158,7 @@ impl Plugin for AbilitiesPlugin {
             .init_resource::<LaserVisionToggleEventQueue>()
             .init_resource::<PlaceMineEventQueue>()
             .init_resource::<PlayerStealthEventQueue>()
+            .init_resource::<RemoveGravityEventQueue>()
             .init_resource::<ParticleCollisionEventQueue>()
             .init_resource::<ParticleTriggerEventQueue>()
             // Add systems
@@ -191,6 +195,8 @@ impl Plugin for AbilitiesPlugin {
                 update_player_gravity_ability,
                 update_player_shield_system,
                 update_player_stealth_system,
+                activate_remove_gravity,
+                update_remove_gravity,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
