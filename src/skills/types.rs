@@ -42,6 +42,17 @@ pub enum SkillEffect {
     CustomEvent(String),
 }
 
+/// Skill slot for active skills
+#[derive(Debug, Clone, Reflect, Default)]
+pub struct SkillSlot {
+    /// Slot name or ID
+    pub name: String,
+    /// Currently equipped skill name (if any)
+    pub equipped_skill: Option<String>,
+    /// Is this slot unlocked
+    pub unlocked: bool,
+}
+
 /// Skills system events
 #[derive(Debug, Event, Reflect, Clone)]
 pub enum SkillSystemEvent {
@@ -71,6 +82,21 @@ pub enum SkillSystemEvent {
         category_index: usize,
         skill_index: usize,
     },
+    /// Request to equip skill
+    EquipSkillRequest {
+        player_entity: Entity,
+        skill_name: String,
+        slot_index: usize,
+    },
+    /// Request to unequip skill
+    UnequipSkillRequest {
+        player_entity: Entity,
+        slot_index: usize,
+    },
+    /// Skill equipped
+    SkillEquipped { entity: Entity, skill_name: String, slot_index: usize },
+    /// Skill unequipped
+    SkillUnequipped { entity: Entity, skill_name: String, slot_index: usize },
 }
 
 #[derive(Resource, Default)]

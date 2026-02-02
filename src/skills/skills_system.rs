@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use super::skill_tree::SkillTree;
+use super::types::SkillSlot;
 
 /// Skills system component
 #[derive(Debug, Component, Reflect)]
@@ -24,6 +25,8 @@ pub struct SkillsSystem {
     pub current_skill: Option<String>,
     /// Current skill level (for tracking)
     pub current_level: Option<u32>,
+    /// Skill slots for active skills
+    pub slots: Vec<SkillSlot>,
 }
 
 impl Default for SkillsSystem {
@@ -39,6 +42,11 @@ impl Default for SkillsSystem {
             skill_tree: SkillTree::new(),
             current_skill: None,
             current_level: None,
+            slots: vec![
+                SkillSlot { name: "Slot 1".to_string(), equipped_skill: None, unlocked: true },
+                SkillSlot { name: "Slot 2".to_string(), equipped_skill: None, unlocked: false },
+                SkillSlot { name: "Slot 3".to_string(), equipped_skill: None, unlocked: false },
+            ],
         }
     }
 }
@@ -259,6 +267,45 @@ impl SkillsSystem {
     /// Set skills system active state
     pub fn set_active(&mut self, state: bool) {
         self.active = state;
+    }
+
+    /// Equip skill to slot
+    pub fn equip_skill(&mut self, skill_name: &str, slot_index: usize) -> bool {
+        if !self.active || slot_index >= self.slots.len() {
+            return false;
+        }
+
+        if !self.slots[slot_index].unlocked {
+            return false;
+        }
+
+        // Check if skill is unlocked and active
+        if let Some(skill) = self.skill_tree.get_skill(skill_name) {
+            if !skill.unlocked || !skill.active {
+                return false;
+            }
+
+            // Unequip from any other slot first
+            for slot in &mut self.slots {
+                if slot.equipped_skill.as_ref().map(|s| s == skill_name).unwrap_or(false) {
+                    slot.equipped_skill = None;
+                }
+            }
+
+            self.slots[slot_index].equipped_skill = Some(skill_name.to_string());
+            return true;
+        }
+
+        false
+    }
+
+    /// Unequip skill from slot
+    pub fn unequip_skill(&mut self, slot_index: usize) -> Option<String> {
+        if !self.active || slot_index >= self.slots.len() {
+            return None;
+        }
+
+        self.slots[slot_index].equipped_skill.take()
     }
 
     /// Check if skills system is active

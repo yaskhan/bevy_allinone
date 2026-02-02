@@ -25,6 +25,7 @@ impl Plugin for StatsPlugin {
             // Register types
             .register_type::<StatsSystem>()
             .init_resource::<AddModifierEventQueue>()
+            .init_resource::<RemoveModifierEventQueue>()
             // Add systems
             .add_systems(Update, (
                 update_stats,

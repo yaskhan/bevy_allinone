@@ -415,3 +415,6 @@ pub struct AddModifierEventQueue(pub Vec<AddModifierEvent>);
 pub struct RemoveModifierEvent {
     pub modifier_name: String,
 }
+
+#[derive(Resource, Default)]
+pub struct RemoveModifierEventQueue(pub Vec<RemoveModifierEvent>);
