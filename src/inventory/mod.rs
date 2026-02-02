@@ -10,6 +10,7 @@ pub mod get_inventory_object_system;
 pub mod get_object_from_inventory_system;
 pub mod inventory_bank_manager;
 pub mod inventory_bank_system;
+pub mod inventory_bank_ui_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -28,6 +29,7 @@ pub use get_inventory_object_system::GetInventoryObjectEvent;
 pub use get_object_from_inventory_system::GetObjectFromInventoryEvent;
 pub use inventory_bank_manager::InventoryBankManager;
 pub use inventory_bank_system::InventoryBankTransferEvent;
+pub use inventory_bank_ui_system::InventoryBankUIRoot;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -52,7 +54,11 @@ impl Plugin for InventoryPlugin {
             get_object_from_inventory_system::update_get_object_from_inventory_system,
             inventory_bank_manager::update_inventory_bank_manager,
             inventory_bank_system::update_inventory_bank_system,
+            inventory_bank_ui_system::update_inventory_bank_ui,
         ))
-        .add_systems(Startup, setup_inventory_ui);
+        .add_systems(Startup, (
+            setup_inventory_ui,
+            inventory_bank_ui_system::setup_inventory_bank_ui,
+        ));
     }
 }

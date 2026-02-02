@@ -12,7 +12,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `getObjectFromInventorySystem.cs`
 - [x] `inventoryBankManager.cs`
 - [x] `inventoryBankSystem.cs`
-- [ ] `inventoryBankUISystem.cs`
+- [x] `inventoryBankUISystem.cs`
 - [ ] `inventoryCaptureManager.cs`
 - [ ] `inventoryCaptureManagerTransparent.cs`
 - [ ] `inventoryCategoryInfo.cs`
