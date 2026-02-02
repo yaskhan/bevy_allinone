@@ -4,10 +4,12 @@ pub mod types;
 pub mod systems;
 pub mod spawn;
 pub mod hoverboard_waypoints;
+pub mod ik_driving_system;
 
 pub use types::*;
 pub use spawn::*;
 pub use hoverboard_waypoints::HoverBoardWaypoints;
+pub use ik_driving_system::IKDrivingSystem;
 
 use systems::*;
 
@@ -34,6 +36,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<VehicleIKTargets>()
             .register_type::<VehiclePassengerStability>()
             .register_type::<HoverBoardWaypoints>()
+            .register_type::<IKDrivingSystem>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -58,6 +61,7 @@ impl Plugin for VehiclesPlugin {
                 audio::update_vehicle_audio,
                 hud::update_vehicle_hud,
                 hoverboard_waypoints::update_hoverboard_waypoints,
+                ik_driving_system::update_ik_driving,
             ));
     }
 }
