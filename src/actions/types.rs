@@ -1,5 +1,14 @@
 use bevy::prelude::*;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Reflect)]
+pub enum ActionState {
+    #[default]
+    Idle,
+    AdjustingTransform,
+    PlayingAnimation,
+    Finished,
+}
+
 /// Main component for an interactive action (e.g., sitting, vaulting)
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -15,10 +24,14 @@ pub struct ActionSystem {
     
     // Player Adjustment
     pub use_position_to_adjust_player: bool,
-    // In Bevy, we'll likely use a child entity or a relative transform component for this
+    // Target transform to match player against
     pub match_target_transform: Option<Transform>, 
+    pub adjust_player_position_speed: f32,
+    pub rotate_player_to_face_target: bool,
+
     pub duration: f32,
     pub animation_speed: f32,
+    pub animation_clip: Option<Handle<AnimationClip>>, // Placeholder for animation asset
     
     // State Overrides
     pub disable_physics: bool,
@@ -40,8 +53,11 @@ impl Default for ActionSystem {
             min_angle: 45.0,
             use_position_to_adjust_player: false,
             match_target_transform: None,
+            adjust_player_position_speed: 5.0,
+            rotate_player_to_face_target: true,
             duration: 1.0,
             animation_speed: 1.0,
+            animation_clip: None,
             disable_physics: true,
             disable_gravity: true,
             disable_input: true,
@@ -56,6 +72,8 @@ impl Default for ActionSystem {
 pub struct PlayerActionSystem {
     pub current_action: Option<Entity>,
     pub is_action_active: bool,
+    
+    pub state: ActionState,
     pub action_timer: f32,
     
     // State backup to restore after action
@@ -68,6 +86,7 @@ impl Default for PlayerActionSystem {
         Self {
             current_action: None,
             is_action_active: false,
+            state: ActionState::Idle,
             action_timer: 0.0,
             previous_gravity_state: true,
             previous_physics_state: true,
