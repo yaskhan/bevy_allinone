@@ -572,8 +572,17 @@ pub fn process_action_events_system(
                     let action_progress = player_action.action_timer / action.duration;
                     for event in action.event_list.iter_mut() {
                         if !event.event_triggered {
-                            accumulated_time += event.delay_to_activate;
-                            if elapsed >= accumulated_time {
+                            // Determine trigger time based on timing mode
+                            let should_fire = if event.use_animation_timing {
+                                // Animation-based: Check normalized time
+                                action_progress >= event.animation_normalized_time
+                            } else {
+                                // Time-based: Check accumulated delay
+                                accumulated_time += event.delay_to_activate;
+                                elapsed >= accumulated_time
+                            };
+                            
+                            if should_fire {
                                 // Check condition before firing
                                 if check_event_condition(
                                     &event.condition,
@@ -591,10 +600,10 @@ pub fn process_action_events_system(
                                     // Mark as triggered even if condition failed (don't retry)
                                     event.event_triggered = true;
                                 }
-                            } else {
-                                break; // Stop checking further events
+                            } else if !event.use_animation_timing {
+                                break; // Stop checking further events (only for time-based)
                             }
-                        } else {
+                        } else if !event.use_animation_timing {
                             accumulated_time += event.delay_to_activate;
                         }
                     }
@@ -602,23 +611,34 @@ pub fn process_action_events_system(
                     // Parallel mode: All events check independently
                     let action_progress = player_action.action_timer / action.duration;
                     for event in action.event_list.iter_mut() {
-                        if !event.event_triggered && elapsed >= event.delay_to_activate {
-                            // Check condition before firing
-                            if check_event_condition(
-                                &event.condition,
-                                action_progress,
-                                player_entity,
-                                player_transform,
-                                action_transform,
-                                &state_query,
-                                &modes_query,
-                                &stats_query,
-                            ) {
-                                fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
-                                event.event_triggered = true;
-                            } else if !event.check_condition_continuously {
-                                // Mark as triggered even if condition failed (don't retry)
-                                event.event_triggered = true;
+                        if !event.event_triggered {
+                            // Determine trigger time based on timing mode
+                            let should_fire = if event.use_animation_timing {
+                                // Animation-based: Check normalized time
+                                action_progress >= event.animation_normalized_time
+                            } else {
+                                // Time-based: Check delay
+                                elapsed >= event.delay_to_activate
+                            };
+                            
+                            if should_fire {
+                                // Check condition before firing
+                                if check_event_condition(
+                                    &event.condition,
+                                    action_progress,
+                                    player_entity,
+                                    player_transform,
+                                    action_transform,
+                                    &state_query,
+                                    &modes_query,
+                                    &stats_query,
+                                ) {
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                    event.event_triggered = true;
+                                } else if !event.check_condition_continuously {
+                                    // Mark as triggered even if condition failed (don't retry)
+                                    event.event_triggered = true;
+                                }
                             }
                         }
                     }

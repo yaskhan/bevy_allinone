@@ -65,6 +65,10 @@ pub struct ActionEvent {
     // Conditions
     pub condition: EventCondition,
     pub check_condition_continuously: bool,
+    
+    // Animation timing
+    pub use_animation_timing: bool,
+    pub animation_normalized_time: f32,  // 0.0 to 1.0
 }
 
 impl Default for ActionEvent {
@@ -80,6 +84,8 @@ impl Default for ActionEvent {
             call_if_action_stopped: false,
             condition: EventCondition::None,
             check_condition_continuously: false,
+            use_animation_timing: false,
+            animation_normalized_time: 0.0,
         }
     }
 }
