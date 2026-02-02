@@ -12,7 +12,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `vehicleBuilder.cs`
 - [x] `vehicleDamageReceiver.cs`
 - [x] `vehicleHUDManager.cs`
-- [ ] `vehicleInterface.cs`
+- [x] `vehicleInterface.cs`
 - [ ] `vehicleLaser.cs`
 - [ ] `vehicleWeaponSystem.cs`
 
