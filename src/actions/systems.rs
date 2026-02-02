@@ -7,6 +7,8 @@ pub fn update_action_system(
     mut end_action_queue: ResMut<EndActionEventQueue>,
     mut player_query: Query<(Entity, &mut PlayerActionSystem, &mut Transform)>,
     mut action_query: Query<(Entity, &mut ActionSystem, &GlobalTransform)>,
+    mut char_state_query: Query<&mut crate::character::types::CharacterMovementState>,
+    mut player_modes_query: Query<&mut crate::player::player_modes::PlayerModesSystem>,
     mut commands: Commands,
     time: Res<Time>,
     input: Res<InputState>,
@@ -40,10 +42,29 @@ pub fn update_action_system(
                     player_action.state = ActionState::PlayingAnimation;
                 }
                 
-                // TODO: Backup physics/gravity state here
-                // In a real implementation we might read from the character controller
+                // Apply player state control
+                let control = &action.player_state_control;
                 
-                info!("Started action: {} in state {:?}", action.action_name, player_action.state);
+                // Save current states if preservation is enabled
+                if control.preserve_crouch {
+                    // Query actual crouch state from CharacterControllerState
+                    if let Ok(char_state) = char_state_query.get(event.player_entity) {
+                        player_action.saved_crouch_state = char_state.is_crouching;
+                        info!("Saved crouch state: {}", char_state.is_crouching);
+                    }
+                }
+                if control.preserve_strafe {
+                    // Query actual strafe mode from PlayerModesSystem
+                    if let Ok(player_modes) = player_modes_query.get(event.player_entity) {
+                        // Check if current mode is strafe-related (e.g., contains "Strafe" in name)
+                        player_action.saved_strafe_state = player_modes.current_players_mode_name.contains("Strafe");
+                        info!("Saved strafe state: {}", player_action.saved_strafe_state);
+                    }
+                }
+                
+                info!("Started action: {} with state control (movement={}, rotation={}, input={}, gravity={}, invincible={})",
+                    action.action_name, !control.disable_movement, !control.disable_rotation, 
+                    !control.disable_input, !control.disable_gravity, control.invincible);
             }
         }
     }
@@ -170,12 +191,52 @@ pub fn update_action_system(
             let is_matching_action = player_action.current_action == Some(event.action_entity) || event.action_entity == Entity::PLACEHOLDER;
             
             if is_matching_action && player_action.is_action_active {
+                // Get action to check if we need to restore states
+                let should_restore_states = if let Some(action_entity) = player_action.current_action {
+                    if let Ok((_entity, action, _transform)) = action_query.get(action_entity) {
+                        let control = &action.player_state_control;
+                        
+                        // Restore preserved states
+                        if control.preserve_crouch && player_action.saved_crouch_state {
+                            // Restore crouch state to CharacterControllerState
+                            if let Ok(mut char_state) = char_state_query.get_mut(event.player_entity) {
+                                char_state.is_crouching = true;
+                                info!("Restored crouch state to: true");
+                            }
+                        }
+                        if control.preserve_strafe && player_action.saved_strafe_state {
+                            // Restore strafe mode to PlayerModesSystem
+                            if let Ok(mut player_modes) = player_modes_query.get_mut(event.player_entity) {
+                                // Find strafe mode name first
+                                let strafe_mode_name = player_modes.player_modes.iter()
+                                    .find(|mode| mode.name.contains("Strafe"))
+                                    .map(|mode| mode.name.clone());
+                                
+                                // Then assign it
+                                if let Some(mode_name) = strafe_mode_name {
+                                    player_modes.current_players_mode_name = mode_name.clone();
+                                    info!("Restored strafe mode to: {}", mode_name);
+                                }
+                            }
+                        }
+                        
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                };
+                
                 player_action.is_action_active = false;
                 player_action.current_action = None;
                 player_action.state = ActionState::Idle;
                 
-                // TODO: Restore physics/gravity state
-                info!("Ended action");
+                // Reset saved states
+                player_action.saved_crouch_state = false;
+                player_action.saved_strafe_state = false;
+                
+                info!("Ended action (restored states: {})", should_restore_states);
             }
         }
     }

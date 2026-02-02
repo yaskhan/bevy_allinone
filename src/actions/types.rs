@@ -494,6 +494,8 @@ pub struct PlayerActionSystem {
     // State backup to restore after action
     pub previous_gravity_state: bool,
     pub previous_physics_state: bool,
+    pub saved_crouch_state: bool,
+    pub saved_strafe_state: bool,
 }
 
 impl Default for PlayerActionSystem {
@@ -512,6 +514,8 @@ impl Default for PlayerActionSystem {
             event_start_time: 0.0,
             previous_gravity_state: true,
             previous_physics_state: true,
+            saved_crouch_state: false,
+            saved_strafe_state: false,
         }
     }
 }
