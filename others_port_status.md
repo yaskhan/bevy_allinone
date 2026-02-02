@@ -16,7 +16,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `eventObjectFoundOnRaycastSystem.cs`
 - [x] `fadeObject.cs`
 - [x] `featuresManager.cs`
-- [ ] `flyingTurretSystem.cs`
+- [x] `flyingTurretSystem.cs`
 - [ ] `followObjectPositionSystem.cs`
 - [ ] `followObjectPositionUpdateSystem.cs`
 - [ ] `GKC_Utils.cs`
