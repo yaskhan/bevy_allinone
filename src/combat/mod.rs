@@ -7,6 +7,7 @@ pub mod destroyable;
 pub mod area_effect;
 pub mod damage_ui;
 pub mod sync;
+pub mod result_queue;
 
 pub use types::*;
 pub use systems::*;
@@ -15,6 +16,7 @@ pub use destroyable::*;
 pub use area_effect::*;
 pub use damage_ui::*;
 pub use sync::*;
+pub use result_queue::*;
 
 pub struct CombatPlugin;
 
@@ -23,6 +25,7 @@ impl Plugin for CombatPlugin {
         app
             .init_resource::<DamageEventQueue>()
             .init_resource::<DeathEventQueue>()
+            .init_resource::<DamageResultQueue>()
             .init_resource::<DamageFeedbackSettings>()
             .register_type::<Health>()
             .register_type::<Shield>()
@@ -36,6 +39,7 @@ impl Plugin for CombatPlugin {
             .register_type::<DamageIndicator>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
+                systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
                 systems::regenerate_health,
                 systems::regenerate_shields,

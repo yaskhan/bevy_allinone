@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use super::types::*;
+use super::result_queue::*;
 use crate::character::Player;
 
 /// Component for the full-screen damage tint effect.
@@ -140,11 +141,12 @@ pub fn update_damage_ui(
 /// System to listen for damage events and trigger UI effects.
 pub fn trigger_damage_ui(
     mut commands: Commands,
-    mut damage_queue: ResMut<DamageEventQueue>,
+    damage_queue: Res<DamageResultQueue>,
     mut effect_query: Query<&mut DamageScreenEffect>,
     player_query: Query<Entity, With<Player>>,
     settings: Res<DamageFeedbackSettings>,
     asset_server: Res<AssetServer>,
+    transform_query: Query<&GlobalTransform>,
 ) {
     // Only process if player exists
     let player_entity = match player_query.iter().next() {
@@ -152,24 +154,8 @@ pub fn trigger_damage_ui(
         None => return,
     };
 
-    // We iterate events but don't drain them here! Wait, damage processor drains them.
-    // We need to read them *before* they are drained, or use a separate event reader.
-    // However, `DamageEventQueue` is a resource with a Vec. `process_damage_events` drains it.
-    // If we run *before* `process_damage_events`, we can read. If we run *after*, they are gone.
-    // BEST PRACTICE in this refactor: Let's use `EventReader` if we switched to Events, 
-    // but the request was "Custom queues".
-    // 
-    // A safe approach: Peek at the queue without draining. 
-    // BUT `process_damage_events` runs in the same frame.
-    // We should run this system *before* `process_damage_events` or make `process_damage_events` emit a "DamageAppliedEvent".
-    // Since we can't easily change the architecture mid-flight without risk, 
-    // let's peek.
-    
-    // NOTE: If `process_damage_events` runs first (due to .chain()), the queue is empty.
-    // We should check system ordering in `mod.rs`.
-    
-    for event in &damage_queue.0 {
-        if event.target == player_entity && event.amount > 0.0 {
+    for event in damage_queue.0.iter() {
+        if event.target == player_entity && (event.final_amount > 0.0 || event.shielded_amount > 0.0) {
             // Trigger Flash
             if settings.flash_enabled {
                 for mut effect in effect_query.iter_mut() {
@@ -179,7 +165,18 @@ pub fn trigger_damage_ui(
 
             // Trigger Indicator
             if settings.indicators_enabled {
-                if let Some(source_pos) = event.position.or(event.direction.map(|d| d * 5.0)) { // Use pos or fake it
+                // Determine source position for indicator
+                let source_pos = if let Some(source) = event.source {
+                    if let Ok(transform) = transform_query.get(source) {
+                        Some(transform.translation())
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                };
+
+                if let Some(pos) = source_pos {
                     // Spawn Indicator
                     commands.spawn((
                         ImageNode::new(asset_server.load("ui/damage_indicator.png")),
@@ -189,16 +186,14 @@ pub fn trigger_damage_ui(
                             left: Val::Percent(50.0),
                             width: Val::Px(100.0),
                             height: Val::Px(100.0),
-                            // Center anchor for rotation
                             margin: UiRect::all(Val::Auto), 
                              ..default()
                         },
-                        // We need to offset it from center to show direction
-                        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)), // z-index handled by parent?
+                        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
                         GlobalZIndex(101),
                         DamageIndicator {
                             lifetime: settings.indicator_lifetime,
-                            source_position: source_pos,
+                            source_position: pos,
                         },
                     ));
                 }

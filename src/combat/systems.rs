@@ -4,12 +4,14 @@ use super::types::*;
 use crate::input::InputState;
 use crate::stats::{StatsSystem, types::DerivedStat};
 use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
+use super::result_queue::*;
 
 /// System to process damage events, reduce health/shields, and show feedback.
 pub fn process_damage_events(
     mut commands: Commands,
     mut damage_queue: ResMut<DamageEventQueue>,
     mut death_queue: ResMut<DeathEventQueue>,
+    mut result_queue: ResMut<DamageResultQueue>,
     mut health_query: Query<(&mut Health, Option<&mut Shield>, Option<&Blocking>, Option<&StatsSystem>, &GlobalTransform)>,
     receiver_query: Query<&DamageReceiver>,
     time: Res<Time>,
@@ -45,16 +47,11 @@ pub fn process_damage_events(
                     DamageType::Electric => resistance = stats.get_derived_stat(DerivedStat::ElectricResistance).copied().unwrap_or(0.0),
                     DamageType::Explosion => resistance = stats.get_derived_stat(DerivedStat::ExplosionResistance).copied().unwrap_or(0.0),
                     DamageType::Melee | DamageType::Ranged => {
-                        // Physical damage uses Defense stat (often flat reduction in RPGs, or percent. Let's assume flat for Defense)
-                        // Wait, DerivedStat::Defense default is 5.0. If damage is 10.0, 5.0 flat reduction is huge (50%).
-                        // If it's percent, 5.0 is 500%? No.
-                        // Let's assume Defense is flat reduction for now, or scaled.
-                        // GKit usually does: damage - defense.
                         flat_defense = stats.get_derived_stat(DerivedStat::Defense).copied().unwrap_or(0.0);
                     },
-                    DamageType::Environmental => {}, // No res for now
+                    DamageType::Environmental => {}, 
                     DamageType::Heal => {}, 
-                    DamageType::Fall => {}, // Fall damage usually ignores defense
+                    DamageType::Fall => {}, 
                 }
             }
 
@@ -129,8 +126,26 @@ pub fn process_damage_events(
                     health.temporal_invincibility_timer = health.temporal_invincibility_duration;
                 }
             }
+            // 5. Emit Result Event (Hook for Audio/UI)
+            result_queue.0.push(DamageResultEvent {
+                target: target_root,
+                source: event.source,
+                original_amount: event.amount,
+                final_amount: final_damage,
+                shielded_amount: shield_dmg,
+                damage_type: event.damage_type,
+                is_crit: is_weak_spot,
+                is_block: is_block || is_parry,
+            });
+            // We can keep this here OR move it to a system reading DamageResultEvent.
+            // For now, keep visual popping here as it's tightly coupled to the logic flow (e.g. knowing it was a parry locally).
+            // BUT DamageResultEvent has is_block/is_crit. 
+            // Moving UI purely to EventReader is cleaner.
+            // Let's keep duplicate visual logic here for safety or remove? 
+            // The Refactor goal is "Event Hooks".
+            // Let's KEEP the Floating Text here (Server/Logic side visual) 
+            // but remove the UI Flash from trigger_damage_ui and move it to reading the event.
 
-            // 5. Feedback
             let text_color = if is_parry {
                 Color::srgb(1.0, 1.0, 0.0)
             } else if is_block {
@@ -166,7 +181,7 @@ pub fn process_damage_events(
                 },
             ));
 
-            // 6. Check Death
+            // 7. Check Death
             if health.current <= 0.0 {
                 health.current = 0.0;
                 health.is_dead = true;

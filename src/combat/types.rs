@@ -153,6 +153,7 @@ pub struct DeathEvent {
 #[derive(Resource, Default)]
 pub struct DeathEventQueue(pub Vec<DeathEvent>);
 
+
 /// Damage type enumeration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub enum DamageType {
