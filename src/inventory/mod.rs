@@ -12,6 +12,7 @@ pub mod inventory_bank_manager;
 pub mod inventory_bank_system;
 pub mod inventory_bank_ui_system;
 pub mod inventory_capture_manager;
+pub mod inventory_capture_manager_transparent;
 
 use bevy::prelude::*;
 use types::*;
@@ -32,6 +33,7 @@ pub use inventory_bank_manager::InventoryBankManager;
 pub use inventory_bank_system::InventoryBankTransferEvent;
 pub use inventory_bank_ui_system::InventoryBankUIRoot;
 pub use inventory_capture_manager::InventoryCaptureManager;
+pub use inventory_capture_manager_transparent::InventoryCaptureManagerTransparent;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -58,6 +60,7 @@ impl Plugin for InventoryPlugin {
             inventory_bank_system::update_inventory_bank_system,
             inventory_bank_ui_system::update_inventory_bank_ui,
             inventory_capture_manager::update_inventory_capture_manager,
+            inventory_capture_manager_transparent::update_inventory_capture_manager_transparent,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,

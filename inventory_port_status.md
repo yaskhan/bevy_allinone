@@ -14,7 +14,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventoryBankSystem.cs`
 - [x] `inventoryBankUISystem.cs`
 - [x] `inventoryCaptureManager.cs`
-- [ ] `inventoryCaptureManagerTransparent.cs`
+- [x] `inventoryCaptureManagerTransparent.cs`
 - [ ] `inventoryCategoryInfo.cs`
 - [ ] `inventoryInfo.cs`
 - [ ] `inventoryListElement.cs`
