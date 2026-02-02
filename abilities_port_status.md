@@ -23,7 +23,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability UI wheel + slot elements (`abilitySlotElement`, `playerAbilitiesUISystem`)
 - [x] Ability input buffering/mapping integration with the input system
 - [x] Ability-specific systems from GKC: `dashSystem`
-- [ ] Ability-specific systems from GKC: `magicSpellActionSystem`
+- [x] Ability-specific systems from GKC: `magicSpellActionSystem`
 - [ ] Ability-specific systems from GKC: `oxygenSystem`
 - [ ] Ability-specific systems from GKC: `staminaSystem`
 - [ ] Ability-specific systems from GKC: `throwObjectTrayectorySystem`

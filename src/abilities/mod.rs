@@ -4,6 +4,7 @@ pub mod ability_info;
 pub mod player_abilities;
 pub mod ui;
 pub mod dash;
+pub mod magic_spell;
 
 use bevy::prelude::*;
 use types::*;
@@ -12,6 +13,7 @@ use ability_info::*;
 use player_abilities::*;
 use ui::*;
 use dash::*;
+use magic_spell::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -27,6 +29,7 @@ pub use types::AbilityTimeLimitEvent;
 pub use player_abilities::PlayerAbilitiesSystem;
 pub use ui::{AbilityWheelUI, AbilitySlotElement};
 pub use dash::DashAbility;
+pub use magic_spell::{MagicSpellAbility, MagicSpellCastEvent};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -43,6 +46,7 @@ impl Plugin for AbilitiesPlugin {
             .add_event::<SetAbilityEnabledEvent>()
             .add_event::<AbilityCooldownEvent>()
             .add_event::<AbilityTimeLimitEvent>()
+            .add_event::<MagicSpellCastEvent>()
             // Add systems
             .add_systems(Update, (
                 update_player_abilities_context,
@@ -52,6 +56,8 @@ impl Plugin for AbilitiesPlugin {
                 handle_ability_input,
                 start_dash_from_ability,
                 update_dash_ability,
+                start_magic_spell_cast,
+                update_magic_spell_cast,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
