@@ -8,6 +8,7 @@ pub mod magic_spell;
 pub mod oxygen;
 pub mod stamina;
 pub mod throw_trajectory;
+pub mod wall_running_zone;
 
 use bevy::prelude::*;
 use types::*;
@@ -20,6 +21,7 @@ use magic_spell::*;
 use oxygen::*;
 use stamina::*;
 use throw_trajectory::*;
+use wall_running_zone::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -39,6 +41,7 @@ pub use magic_spell::{MagicSpellAbility, MagicSpellCastEvent};
 pub use oxygen::OxygenSystem;
 pub use stamina::StaminaSystem;
 pub use throw_trajectory::ThrowObjectTrajectory;
+pub use wall_running_zone::{WallRunningZone, WallRunningZoneTracker};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -70,6 +73,7 @@ impl Plugin for AbilitiesPlugin {
                 update_oxygen_system,
                 update_stamina_system,
                 update_throw_trajectory,
+                update_wall_running_zones,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
