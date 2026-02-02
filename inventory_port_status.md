@@ -28,7 +28,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `inventorySlotOptionsButtons.cs`
 - [x] `inventoryWeightManager.cs`
 - [x] `meleeShieldInventoryPrefabCreationSystem.cs`
-- [ ] `meleeWeaponConsumableInventoryPrefabCreationSystem.cs`
+- [x] `meleeWeaponConsumableInventoryPrefabCreationSystem.cs`
 - [ ] `meleeWeaponInventoryPrefabCreationSystem.cs`
 - [ ] `playerInventoryCategoriesListManager.cs`
 - [ ] `useInventoryObject.cs`
