@@ -35,7 +35,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Editor tooling equivalents (Unity inspectors) not applicable / not ported (N/A in Bevy)
 
 ## Next Suggested Steps
-- [ ] Wire ability events and add `add_event` registrations in the plugin
+- [x] Wire ability events and add `add_event` registrations in the plugin (implemented via event queues)
 - [ ] Connect ability activation to input actions (press/hold/release)
 - [ ] Implement hold behavior (continuous use + energy drain)
 - [ ] Integrate grounded / first-person constraints with character/camera systems
