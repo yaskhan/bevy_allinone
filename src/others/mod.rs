@@ -31,6 +31,7 @@ pub mod place_object_in_camera_editor_position_system;
 pub mod player_options_editor_system;
 pub mod play_sound_on_collision;
 pub mod play_sound_on_trigger_enter;
+pub mod put_gear;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -67,6 +68,7 @@ pub use place_object_in_camera_editor_position_system::PlaceObjectInCameraEditor
 pub use player_options_editor_system::PlayerOptionsEditorSystem;
 pub use play_sound_on_collision::{PlaySoundOnCollision, CollisionSoundEvent};
 pub use play_sound_on_trigger_enter::{PlaySoundOnTriggerEnter, TriggerSoundEvent};
+pub use put_gear::PutGear;
 
 pub struct OthersPlugin;
 

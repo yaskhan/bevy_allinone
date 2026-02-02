@@ -34,7 +34,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `playerOptionsEditorSystem.cs`
 - [x] `playSoundOnCollision.cs`
 - [x] `playSoundOnTriggerEnter.cs`
-- [ ] `putGear.cs`
+- [x] `putGear.cs`
 - [ ] `railMechanism.cs`
 - [ ] `replaceMaterialSystem.cs`
 - [ ] `rotateObjects.cs`
