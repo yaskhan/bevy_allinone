@@ -65,5 +65,5 @@ Source: `gkit/Scripts/Others/`
 - [x] `consoleMode.cs`
 
 ## Scanner System
-- [ ] `scannerSystem.cs`
+- [x] `scannerSystem.cs`
 - [ ] `simpleScannerSystem.cs`

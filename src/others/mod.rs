@@ -38,6 +38,7 @@ pub mod replace_material_system;
 pub mod rotate_objects;
 pub mod rotatory_gear;
 pub mod scan_element_info;
+pub mod scanner_system;
 pub mod set_fixed_rotation;
 pub mod set_game_object_active_state;
 pub mod set_object_parent_system;
@@ -101,6 +102,7 @@ pub use replace_material_system::ReplaceMaterialSystem;
 pub use rotate_objects::RotateObjects;
 pub use rotatory_gear::RotatoryGear;
 pub use scan_element_info::ScanElementInfo;
+pub use scanner_system::{ScannerPingEvent, ScannerSystem};
 pub use set_fixed_rotation::SetFixedRotation;
 pub use set_game_object_active_state::SetGameObjectActiveState;
 pub use set_object_parent_system::SetObjectParentSystem;
@@ -138,6 +140,7 @@ impl Plugin for OthersPlugin {
             .add_event::<SimpleActionButtonEvent>()
             .add_event::<SimpleEvent>()
             .add_event::<UIMouseHoverChangedEvent>()
+            .add_event::<ScannerPingEvent>()
             .add_systems(Update, (
                 add_force_to_object_system::update_add_force_to_object_system,
                 animator_trigger_enter_exit_event::update_animator_trigger_enter_exit_event,
@@ -177,6 +180,7 @@ impl Plugin for OthersPlugin {
                 simple_set_quaternion_rotation::update_simple_set_quaternion_rotation,
                 spawn_object::update_spawn_object,
                 spline_walker::update_spline_walker,
+                scanner_system::update_scanner_system,
             ));
     }
 }
