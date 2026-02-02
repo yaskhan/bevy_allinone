@@ -1,16 +1,91 @@
 use bevy::prelude::*;
 use crate::input::InputState;
 use super::types::*;
+use crate::physics::GroundDetection;
+use crate::character::types::CharacterMovementState;
+use crate::player::ragdoll::{Ragdoll, RagdollState};
+use crate::camera::{CameraController, CameraTargetState};
+use crate::weapons::WeaponManager;
+
+/// Helper to validate if player meets action requirement conditions
+pub fn validate_action_requirements(
+    check_on_ground: bool,
+    check_crouch_state: bool,
+    required_crouch_state: bool,
+    check_ragdoll_state: bool,
+    required_ragdoll_state: bool,
+    check_locked_camera_state: bool,
+    required_locked_camera_state: bool,
+    check_aiming_state: bool,
+    required_aiming_state: bool,
+    ground_detection: Option<&GroundDetection>,
+    char_movement: Option<&CharacterMovementState>,
+    ragdoll: Option<&Ragdoll>,
+    camera_target_state: Option<&CameraTargetState>,
+    weapon_manager: Option<&WeaponManager>,
+) -> bool {
+    // Ground check
+    if check_on_ground {
+        if let Some(gd) = ground_detection {
+            if !gd.is_grounded {
+                return false;
+            }
+        }
+    }
+    
+    // Crouch check
+    if check_crouch_state {
+        if let Some(cms) = char_movement {
+            if cms.is_crouching != required_crouch_state {
+                return false;
+            }
+        }
+    }
+    
+    // Ragdoll check
+    if check_ragdoll_state {
+        if let Some(r) = ragdoll {
+            let is_ragdolled = r.current_state == RagdollState::Ragdolled;
+            if is_ragdolled != required_ragdoll_state {
+                return false;
+            }
+        }
+    }
+    
+    // Camera lock check
+    if check_locked_camera_state {
+        if let Some(cts) = camera_target_state {
+            if cts.is_locking != required_locked_camera_state {
+                return false;
+            }
+        }
+    }
+    
+    // Aiming check
+    if check_aiming_state {
+        if let Some(wm) = weapon_manager {
+            let is_aiming = wm.aiming_in_third_person || wm.aiming_in_first_person;
+            if is_aiming != required_aiming_state {
+                return false;
+            }
+        }
+    }
+    
+    true
+}
 
 pub fn update_action_system(
     mut start_action_queue: ResMut<StartActionEventQueue>,
     mut end_action_queue: ResMut<EndActionEventQueue>,
     mut player_query: Query<(Entity, &mut PlayerActionSystem, &mut Transform)>,
     mut action_query: Query<(Entity, &mut ActionSystem, &GlobalTransform)>,
-    mut char_state_query: Query<&mut crate::character::types::CharacterMovementState>,
+    mut char_state_query: Query<&mut CharacterMovementState>,
     mut player_modes_query: Query<&mut crate::player::player_modes::PlayerModesSystem>,
-    mut weapon_manager_query: Query<&mut crate::weapons::WeaponManager>,
-    mut camera_query: Query<&mut crate::camera::CameraController>,
+    mut weapon_manager_query: Query<&mut WeaponManager>,
+    mut camera_query: Query<&mut CameraController>,
+    ground_query: Query<&GroundDetection>,
+    ragdoll_query: Query<&Ragdoll>,
+    camera_target_query: Query<&CameraTargetState>,
     mut commands: Commands,
     time: Res<Time>,
     input: Res<InputState>,
@@ -374,6 +449,39 @@ pub fn update_action_system(
                  
                  let dist = player_transform.translation.distance(action_transform.translation());
                  if dist <= action.min_distance {
+                     // Advanced Validation
+                     let ground = ground_query.get(player_entity).ok();
+                     let cms = char_state_query.get(player_entity).ok();
+                     let ragdoll = ragdoll_query.get(player_entity).ok();
+                     let weapon_manager = weapon_manager_query.get(player_entity).ok();
+                     
+                     // Find active camera for this player
+                     let mut camera_target = None;
+                     for target_state in camera_target_query.iter() {
+                         // This is a bit simplified, usually you'd link camera to player
+                         camera_target = Some(target_state);
+                         break;
+                     }
+
+                     if !validate_action_requirements(
+                         action.check_on_ground,
+                         action.check_crouch_state,
+                         action.required_crouch_state,
+                         action.check_ragdoll_state,
+                         action.required_ragdoll_state,
+                         action.check_locked_camera_state,
+                         action.required_locked_camera_state,
+                         action.check_aiming_state,
+                         action.required_aiming_state,
+                         ground,
+                         cms,
+                         ragdoll,
+                         camera_target,
+                         weapon_manager,
+                     ) {
+                         continue;
+                     }
+
                      // Check Angle if needed
                      // Simple forward check
                      let to_action = (action_transform.translation() - player_transform.translation).normalize_or_zero();
@@ -505,6 +613,11 @@ pub fn handle_custom_action_activation_system(
     mut player_query: Query<&mut PlayerActionSystem>,
     custom_action_query: Query<&CustomActionInfo>,
     action_query: Query<&ActionSystem>,
+    ground_query: Query<&GroundDetection>,
+    char_movement_query: Query<&CharacterMovementState>,
+    ragdoll_query: Query<&Ragdoll>,
+    camera_target_query: Query<&CameraTargetState>,
+    weapon_manager_query: Query<&WeaponManager>,
 ) {
     for event in activate_queue.0.drain(..) {
         let action_name_lower = event.action_name.to_lowercase();
@@ -516,8 +629,37 @@ pub fn handle_custom_action_activation_system(
                     continue;
                 }
                 
-                // Check conditions
-                // TODO: Add locked camera state, aiming state, on ground checks when those systems exist
+                // Advanced Validation
+                let ground = ground_query.get(event.player_entity).ok();
+                let cms = char_movement_query.get(event.player_entity).ok();
+                let ragdoll = ragdoll_query.get(event.player_entity).ok();
+                let weapon_manager = weapon_manager_query.get(event.player_entity).ok();
+                
+                let mut camera_target = None;
+                for target_state in camera_target_query.iter() {
+                    camera_target = Some(target_state);
+                    break;
+                }
+
+                if !validate_action_requirements(
+                    custom_action_info.check_on_ground,
+                    custom_action_info.check_crouch_state,
+                    custom_action_info.required_crouch_state,
+                    custom_action_info.check_ragdoll_state,
+                    custom_action_info.required_ragdoll_state,
+                    custom_action_info.check_locked_camera_state,
+                    custom_action_info.required_locked_camera_state,
+                    custom_action_info.check_aiming_state,
+                    custom_action_info.required_aiming_state,
+                    ground,
+                    cms,
+                    ragdoll,
+                    camera_target,
+                    weapon_manager,
+                ) {
+                    info!("Action {} failed high-level validation", custom_action_info.name);
+                    continue;
+                }
                 
                 // Handle probability
                 if custom_action_info.use_probability {

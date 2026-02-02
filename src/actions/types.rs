@@ -431,6 +431,10 @@ pub struct CustomActionInfo {
     pub check_aiming_state: bool,
     pub required_aiming_state: bool,
     pub check_on_ground: bool,
+    pub check_crouch_state: bool,
+    pub required_crouch_state: bool,
+    pub check_ragdoll_state: bool,
+    pub required_ragdoll_state: bool,
     
     // Action on air
     pub use_action_on_air: bool,
@@ -460,6 +464,10 @@ impl Default for CustomActionInfo {
             check_aiming_state: false,
             required_aiming_state: false,
             check_on_ground: false,
+            check_crouch_state: false,
+            required_crouch_state: false,
+            check_ragdoll_state: false,
+            required_ragdoll_state: false,
             use_action_on_air: false,
             action_system_on_air_entity: None,
         }
@@ -479,6 +487,17 @@ pub struct ActionSystem {
     pub min_distance: f32,
     pub use_min_angle: bool,
     pub min_angle: f32,
+    
+    // Advanced Conditions
+    pub check_on_ground: bool,
+    pub check_crouch_state: bool,
+    pub required_crouch_state: bool,
+    pub check_ragdoll_state: bool,
+    pub required_ragdoll_state: bool,
+    pub check_locked_camera_state: bool,
+    pub required_locked_camera_state: bool,
+    pub check_aiming_state: bool,
+    pub required_aiming_state: bool,
     
     // Player Adjustment
     pub use_position_to_adjust_player: bool,
@@ -596,6 +615,15 @@ impl Default for ActionSystem {
             use_event_on_interrupted_action: false,
             player_detected: false,
             player_state_control: PlayerStateControl::default(),
+            check_on_ground: false,
+            check_crouch_state: false,
+            required_crouch_state: false,
+            check_ragdoll_state: false,
+            required_ragdoll_state: false,
+            check_locked_camera_state: false,
+            required_locked_camera_state: false,
+            check_aiming_state: false,
+            required_aiming_state: false,
         }
     }
 }
