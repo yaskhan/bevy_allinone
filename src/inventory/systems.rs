@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::interaction::{InteractionEvent, InteractionEventQueue, InteractionType, InteractionDetector};
+use crate::abilities::{AbilityPickup, PlayerAbilitiesSystem, AbilityInfo};
 use crate::input::InputState;
 use super::components::*;
 use super::types::{InventoryItem, ItemType};
@@ -9,6 +10,9 @@ pub fn handle_pickup_events(
     mut events: ResMut<InteractionEventQueue>,
     mut inventory_query: Query<&mut Inventory>,
     item_query: Query<&PhysicalItem>,
+    ability_pickup_query: Query<&AbilityPickup>,
+    mut abilities_query: Query<&mut AbilityInfo>,
+    mut player_abilities_query: Query<&mut PlayerAbilitiesSystem>,
 ) {
     let events_to_process: Vec<InteractionEvent> = events.0.drain(..).collect();
     
@@ -25,7 +29,21 @@ pub fn handle_pickup_events(
                     } else {
                         info!("Picked up {}", physical_item.item.name);
                         // Despawn physical entity
-                        commands.entity(event.target).despawn(); 
+                        commands.entity(event.target).despawn();
+
+                        if let Ok(pickup) = ability_pickup_query.get(event.target) {
+                            if let Ok(mut system) = player_abilities_query.get_mut(event.source) {
+                                system.enable_ability_by_name(&pickup.ability_name, &mut abilities_query);
+                                if pickup.activate_on_pickup {
+                                    system.input_select_and_press_down_new_ability_temporally(
+                                        &pickup.ability_name,
+                                        pickup.temporary_activation,
+                                        &mut abilities_query,
+                                        system.is_on_ground,
+                                    );
+                                }
+                            }
+                        }
                     }
                 }
             }

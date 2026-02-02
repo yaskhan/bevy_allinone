@@ -12,6 +12,7 @@ pub mod wall_running_zone;
 pub mod particle_detection;
 pub mod template_ability;
 pub mod weapon_integration;
+pub mod ability_pickups;
 
 use bevy::prelude::*;
 use types::*;
@@ -28,6 +29,7 @@ use wall_running_zone::*;
 use particle_detection::*;
 use template_ability::*;
 use weapon_integration::*;
+use ability_pickups::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -59,6 +61,7 @@ pub use particle_detection::{
 };
 pub use template_ability::TemplateAbilitySystem;
 pub use weapon_integration::AbilityWeaponIntegration;
+pub use ability_pickups::AbilityPickup;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;

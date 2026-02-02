@@ -31,7 +31,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
 - [x] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
 - [x] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
-- [ ] Ability pickup/enable hooks from inventory/pickups
+- [x] Ability pickup/enable hooks from inventory/pickups
 - [ ] Editor tooling equivalents (Unity inspectors) not applicable / not ported
 
 ## Next Suggested Steps
