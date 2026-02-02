@@ -1,6 +1,7 @@
 pub mod types;
 pub mod stats_system;
 pub mod systems;
+pub mod ui;
 
 use bevy::prelude::*;
 use types::*;
@@ -31,6 +32,8 @@ impl Plugin for StatsPlugin {
                 update_stats,
                 handle_stat_changes,
                 handle_modifier_events,
-            ));
+                ui::update_stats_hud,
+            ))
+            .add_systems(Startup, ui::setup_stats_hud);
     }
 }

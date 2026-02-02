@@ -3,6 +3,7 @@ pub mod skill;
 pub mod skill_tree;
 pub mod skills_system;
 pub mod systems;
+pub mod ui;
 
 use bevy::prelude::*;
 use types::*;
@@ -37,7 +38,12 @@ impl Plugin for SkillsPlugin {
            .register_type::<SkillSystemEvent>();
 
         // Add systems
-        app.add_systems(Update, skills_system_update);
+        app.add_systems(Startup, ui::setup_skill_tree_ui)
+           .add_systems(Update, (
+            skills_system_update,
+            ui::toggle_skill_tree_ui,
+            ui::update_skill_tree_ui,
+        ));
     }
 }
 
