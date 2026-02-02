@@ -47,7 +47,7 @@ Source: `gkit/Scripts/Inventory/`
 - [x] `oxygenOnInventory.cs`
 - [x] `shieldOnInventory.cs`
 - [x] `staminaOnInventory.cs`
-- [ ] `vehicleFuelOnInventory.cs`
+- [x] `vehicleFuelOnInventory.cs`
 - [ ] `weaponAttachmentOnInventory.cs`
 - [ ] `weaponOnInventory.cs`
 
