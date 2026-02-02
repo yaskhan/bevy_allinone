@@ -24,9 +24,13 @@ pub fn update_action_system(
                 player_action.current_action = Some(action_entity);
                 player_action.is_action_active = true;
                 player_action.action_timer = 0.0;
+                player_action.walk_timer = 0.0;
+                player_action.walk_state = WalkToTargetState::Idle;
                 
                 // Determine initial state
-                if action.use_position_to_adjust_player && action.match_target_transform.is_some() {
+                if action.use_walk_to_target_before_action {
+                    player_action.state = ActionState::WalkingToTargetBefore;
+                } else if action.use_position_to_adjust_player && action.match_target_transform.is_some() {
                     player_action.state = ActionState::AdjustingTransform;
                 } else {
                     player_action.state = ActionState::PlayingAnimation;
@@ -50,6 +54,24 @@ pub fn update_action_system(
              if let Ok((_, action, action_glob_transform)) = action_query.get(action_entity) {
                  
                  match player_action.state {
+                    ActionState::WalkingToTargetBefore => {
+                        // Walk-to-target is handled by update_walk_to_target_system
+                        // This state just waits for walk completion
+                        if player_action.walk_state == WalkToTargetState::ReachedTarget {
+                            // Transition to next state
+                            if action.use_position_to_adjust_player && action.match_target_transform.is_some() {
+                                player_action.state = ActionState::AdjustingTransform;
+                            } else {
+                                player_action.state = ActionState::PlayingAnimation;
+                            }
+                            player_action.action_timer = 0.0;
+                            info!("Action System: Reached walk target, transitioning to {:?}", player_action.state);
+                        } else if player_action.walk_state == WalkToTargetState::TimedOut {
+                            // Timeout - cancel action
+                            warn!("Action System: Walk to target timed out, cancelling action");
+                            action_ended = true;
+                        }
+                    }
                     ActionState::AdjustingTransform => {
                          if let Some(target_local) = action.match_target_transform {
                             // Calculate target world transform
@@ -92,6 +114,23 @@ pub fn update_action_system(
                         player_action.action_timer += time.delta_secs();
                         
                         if player_action.action_timer >= action.duration {
+                            // Check if we need to walk after action
+                            if action.use_walk_to_target_after_action {
+                                player_action.state = ActionState::WalkingToTargetAfter;
+                                player_action.walk_timer = 0.0;
+                                player_action.walk_state = WalkToTargetState::Idle;
+                            } else {
+                                player_action.state = ActionState::Finished;
+                            }
+                        }
+                    }
+                    ActionState::WalkingToTargetAfter => {
+                        // Walk-to-target is handled by update_walk_to_target_system
+                        if player_action.walk_state == WalkToTargetState::ReachedTarget {
+                            player_action.state = ActionState::Finished;
+                            info!("Action System: Reached walk target after action");
+                        } else if player_action.walk_state == WalkToTargetState::TimedOut {
+                            warn!("Action System: Walk after action timed out");
                             player_action.state = ActionState::Finished;
                         }
                     }
@@ -407,6 +446,83 @@ pub fn update_custom_action_manager_system(
             .entry(category_name)
             .or_insert_with(Vec::new)
             .push(entity);
+    }
+}
+
+/// System to handle walk-to-target for actions
+pub fn update_walk_to_target_system(
+    mut player_query: Query<(&mut PlayerActionSystem, Entity)>,
+    action_query: Query<&ActionSystem>,
+    mut navmesh_query: Query<&mut crate::player::navmesh_override::NavMeshOverride>,
+    mut enable_queue: ResMut<crate::player::navmesh_override::EnableNavMeshOverrideQueue>,
+    mut target_queue: ResMut<crate::player::navmesh_override::SetNavMeshTargetQueue>,
+) {
+    for (mut player_action, player_entity) in player_query.iter_mut() {
+        if !player_action.is_action_active {
+            continue;
+        }
+        
+        // Only process if in a walking state
+        let is_walking_state = matches!(
+            player_action.state,
+            ActionState::WalkingToTargetBefore | ActionState::WalkingToTargetAfter
+        );
+        
+        if !is_walking_state {
+            continue;
+        }
+        
+        if let Some(action_entity) = player_action.current_action {
+            if let Ok(action) = action_query.get(action_entity) {
+                // Initialize walk if needed
+                if player_action.walk_state == WalkToTargetState::Idle {
+                    // Enable NavMesh override
+                    enable_queue.0.push(crate::player::navmesh_override::EnableNavMeshOverrideEvent {
+                        entity: player_entity,
+                    });
+                    
+                    // Set target
+                    target_queue.0.push(crate::player::navmesh_override::SetNavMeshTargetEvent {
+                        entity: player_entity,
+                        target_position: action.walk_target_position,
+                        target_entity: action.walk_target_entity,
+                    });
+                    
+                    // Configure NavMesh settings
+                    if let Ok(mut navmesh) = navmesh_query.get_mut(player_entity) {
+                        navmesh.walk_speed = action.max_walk_speed;
+                        navmesh.min_distance = action.min_distance_to_target;
+                        navmesh.timeout = action.walk_timeout;
+                        navmesh.elapsed_time = 0.0;
+                    }
+                    
+                    player_action.walk_state = WalkToTargetState::Walking;
+                    player_action.walk_timer = 0.0;
+                    
+                    info!("Walk-to-Target: Started walking for action {}", action.action_name);
+                }
+                
+                // Monitor NavMesh status
+                if player_action.walk_state == WalkToTargetState::Walking {
+                    if let Ok(navmesh) = navmesh_query.get(player_entity) {
+                        match navmesh.path_status.as_str() {
+                            "Reached" => {
+                                player_action.walk_state = WalkToTargetState::ReachedTarget;
+                                info!("Walk-to-Target: Reached target");
+                            }
+                            "TimedOut" => {
+                                player_action.walk_state = WalkToTargetState::TimedOut;
+                                warn!("Walk-to-Target: Timed out");
+                            }
+                            _ => {
+                                // Still walking
+                                player_action.walk_timer += 0.016; // Approximate delta
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

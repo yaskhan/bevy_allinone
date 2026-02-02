@@ -29,6 +29,7 @@ impl Plugin for ActionSystemPlugin {
                 systems::update_action_system,
                 systems::update_animator_parameters_system,
                 systems::apply_match_target_system,
+                systems::update_walk_to_target_system,
                 systems::handle_custom_action_activation_system,
                 systems::update_custom_action_manager_system,
             ).chain());

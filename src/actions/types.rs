@@ -5,9 +5,21 @@ use std::collections::HashMap;
 pub enum ActionState {
     #[default]
     Idle,
+    WalkingToTargetBefore,
     AdjustingTransform,
     PlayingAnimation,
+    WalkingToTargetAfter,
     Finished,
+}
+
+/// Walk-to-target state for NavMesh integration
+#[derive(Debug, Clone, Copy, Default, PartialEq, Reflect)]
+pub enum WalkToTargetState {
+    #[default]
+    Idle,
+    Walking,
+    ReachedTarget,
+    TimedOut,
 }
 
 /// Animator parameters for action system
@@ -198,6 +210,19 @@ pub struct ActionSystem {
     pub disable_gravity: bool,
     pub disable_input: bool,
     
+    // Walk-to-target settings
+    pub use_walk_to_target_before_action: bool,
+    pub use_walk_to_target_after_action: bool,
+    pub walk_target_position: Option<Vec3>,
+    pub walk_target_entity: Option<Entity>,
+    pub max_walk_speed: f32,
+    pub min_distance_to_target: f32,
+    pub walk_timeout: f32,
+    pub use_raycast_to_adjust_target: bool,
+    pub raycast_layer_mask: u32,
+    pub activate_dynamic_obstacle_detection: bool,
+    pub dynamic_obstacle_distance_threshold: f32,
+    
     // Chaining
     pub activate_custom_action_after_complete: bool,
     pub custom_action_name_after_complete: String,
@@ -241,6 +266,17 @@ impl Default for ActionSystem {
             disable_physics: true,
             disable_gravity: true,
             disable_input: true,
+            use_walk_to_target_before_action: false,
+            use_walk_to_target_after_action: false,
+            walk_target_position: None,
+            walk_target_entity: None,
+            max_walk_speed: 2.0,
+            min_distance_to_target: 0.5,
+            walk_timeout: 10.0,
+            use_raycast_to_adjust_target: false,
+            raycast_layer_mask: 0,
+            activate_dynamic_obstacle_detection: false,
+            dynamic_obstacle_distance_threshold: 2.0,
             activate_custom_action_after_complete: false,
             custom_action_name_after_complete: String::new(),
             can_stop_previous_action: true,
@@ -265,6 +301,11 @@ pub struct PlayerActionSystem {
     pub current_action_category: Option<String>,
     pub action_waiting_to_resume: Option<Entity>,
     
+    // Walk-to-target state
+    pub walk_state: WalkToTargetState,
+    pub walk_timer: f32,
+    pub previous_navmesh_active: bool,
+    
     // State backup to restore after action
     pub previous_gravity_state: bool,
     pub previous_physics_state: bool,
@@ -279,6 +320,9 @@ impl Default for PlayerActionSystem {
             action_timer: 0.0,
             current_action_category: None,
             action_waiting_to_resume: None,
+            walk_state: WalkToTargetState::Idle,
+            walk_timer: 0.0,
+            previous_navmesh_active: false,
             previous_gravity_state: true,
             previous_physics_state: true,
         }

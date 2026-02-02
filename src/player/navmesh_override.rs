@@ -28,6 +28,12 @@ pub struct NavMeshOverride {
     pub target_entity: Option<Entity>,
     pub target_position: Option<Vec3>,
     pub path_status: String, // Placeholder for path status (e.g., "Moving", "Reached")
+    
+    // Walk settings
+    pub walk_speed: f32,
+    pub min_distance: f32,
+    pub timeout: f32,
+    pub elapsed_time: f32,
 }
 
 impl Default for NavMeshOverride {
@@ -37,6 +43,10 @@ impl Default for NavMeshOverride {
             target_entity: None,
             target_position: None,
             path_status: "Idle".to_string(),
+            walk_speed: 2.0,
+            min_distance: 0.5,
+            timeout: 10.0,
+            elapsed_time: 0.0,
         }
     }
 }
@@ -115,7 +125,7 @@ pub fn handle_navmesh_override_events(
 pub fn update_navmesh_override(
     mut query: Query<(&mut NavMeshOverride, &GlobalTransform, Option<&mut Transform>)>,
     global_transforms: Query<&GlobalTransform>,
-    // time: Res<Time>,
+    time: Res<Time>,
 ) {
     for (mut nav_override, char_global, mut char_transform) in query.iter_mut() {
         if !nav_override.active {
@@ -132,20 +142,35 @@ pub fn update_navmesh_override(
         }
 
         if let Some(destination) = dest {
-             // Simple debug check: if close enough, set to Reached
-             let dist = (destination - char_global.translation()).length();
-             if dist < 0.5 {
-                 if nav_override.path_status != "Reached" {
-                      nav_override.path_status = "Reached".to_string();
-                      info!("NavMesh Override: Reached target");
-                 }
-             } else {
-                 // Move towards target (Simple simulation)
-                  if let Some(transform) = char_transform.as_mut() {
-                      // Placeholder for actual movement logic
-                      let _ = transform; 
-                  }
-             }
+            // Update elapsed time
+            nav_override.elapsed_time += time.delta_secs();
+            
+            // Check timeout
+            if nav_override.elapsed_time >= nav_override.timeout {
+                if nav_override.path_status != "TimedOut" {
+                    nav_override.path_status = "TimedOut".to_string();
+                    warn!("NavMesh Override: Timed out after {} seconds", nav_override.timeout);
+                }
+                return;
+            }
+            
+            // Check distance to target
+            let dist = (destination - char_global.translation()).length();
+            if dist < nav_override.min_distance {
+                if nav_override.path_status != "Reached" {
+                    nav_override.path_status = "Reached".to_string();
+                    info!("NavMesh Override: Reached target (distance: {:.2})", dist);
+                }
+            } else {
+                // Move towards target (Simple simulation)
+                if let Some(transform) = char_transform.as_mut() {
+                    // Placeholder for actual movement logic
+                    // In a real implementation, this would use pathfinding
+                    let direction = (destination - char_global.translation()).normalize_or_zero();
+                    let movement = direction * nav_override.walk_speed * time.delta_secs();
+                    transform.translation += movement;
+                }
+            }
         }
     }
 }
