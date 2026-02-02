@@ -121,6 +121,21 @@ impl Default for MotorBikeController {
     }
 }
 
+/// Sphere controller.
+///
+/// GKC reference: `sphereController.cs`
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct SphereController {
+    pub enabled: bool,
+}
+
+impl Default for SphereController {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 /// Update vehicle type based on controller components.
 pub fn update_vehicle_controller_types(
     mut aircraft_vehicles: Query<&mut Vehicle, With<AirCraftController>>,
@@ -131,6 +146,7 @@ pub fn update_vehicle_controller_types(
     mut hoverboard_vehicles: Query<&mut Vehicle, With<HoverBoardController>>,
     mut hovercraft_vehicles: Query<&mut Vehicle, With<HoverCraftController>>,
     mut motorbike_vehicles: Query<&mut Vehicle, With<MotorBikeController>>,
+    mut sphere_vehicles: Query<&mut Vehicle, With<SphereController>>,
 ) {
     for mut vehicle in aircraft_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Aircraft;
@@ -155,5 +171,8 @@ pub fn update_vehicle_controller_types(
     }
     for mut vehicle in motorbike_vehicles.iter_mut() {
         vehicle.vehicle_type = VehicleType::Motorcycle;
+    }
+    for mut vehicle in sphere_vehicles.iter_mut() {
+        vehicle.vehicle_type = VehicleType::Sphere;
     }
 }

@@ -26,7 +26,7 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `hoverBoardController.cs`
 - [x] `hoverCraftController.cs`
 - [x] `motorBikeController.cs`
-- [ ] `sphereController.cs`
+- [x] `sphereController.cs`
 - [ ] `turretController.cs`
 - [ ] `vehicleController.cs`
 
