@@ -28,7 +28,7 @@ Source: `gkit/Scripts/Abilities System/`
 - [x] Ability-specific systems from GKC: `staminaSystem`
 - [x] Ability-specific systems from GKC: `throwObjectTrayectorySystem`
 - [x] Ability-specific systems from GKC: `wallRunningZoneSystem`
-- [ ] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
+- [x] Particle collision/trigger helpers (`particleCollisionDetection`, `particleTriggerDetection`)
 - [ ] Custom ability base/template behavior (`Custom Abilities/templateAbilitySystem`)
 - [ ] Abilities + weapons/powers integration hooks (GKC: `playerWeaponSystem`, `powersAndAbilitiesSystem`)
 - [ ] Ability pickup/enable hooks from inventory/pickups

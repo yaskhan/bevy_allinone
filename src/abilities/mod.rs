@@ -9,6 +9,7 @@ pub mod oxygen;
 pub mod stamina;
 pub mod throw_trajectory;
 pub mod wall_running_zone;
+pub mod particle_detection;
 
 use bevy::prelude::*;
 use types::*;
@@ -22,6 +23,7 @@ use oxygen::*;
 use stamina::*;
 use throw_trajectory::*;
 use wall_running_zone::*;
+use particle_detection::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -42,6 +44,14 @@ pub use oxygen::OxygenSystem;
 pub use stamina::StaminaSystem;
 pub use throw_trajectory::ThrowObjectTrajectory;
 pub use wall_running_zone::{WallRunningZone, WallRunningZoneTracker};
+pub use particle_detection::{
+    ParticleCollisionDetector,
+    ParticleTriggerDetector,
+    ParticleCollisionEvent,
+    ParticleTriggerEvent,
+    ParticleCollisionEventQueue,
+    ParticleTriggerEventQueue,
+};
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -52,13 +62,15 @@ impl Plugin for AbilitiesPlugin {
             // Register types
             .register_type::<AbilityInfo>()
             .register_type::<PlayerAbilitiesSystem>()
-            // Events
-            .add_event::<ActivateAbilityEvent>()
-            .add_event::<DeactivateAbilityEvent>()
-            .add_event::<SetAbilityEnabledEvent>()
-            .add_event::<AbilityCooldownEvent>()
-            .add_event::<AbilityTimeLimitEvent>()
-            .add_event::<MagicSpellCastEvent>()
+            // Events (Resource Queues)
+            .init_resource::<ActivateAbilityEventQueue>()
+            .init_resource::<DeactivateAbilityEventQueue>()
+            .init_resource::<SetAbilityEnabledEventQueue>()
+            .init_resource::<AbilityCooldownEventQueue>()
+            .init_resource::<AbilityTimeLimitEventQueue>()
+            .init_resource::<MagicSpellCastEventQueue>()
+            .init_resource::<ParticleCollisionEventQueue>()
+            .init_resource::<ParticleTriggerEventQueue>()
             // Add systems
             .add_systems(Update, (
                 update_player_abilities_context,
@@ -74,6 +86,8 @@ impl Plugin for AbilitiesPlugin {
                 update_stamina_system,
                 update_throw_trajectory,
                 update_wall_running_zones,
+                handle_particle_collision_events,
+                handle_particle_trigger_events,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
