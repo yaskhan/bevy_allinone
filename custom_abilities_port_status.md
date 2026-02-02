@@ -15,7 +15,7 @@ Source: `gkit/Scripts/Abilities System/Custom Abilities/`
 - [x] `laserVisionSystem.cs`
 - [x] `manualDetonationMineSystem.cs`
 - [x] `playerGravitySystem.cs`
-- [ ] `playerShieldSystem.cs`
+- [x] `playerShieldSystem.cs`
 - [ ] `playerStealthSystem.cs`
 - [ ] `removeGravityFromCharacterSystem.cs`
 - [ ] `templateAbilitySystem.cs`

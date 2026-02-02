@@ -24,6 +24,7 @@ pub mod drain_stat_system;
 pub mod laser_vision_system;
 pub mod manual_detonation_mine_system;
 pub mod player_gravity_system;
+pub mod player_shield_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -52,6 +53,7 @@ use drain_stat_system::*;
 use laser_vision_system::*;
 use manual_detonation_mine_system::*;
 use player_gravity_system::*;
+use player_shield_system::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -117,6 +119,7 @@ pub use manual_detonation_mine_system::{
     PlaceMineEventQueue,
 };
 pub use player_gravity_system::PlayerGravityAbility;
+pub use player_shield_system::PlayerShieldSystem;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;
@@ -182,6 +185,7 @@ impl Plugin for AbilitiesPlugin {
                 set_current_mine,
                 activate_current_mine,
                 update_player_gravity_ability,
+                update_player_shield_system,
                 handle_ability_activation,
                 handle_ability_deactivation,
                 handle_ability_enabled_events,
