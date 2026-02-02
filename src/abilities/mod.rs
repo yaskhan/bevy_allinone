@@ -18,6 +18,7 @@ pub mod grappling_hook_effect;
 pub mod grappling_hook_system;
 pub mod grappling_hook_target;
 pub mod grappling_hook_targets_system;
+pub mod object_to_attract_with_grappling_hook;
 
 use bevy::prelude::*;
 use types::*;
@@ -40,6 +41,7 @@ use grappling_hook_effect::*;
 use grappling_hook_system::*;
 use grappling_hook_target::*;
 use grappling_hook_targets_system::*;
+use object_to_attract_with_grappling_hook::*;
 
 // Re-export specific types for cleaner imports
 pub use types::AbilityStatus;
@@ -78,6 +80,7 @@ pub use grappling_hook_effect::GrapplingHookEffect;
 pub use grappling_hook_system::GrapplingHookSystem;
 pub use grappling_hook_target::GrapplingHookTarget;
 pub use grappling_hook_targets_system::GrapplingHookTargetsSystem;
+pub use object_to_attract_with_grappling_hook::ObjectToAttractWithGrapplingHook;
 
 /// Plugin for the abilities system
 pub struct AbilitiesPlugin;

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use avian3d::prelude::{LayerMask, SpatialQuery, SpatialQueryFilter, LinearVelocity};
 use crate::input::InputState;
 use super::grappling_hook_targets_system::GrapplingHookTargetsSystem;
+use super::object_to_attract_with_grappling_hook::ObjectToAttractWithGrapplingHook;
 use super::ability_info::AbilityInfo;
 
 /// Grappling hook system (core).
@@ -101,6 +102,7 @@ pub fn handle_grappling_hook_input(
     input: Res<InputState>,
     camera_query: Query<&GlobalTransform, With<Camera3d>>,
     target_query: Query<&GlobalTransform>,
+    attract_query: Query<&ObjectToAttractWithGrapplingHook>,
     mut query: Query<(&mut GrapplingHookSystem, &mut AbilityInfo, Option<&GrapplingHookTargetsSystem>)>,
 ) {
     let Some(camera) = camera_query.iter().next() else { return };
@@ -143,7 +145,8 @@ pub fn handle_grappling_hook_input(
                 hook.current_target = Some(hit.point);
                 hook.current_target_entity = Some(hit.entity);
                 hook.active = true;
-                hook.attracting_object_active = false;
+                hook.attracting_object_active = hook.attract_objects_enabled
+                    && attract_query.get(hit.entity).map(|a| a.enabled).unwrap_or(false);
                 hook.last_time_hook_active = time.elapsed_secs();
                 hook.last_time_object_moving = 0.0;
                 ability.active = true;
@@ -168,6 +171,7 @@ pub fn update_grappling_hook_forces(
     time: Res<Time>,
     input: Res<InputState>,
     mut player_query: Query<(Entity, &mut GrapplingHookSystem, &GlobalTransform, &mut LinearVelocity)>,
+    mut target_query: Query<(&GlobalTransform, &mut LinearVelocity, Option<&ObjectToAttractWithGrapplingHook>)>,
 ) {
     for (entity, mut hook, player_transform, mut velocity) in player_query.iter_mut() {
         if !hook.active {
@@ -195,26 +199,63 @@ pub fn update_grappling_hook_forces(
         to_target = to_target.normalize_or_zero();
         let mut force = to_target * movement_speed;
 
-        let mut movement_dir = Vec3::ZERO;
-        if hook.use_vertical_movement_on_hook {
-            movement_dir += Vec3::Y * input.movement.y;
-        } else {
-            let mut forward_input = input.movement.y;
-            if hook.ignore_backward_movement_on_hook {
-                forward_input = forward_input.clamp(0.0, 1.0);
+        if hook.attracting_object_active {
+            if let Some(target_entity) = hook.current_target_entity {
+                if let Ok((target_transform, mut target_velocity, attract_info)) = target_query.get_mut(target_entity) {
+                    let min_distance = attract_info
+                        .map(|a| a.custom_min_distance_to_stop)
+                        .unwrap_or(hook.min_distance_to_stop_attract_object);
+                    if distance <= min_distance {
+                        hook.active = false;
+                        hook.attracting_object_active = false;
+                        continue;
+                    }
+
+                    let attraction_force = if hook.increase_speed_active {
+                        hook.increased_attraction_force
+                    } else {
+                        hook.regular_attraction_force
+                    };
+
+                    let mut attraction = (player_pos - target_transform.translation()).normalize_or_zero() * attraction_force;
+
+                    if let Some(info) = attract_info {
+                        if info.use_custom_force_values && info.custom_add_up_force {
+                            if time.elapsed_secs() - hook.last_time_hook_active <= info.custom_up_force_duration {
+                                attraction += Vec3::Y * info.custom_up_force;
+                            }
+                        }
+                    } else if hook.add_up_force_for_attraction {
+                        if time.elapsed_secs() - hook.last_time_hook_active <= hook.add_up_force_for_attraction_duration {
+                            attraction += Vec3::Y * hook.up_force_for_attraction;
+                        }
+                    }
+
+                    target_velocity.0 = attraction;
+                }
             }
-            movement_dir += to_target * forward_input;
+        } else {
+            let mut movement_dir = Vec3::ZERO;
+            if hook.use_vertical_movement_on_hook {
+                movement_dir += Vec3::Y * input.movement.y;
+            } else {
+                let mut forward_input = input.movement.y;
+                if hook.ignore_backward_movement_on_hook {
+                    forward_input = forward_input.clamp(0.0, 1.0);
+                }
+                movement_dir += to_target * forward_input;
+            }
+
+            let right = player_transform.right().as_vec3();
+            movement_dir += right * input.movement.x;
+            force += movement_dir * hook.input_movement_multiplier;
+
+            if hook.add_vertical_falling_speed {
+                force -= Vec3::Y * hook.vertical_falling_speed;
+            }
+
+            velocity.0 = force;
         }
-
-        let right = player_transform.right().as_vec3();
-        movement_dir += right * input.movement.x;
-        force += movement_dir * hook.input_movement_multiplier;
-
-        if hook.add_vertical_falling_speed {
-            force -= Vec3::Y * hook.vertical_falling_speed;
-        }
-
-        velocity.0 = force;
 
         if hook.rotate_player_toward_target {
             let flat_dir = Vec3::new(to_target.x, 0.0, to_target.z).normalize_or_zero();
