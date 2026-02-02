@@ -26,6 +26,7 @@ pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
 pub mod melee_weapon_inventory_prefab_creation_system;
 pub mod player_inventory_categories_list_manager;
+pub mod use_inventory_object;
 
 use bevy::prelude::*;
 use types::*;
@@ -60,6 +61,7 @@ pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefa
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
 pub use melee_weapon_inventory_prefab_creation_system::MeleeWeaponInventoryPrefabCreationSystem;
 pub use player_inventory_categories_list_manager::PlayerInventoryCategoriesListManager;
+pub use use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent};
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -71,6 +73,8 @@ impl Plugin for InventoryPlugin {
         .add_event::<GetObjectFromInventoryEvent>()
         .add_event::<InventoryBankTransferEvent>()
         .add_event::<InventoryMenuPanelEvent>()
+        .add_event::<UseInventoryObjectEvent>()
+        .add_event::<InventoryObjectUsedEvent>()
         .add_systems(Update, (
             update_inventory,
             handle_pickup_events,
@@ -94,6 +98,7 @@ impl Plugin for InventoryPlugin {
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
+            use_inventory_object::update_use_inventory_object,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
