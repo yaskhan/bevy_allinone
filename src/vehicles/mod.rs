@@ -13,6 +13,7 @@ pub mod vehicle_interface;
 pub mod vehicle_laser;
 pub mod controllers;
 pub mod hoverboard_animation;
+pub mod vehicle_ai_navmesh;
 
 pub use types::*;
 pub use spawn::*;
@@ -36,6 +37,7 @@ pub use controllers::SphereController;
 pub use controllers::TurretController;
 pub use controllers::VehicleController;
 pub use hoverboard_animation::HoverBoardAnimationSystem;
+pub use vehicle_ai_navmesh::VehicleAINavMesh;
 
 use systems::*;
 
@@ -81,6 +83,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<TurretController>()
             .register_type::<VehicleController>()
             .register_type::<HoverBoardAnimationSystem>()
+            .register_type::<VehicleAINavMesh>()
             .add_systems(Update, (
                 input::vehicle_input_system,
                 sync::character_vehicle_sync_system,
@@ -112,6 +115,7 @@ impl Plugin for VehiclesPlugin {
                 vehicle_laser::update_vehicle_laser,
                 controllers::update_vehicle_controller_types,
                 hoverboard_animation::update_hoverboard_animation,
+                vehicle_ai_navmesh::update_vehicle_ai_navmesh,
             ));
     }
 }

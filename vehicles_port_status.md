@@ -31,6 +31,6 @@ Source: `gkit/Scripts/Vehicles/`
 - [x] `vehicleController.cs`
 
 ## Vehicle AI
-- [ ] `vehicleAINavMesh.cs`
+- [x] `vehicleAINavMesh.cs`
 - [ ] `WaypointCircuit.cs`
 - [ ] `WaypointProgressTracker.cs`
