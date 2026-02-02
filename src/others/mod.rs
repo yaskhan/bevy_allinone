@@ -14,6 +14,7 @@ pub mod event_object_found_on_raycast_system;
 pub mod fade_object;
 pub mod features_manager;
 pub mod flying_turret_system;
+pub mod follow_object_position_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -33,6 +34,7 @@ pub use event_object_found_on_raycast_system::{EventObjectFoundOnRaycastSystem, 
 pub use fade_object::FadeObject;
 pub use features_manager::FeaturesManager;
 pub use flying_turret_system::FlyingTurretSystem;
+pub use follow_object_position_system::FollowObjectPositionSystem;
 
 pub struct OthersPlugin;
 
@@ -55,6 +57,7 @@ impl Plugin for OthersPlugin {
                 event_object_found_on_raycast_system::update_event_object_found_on_raycast_system,
                 fade_object::update_fade_object,
                 flying_turret_system::update_flying_turret_system,
+                follow_object_position_system::update_follow_object_position_system,
             ));
     }
 }

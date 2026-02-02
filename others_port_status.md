@@ -17,7 +17,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `fadeObject.cs`
 - [x] `featuresManager.cs`
 - [x] `flyingTurretSystem.cs`
-- [ ] `followObjectPositionSystem.cs`
+- [x] `followObjectPositionSystem.cs`
 - [ ] `followObjectPositionUpdateSystem.cs`
 - [ ] `GKC_Utils.cs`
 - [ ] `headExplodeExample.cs`
