@@ -22,6 +22,7 @@ pub mod hide_body_part_on_character_system;
 pub mod ignore_collision_helper;
 pub mod ignore_collision_system;
 pub mod initial_pop_up_window;
+pub mod mechanism_part;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -49,6 +50,7 @@ pub use hide_body_part_on_character_system::HideBodyPartOnCharacterSystem;
 pub use ignore_collision_helper::IgnoreCollisionHelper;
 pub use ignore_collision_system::IgnoreCollisionSystem;
 pub use initial_pop_up_window::InitialPopUpWindow;
+pub use mechanism_part::MechanismPart;
 
 pub struct OthersPlugin;
 
