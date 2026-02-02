@@ -21,6 +21,7 @@ pub mod inventory_menu_icon_element;
 pub mod inventory_menu_panels_system;
 pub mod inventory_object_to_equip_info;
 pub mod inventory_prefab_creation_system;
+pub mod inventory_slot_options_buttons;
 
 use bevy::prelude::*;
 use types::*;
@@ -50,6 +51,7 @@ pub use inventory_menu_icon_element::InventoryMenuIconElement;
 pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPanelsSystem};
 pub use inventory_object_to_equip_info::InventoryObjectToEquipInfo;
 pub use inventory_prefab_creation_system::InventoryPrefabCreationSystem;
+pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
