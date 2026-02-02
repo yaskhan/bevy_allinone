@@ -15,16 +15,63 @@ pub fn update_abilities(
 }
 
 /// System to handle ability activation events
-pub fn handle_ability_activation() {
-    // Event handling would be added here if needed
+pub fn handle_ability_activation(
+    mut events: EventReader<ActivateAbilityEvent>,
+    mut abilities: Query<&mut AbilityInfo>,
+) {
+    for event in events.read() {
+        if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
+            if !ability.enabled {
+                continue;
+            }
+
+            ability.active = true;
+            ability.status = AbilityStatus::Active;
+
+            match event.input_type {
+                AbilityInputType::PressDown => {
+                    ability.use_press_down();
+                }
+                AbilityInputType::PressHold => {
+                    ability.use_press_hold();
+                }
+                AbilityInputType::PressUp => {
+                    ability.use_press_up();
+                }
+            }
+        }
+    }
 }
 
 /// System to handle ability deactivation events
-pub fn handle_ability_deactivation() {
-    // Event handling would be added here if needed
+pub fn handle_ability_deactivation(
+    mut events: EventReader<DeactivateAbilityEvent>,
+    mut abilities: Query<&mut AbilityInfo>,
+) {
+    for event in events.read() {
+        if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
+            ability.deactivate();
+            ability.status = if ability.enabled {
+                AbilityStatus::Enabled
+            } else {
+                AbilityStatus::Disabled
+            };
+        }
+    }
 }
 
 /// System to handle ability enable/disable events
-pub fn handle_ability_enabled_events() {
-    // Event handling would be added here if needed
+pub fn handle_ability_enabled_events(
+    mut events: EventReader<SetAbilityEnabledEvent>,
+    mut abilities: Query<&mut AbilityInfo>,
+) {
+    for event in events.read() {
+        if let Some(mut ability) = abilities.iter_mut().find(|a| a.name == event.ability_name) {
+            if event.enabled {
+                ability.enable();
+            } else {
+                ability.disable();
+            }
+        }
+    }
 }

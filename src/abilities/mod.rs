@@ -29,6 +29,10 @@ impl Plugin for AbilitiesPlugin {
             // Register types
             .register_type::<AbilityInfo>()
             .register_type::<PlayerAbilitiesSystem>()
+            // Events
+            .add_event::<ActivateAbilityEvent>()
+            .add_event::<DeactivateAbilityEvent>()
+            .add_event::<SetAbilityEnabledEvent>()
             // Add systems
             .add_systems(Update, (
                 update_abilities,
