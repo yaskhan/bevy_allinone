@@ -540,6 +540,7 @@ pub fn process_action_events_system(
     stats_query: Query<&crate::stats::stats_system::StatsSystem>,
     mut event_queue: ResMut<ActionEventTriggeredQueue>,
     mut remote_queue: ResMut<RemoteActionEventQueue>,
+    mut camera_queue: ResMut<CameraEventQueue>,
     time: Res<Time>,
 ) {
     for (mut player_action, player_entity, player_transform) in player_query.iter_mut() {
@@ -594,7 +595,7 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue);
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -633,7 +634,7 @@ pub fn process_action_events_system(
                                     &modes_query,
                                     &stats_query,
                                 ) {
-                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue);
+                                    fire_action_event(event, action_entity, player_entity, &mut event_queue, &mut remote_queue, &mut camera_queue);
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
                                     // Mark as triggered even if condition failed (don't retry)
@@ -654,6 +655,7 @@ fn fire_action_event(
     player_entity: Entity,
     event_queue: &mut ActionEventTriggeredQueue,
     remote_queue: &mut RemoteActionEventQueue,
+    camera_queue: &mut CameraEventQueue,
 ) {
     if event.use_bevy_event {
         event_queue.0.push(ActionEventTriggered {
@@ -670,6 +672,15 @@ fn fire_action_event(
             player_entity: if event.send_player_entity { Some(player_entity) } else { None },
         });
         info!("Remote Event: {} triggered", event.remote_event_name);
+    }
+    
+    if event.use_camera_event {
+        camera_queue.0.push(CameraEventTriggered {
+            event_type: event.camera_event_type.clone(),
+            player_entity,
+            action_entity,
+        });
+        info!("Camera Event: {:?} triggered", event.camera_event_type);
     }
 }
 

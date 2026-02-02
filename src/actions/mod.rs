@@ -24,6 +24,7 @@ impl Plugin for ActionSystemPlugin {
             .init_resource::<types::ActionInterruptedEventQueue>()
             .init_resource::<types::ActionEventTriggeredQueue>()
             .init_resource::<types::RemoteActionEventQueue>()
+            .init_resource::<types::CameraEventQueue>()
             .init_resource::<types::CustomActionManager>()
             
             // Register systems

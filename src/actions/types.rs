@@ -22,6 +22,22 @@ pub enum WalkToTargetState {
     TimedOut,
 }
 
+/// Camera event types for cinematic effects
+#[derive(Debug, Clone, Reflect, PartialEq)]
+pub enum CameraEventType {
+    None,
+    Shake { intensity: f32, duration: f32, frequency: f32 },
+    Zoom { target_fov: f32, duration: f32 },
+    Focus { target_position: Vec3, duration: f32 },
+    Offset { offset: Vec3, duration: f32 },
+}
+
+impl Default for CameraEventType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 /// Condition that must be met for an event to fire
 #[derive(Debug, Clone, Reflect, PartialEq)]
 pub enum EventCondition {
@@ -69,6 +85,10 @@ pub struct ActionEvent {
     // Animation timing
     pub use_animation_timing: bool,
     pub animation_normalized_time: f32,  // 0.0 to 1.0
+    
+    // Camera events
+    pub use_camera_event: bool,
+    pub camera_event_type: CameraEventType,
 }
 
 impl Default for ActionEvent {
@@ -86,6 +106,8 @@ impl Default for ActionEvent {
             check_condition_continuously: false,
             use_animation_timing: false,
             animation_normalized_time: 0.0,
+            use_camera_event: false,
+            camera_event_type: CameraEventType::None,
         }
     }
 }
@@ -499,3 +521,14 @@ pub struct RemoteActionEvent {
 
 #[derive(Resource, Default)]
 pub struct RemoteActionEventQueue(pub Vec<RemoteActionEvent>);
+
+/// Camera event triggered during action
+#[derive(Debug, Clone)]
+pub struct CameraEventTriggered {
+    pub event_type: CameraEventType,
+    pub player_entity: Entity,
+    pub action_entity: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct CameraEventQueue(pub Vec<CameraEventTriggered>);
