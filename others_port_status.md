@@ -53,7 +53,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `simpleEventSystem.cs`
 - [x] `SimpleFPSCounter.cs`
 - [x] `simpleLamp.cs`
-- [ ] `simpleLensFlareSystem.cs`
+- [x] `simpleLensFlareSystem.cs`
 - [ ] `simpleSetQuaternionRotation.cs`
 - [ ] `spawnObject.cs`
 - [ ] `SplineWalker.cs`
