@@ -5,7 +5,7 @@ Source: `gkit/Scripts/Vehicles/`
 ## Core Vehicle Systems
 - [x] `hoverBoardWayPoints.cs`
 - [x] `IKDrivingSystem.cs`
-- [ ] `launchTrayectory.cs`
+- [x] `launchTrayectory.cs`
 - [ ] `playerHUDManager.cs`
 - [ ] `shipInterfaceInfo.cs`
 - [ ] `skidsManager.cs`
