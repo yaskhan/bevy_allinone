@@ -29,7 +29,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `moveObjectSmoothlySystem.cs`
 - [x] `onEnableCheckSystem.cs`
 - [x] `openInitialPopUpWindow.cs`
-- [ ] `pauseAnimationSystem.cs`
+- [x] `pauseAnimationSystem.cs`
 - [ ] `placeObjectInCameraEditorPositionSystem.cs`
 - [ ] `playerOptionsEditorSystem.cs`
 - [ ] `playSoundOnCollision.cs`
