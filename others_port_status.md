@@ -30,7 +30,7 @@ Source: `gkit/Scripts/Others/`
 - [x] `onEnableCheckSystem.cs`
 - [x] `openInitialPopUpWindow.cs`
 - [x] `pauseAnimationSystem.cs`
-- [ ] `placeObjectInCameraEditorPositionSystem.cs`
+- [x] `placeObjectInCameraEditorPositionSystem.cs`
 - [ ] `playerOptionsEditorSystem.cs`
 - [ ] `playSoundOnCollision.cs`
 - [ ] `playSoundOnTriggerEnter.cs`

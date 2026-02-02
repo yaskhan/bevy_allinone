@@ -27,6 +27,7 @@ pub mod move_object_smoothly_system;
 pub mod on_enable_check_system;
 pub mod open_initial_pop_up_window;
 pub mod pause_animation_system;
+pub mod place_object_in_camera_editor_position_system;
 
 pub use add_force_to_object_system::AddForceToObjectSystem;
 pub use animator_trigger_enter_exit_event::{
@@ -59,6 +60,7 @@ pub use move_object_smoothly_system::MoveObjectSmoothlySystem;
 pub use on_enable_check_system::OnEnableCheckSystem;
 pub use open_initial_pop_up_window::OpenInitialPopUpWindow;
 pub use pause_animation_system::PauseAnimationSystem;
+pub use place_object_in_camera_editor_position_system::PlaceObjectInCameraEditorPositionSystem;
 
 pub struct OthersPlugin;
 
@@ -89,6 +91,7 @@ impl Plugin for OthersPlugin {
                 on_enable_check_system::update_on_enable_check_system,
                 open_initial_pop_up_window::update_open_initial_pop_up_window,
                 pause_animation_system::update_pause_animation_system,
+                place_object_in_camera_editor_position_system::update_place_object_in_camera_editor_position_system,
             ));
     }
 }
