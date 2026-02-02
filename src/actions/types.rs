@@ -565,6 +565,9 @@ pub struct PlayerActionSystem {
     // Saved weapon state
     pub saved_aim_state: bool,
     pub saved_weapon_index: usize,
+    pub saved_change_keys: bool,
+    pub saved_change_wheel: bool,
+    pub saved_change_number: bool,
 }
 
 impl Default for PlayerActionSystem {
@@ -587,6 +590,9 @@ impl Default for PlayerActionSystem {
             saved_strafe_state: false,
             saved_aim_state: false,
             saved_weapon_index: 0,
+            saved_change_keys: true,
+            saved_change_wheel: true,
+            saved_change_number: true,
         }
     }
 }

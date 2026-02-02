@@ -87,6 +87,19 @@ pub fn update_action_system(
                     }
                 }
                 
+                if control.disable_weapon_switching {
+                    if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                        player_action.saved_change_keys = weapon_manager.change_weapons_with_keys;
+                        player_action.saved_change_wheel = weapon_manager.change_weapons_with_mouse_wheel;
+                        player_action.saved_change_number = weapon_manager.change_weapons_with_number_keys;
+                        
+                        weapon_manager.change_weapons_with_keys = false;
+                        weapon_manager.change_weapons_with_mouse_wheel = false;
+                        weapon_manager.change_weapons_with_number_keys = false;
+                        info!("Weapon switching disabled during action");
+                    }
+                }
+                
                 info!("Started action: {} with state control (movement={}, rotation={}, input={}, gravity={}, invincible={})",
                     action.action_name, !control.disable_movement, !control.disable_rotation, 
                     !control.disable_input, !control.disable_gravity, control.invincible);
@@ -259,6 +272,16 @@ pub fn update_action_system(
                             if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
                                 weapon_manager.player_currently_busy = false;
                                 info!("Weapon input re-enabled");
+                            }
+                        }
+                        
+                        // Restore switching flags
+                        if control.disable_weapon_switching {
+                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.player_entity) {
+                                weapon_manager.change_weapons_with_keys = player_action.saved_change_keys;
+                                weapon_manager.change_weapons_with_mouse_wheel = player_action.saved_change_wheel;
+                                weapon_manager.change_weapons_with_number_keys = player_action.saved_change_number;
+                                info!("Weapon switching restored");
                             }
                         }
                         
@@ -672,6 +695,7 @@ pub fn process_action_events_system(
                     }
                 }
                 
+                let power_multiplier = action.player_state_control.power_drain_multiplier;
                 let elapsed = time.elapsed_secs() - player_action.event_start_time;
                 
                 if action.use_accumulative_delay {
@@ -713,6 +737,7 @@ pub fn process_action_events_system(
                                         &mut state_change_queue,
                                         &mut weapon_queue,
                                         &mut power_queue,
+                                        power_multiplier,
                                     );
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
@@ -763,6 +788,7 @@ pub fn process_action_events_system(
                                         &mut state_change_queue,
                                         &mut weapon_queue,
                                         &mut power_queue,
+                                        power_multiplier,
                                     );
                                     event.event_triggered = true;
                                 } else if !event.check_condition_continuously {
@@ -789,6 +815,7 @@ fn fire_action_event(
     state_change_queue: &mut StateChangeEventQueue,
     weapon_queue: &mut WeaponEventQueue,
     power_queue: &mut PowerEventQueue,
+    power_multiplier: f32,
 ) {
     if event.use_bevy_event {
         event_queue.0.push(ActionEventTriggered {
@@ -849,20 +876,28 @@ fn fire_action_event(
     }
 
     if event.use_power_event {
-        let amount = match &event.power_event_type {
+        let mut amount = match &event.power_event_type {
             PowerEventType::ConsumePower { amount } => *amount,
             PowerEventType::RestorePower { amount } => *amount,
-            PowerEventType::DrainOverTime { amount_per_second, .. } => *amount_per_second,
+            PowerEventType::DrainOverTime { amount_per_second, duration: _ } => *amount_per_second,
             PowerEventType::RequirePower { minimum_amount } => *minimum_amount,
             _ => 0.0,
         };
+        
+        // Apply multiplier for consumption and drain
+        match &event.power_event_type {
+            PowerEventType::ConsumePower { .. } | PowerEventType::DrainOverTime { .. } => {
+                amount *= power_multiplier;
+            }
+            _ => {}
+        }
         
         power_queue.0.push(PowerEventTriggered {
             event_type: event.power_event_type.clone(),
             player_entity,
             amount,
         });
-        info!("Power Event: {:?} triggered with amount {}", event.power_event_type, amount);
+        info!("Power Event: {:?} triggered with amount {} (mult: {})", event.power_event_type, amount, power_multiplier);
     }
 }
 
