@@ -5,6 +5,7 @@ use crate::weapons::{Weapon, WeaponManager};
 
 use super::events::PickupEventQueue;
 use super::melee_weapon_consumable_pickup::MeleeWeaponConsumablePickup;
+use super::melee_shield_pickup::MeleeShieldPickup;
 use super::melee_weapon_pickup::MeleeWeaponPickup;
 use super::weapon_pickup::WeaponPickup;
 
@@ -17,6 +18,7 @@ pub fn process_pickup_events(
     weapon_pickup_query: Query<&WeaponPickup>,
     melee_weapon_pickup_query: Query<&MeleeWeaponPickup>,
     melee_weapon_consumable_pickup_query: Query<&MeleeWeaponConsumablePickup>,
+    melee_shield_pickup_query: Query<&MeleeShieldPickup>,
 ) {
     for event in events.0.drain(..) {
         let mut picked = false;
@@ -42,6 +44,12 @@ pub fn process_pickup_events(
         if !picked {
             if let Ok(pickup) = melee_weapon_consumable_pickup_query.get(event.target) {
                 picked = handle_melee_weapon_consumable_pickup(event.source, pickup, &mut inventory_query);
+            }
+        }
+
+        if !picked {
+            if let Ok(pickup) = melee_shield_pickup_query.get(event.target) {
+                picked = handle_melee_shield_pickup(event.source, pickup, &mut inventory_query);
             }
         }
 
@@ -190,6 +198,37 @@ fn handle_melee_weapon_consumable_pickup(
         icon_path: String::new(),
         value: 0.0,
         category: "Melee Consumable".to_string(),
+        min_level: 0,
+        info: String::new(),
+    };
+
+    inventory.add_item(item).is_none()
+}
+
+fn handle_melee_shield_pickup(
+    player: Entity,
+    pickup: &MeleeShieldPickup,
+    inventory_query: &mut Query<&mut Inventory>,
+) -> bool {
+    if !pickup.store_picked_shields_on_inventory {
+        warn!("Melee shield pickup requires inventory storage. Storing by default.");
+    }
+
+    let Ok(mut inventory) = inventory_query.get_mut(player) else {
+        warn!("Melee shield pickup missing inventory on {:?}", player);
+        return false;
+    };
+
+    let item = InventoryItem {
+        item_id: pickup.shield_id.clone(),
+        name: pickup.shield_name.clone(),
+        quantity: 1,
+        max_stack: 1,
+        weight: 0.0,
+        item_type: ItemType::Equipment,
+        icon_path: String::new(),
+        value: 0.0,
+        category: "Shield".to_string(),
         min_level: 0,
         info: String::new(),
     };
