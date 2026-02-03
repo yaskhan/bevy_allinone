@@ -201,6 +201,72 @@ impl Default for MeleeCombat {
     }
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MeleeRangedWeaponSettings {
+    pub projectile_speed: f32,
+    pub projectile_lifetime: f32,
+    pub damage_multiplier: f32,
+    pub fire_cooldown: f32,
+    pub last_fire_time: f32,
+    pub aim_fov: f32,
+    pub aim_fov_speed: f32,
+    pub allow_hold_to_aim: bool,
+    pub returnable: bool,
+    pub return_delay: f32,
+    pub return_speed: f32,
+}
+
+impl Default for MeleeRangedWeaponSettings {
+    fn default() -> Self {
+        Self {
+            projectile_speed: 18.0,
+            projectile_lifetime: 4.0,
+            damage_multiplier: 1.0,
+            fire_cooldown: 0.35,
+            last_fire_time: -999.0,
+            aim_fov: 45.0,
+            aim_fov_speed: 8.0,
+            allow_hold_to_aim: true,
+            returnable: false,
+            return_delay: 0.5,
+            return_speed: 22.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MeleeRangedAimState {
+    pub aiming: bool,
+}
+
+impl Default for MeleeRangedAimState {
+    fn default() -> Self {
+        Self { aiming: false }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct ReturnToOwner {
+    pub owner: Entity,
+    pub delay: f32,
+    pub speed: f32,
+    pub timer: f32,
+}
+
+impl Default for ReturnToOwner {
+    fn default() -> Self {
+        Self {
+            owner: Entity::PLACEHOLDER,
+            delay: 0.0,
+            speed: 20.0,
+            timer: 0.0,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Reflect)]
 pub struct AttackDefinition {
     pub name: String,
