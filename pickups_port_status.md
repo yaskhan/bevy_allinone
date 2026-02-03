@@ -13,7 +13,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `pickUpManager.cs`
 - [x] `pickUpObject.cs`
 - [x] `pickUpsScreenInfo.cs`
-- [ ] `playerPickupIconManager.cs`
+- [x] `playerPickupIconManager.cs`
 
 ## Pickups Behaviour
 - [ ] `ammoPickup.cs`

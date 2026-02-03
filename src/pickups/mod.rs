@@ -10,6 +10,7 @@ pub mod pickup_icon_info;
 pub mod pickup_manager;
 pub mod pickup_object;
 pub mod pickups_screen_info;
+pub mod player_pickup_icon_manager;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -21,6 +22,7 @@ pub use pickup_icon_info::PickUpIconInfo;
 pub use pickup_manager::PickUpManager;
 pub use pickup_object::PickUpObject;
 pub use pickups_screen_info::PickUpsScreenInfo;
+pub use player_pickup_icon_manager::PlayerPickupIconManager;
 
 pub struct PickupsPlugin;
 
