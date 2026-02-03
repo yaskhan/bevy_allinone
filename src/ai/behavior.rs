@@ -11,6 +11,8 @@ pub fn update_ai_behavior(
         &mut CharacterController,
         &mut InputState,
         &mut AiMovement,
+        Option<&mut AiCombatBrain>,
+        Option<&AiCombatRangeSettings>,
     )>,
     target_query: Query<&GlobalTransform>,
     player_query: Query<&GlobalTransform, With<crate::character::Player>>,
@@ -18,7 +20,7 @@ pub fn update_ai_behavior(
 ) {
     let delta = time.delta_secs();
 
-    for (transform, mut ai, _controller, mut input, mut movement) in ai_query.iter_mut() {
+    for (transform, mut ai, _controller, mut input, mut movement, brain_opt, range_opt) in ai_query.iter_mut() {
         let current_pos = transform.translation();
         
         // Reset input state
@@ -52,6 +54,9 @@ pub fn update_ai_behavior(
                         let to_target = target_transform.translation() - current_pos;
                         if to_target.length() <= ai.attack_range {
                             ai.state = AiBehaviorState::Attack;
+                            if let (Some(mut brain), Some(range_settings)) = (brain_opt, range_opt) {
+                                update_combat_strategy(&mut brain, to_target.length(), range_settings);
+                            }
                         } else {
                             let move_dir = to_target.normalize_or_zero();
                             input.movement = Vec2::new(move_dir.x, move_dir.z);
@@ -70,6 +75,9 @@ pub fn update_ai_behavior(
                         if to_target.length() > ai.attack_range * 1.2 {
                             ai.state = AiBehaviorState::Chase;
                         } else {
+                            if let (Some(mut brain), Some(range_settings)) = (brain_opt, range_opt) {
+                                update_combat_strategy(&mut brain, to_target.length(), range_settings);
+                            }
                             input.attack_pressed = true;
                         }
                     } else {
@@ -146,6 +154,27 @@ pub fn update_ai_behavior(
             }
             _ => {}
         }
+    }
+}
+
+fn update_combat_strategy(
+    brain: &mut AiCombatBrain,
+    distance: f32,
+    settings: &AiCombatRangeSettings,
+) {
+    if distance <= settings.melee_range || distance <= settings.min_distance_to_draw {
+        brain.strategy = AiCombatStrategy::MeleeAdvanced;
+        return;
+    }
+
+    if distance >= settings.min_distance_to_shoot && distance <= settings.ranged_range {
+        brain.strategy = AiCombatStrategy::Ranged;
+        return;
+    }
+
+    if distance > settings.ranged_range {
+        brain.strategy = AiCombatStrategy::Ranged;
+        return;
     }
 }
 
