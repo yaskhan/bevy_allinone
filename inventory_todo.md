@@ -28,9 +28,9 @@ The UI layer has the most gaps compared to the Unity implementation.
     - [ ] Add background panels and blur effects (if desired).
 - [ ] **Interactive Features**
     - [ ] **Drag & Drop**: Implement drag-and-drop reordering of items.
-    - [ ] **Selection**: persistent selection state to show details in a side panel.
+    - [x] **Selection**: persistent selection state to show details in a side panel.
 - [ ] **Info Panels / Tooltips**
-    - [ ] Show `Description` and `Object Info` in a dedicated UI panel when an item is selected.
+    - [x] Show `Description` and `Object Info` in a dedicated UI panel when an item is selected.
     - [ ] "Full Inventory" / "Too Heavy" on-screen feedback messages.
 - [ ] **Zoom Controls**
     - [x] Implement input handling to zoom in/out with scroll wheel during item examination.

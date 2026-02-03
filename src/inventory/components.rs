@@ -90,3 +90,11 @@ pub struct InventorySlotIcon;
 
 #[derive(Component)]
 pub struct InventorySlotCount;
+
+#[derive(Resource, Default)]
+pub struct InventorySelection {
+    pub selected: Option<usize>,
+}
+
+#[derive(Component)]
+pub struct InventoryDetailsText;

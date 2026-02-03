@@ -117,6 +117,7 @@ pub fn setup_inventory_ui(mut commands: Commands) {
                             ..default()
                         },
                         BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 1.0)),
+                        Button,
                         InventoryUISlot { index: i },
                     )).with_children(|slot| {
                         // Icon (Placeholder)
@@ -147,6 +148,28 @@ pub fn setup_inventory_ui(mut commands: Commands) {
                         ));
                     });
                 }
+            });
+
+            // Details Panel
+            parent.spawn((
+                Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Px(120.0),
+                    margin: UiRect { top: Val::Px(10.0), ..default() },
+                    padding: UiRect::all(Val::Px(8.0)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(0.12, 0.12, 0.12, 0.9)),
+            )).with_children(|details| {
+                details.spawn((
+                    Text::new("Select an item to see details."),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                    InventoryDetailsText,
+                ));
             });
 
             // Weight Info (Footer)
@@ -190,6 +213,7 @@ pub fn update_inventory_ui(
     mut slot_query: Query<(&InventoryUISlot, &Children)>,
     mut icon_query: Query<&mut BackgroundColor, With<InventorySlotIcon>>,
     mut text_query: Query<&mut Text, With<InventorySlotCount>>,
+    selection: Res<InventorySelection>,
 ) {
     let Some(inventory) = inventory_query.iter().next() else { return };
 
@@ -222,5 +246,39 @@ pub fn update_inventory_ui(
                 }
             }
         }
+    }
+}
+
+pub fn handle_inventory_selection(
+    mut selection: ResMut<InventorySelection>,
+    mut interaction_query: Query<(&Interaction, &InventoryUISlot), Changed<Interaction>>,
+) {
+    for (interaction, slot) in interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            selection.selected = Some(slot.index);
+        }
+    }
+}
+
+pub fn update_inventory_details_panel(
+    selection: Res<InventorySelection>,
+    inventory_query: Query<&Inventory, With<InteractionDetector>>,
+    mut details_query: Query<&mut Text, With<InventoryDetailsText>>,
+) {
+    let Some(inventory) = inventory_query.iter().next() else { return };
+    let Ok(mut text) = details_query.get_single_mut() else { return };
+
+    let details = if let Some(index) = selection.selected {
+        if let Some(Some(item)) = inventory.items.get(index) {
+            format!("{} x{}\n{}\n{}", item.name, item.quantity, item.category, item.info)
+        } else {
+            "Empty slot.".to_string()
+        }
+    } else {
+        "Select an item to see details.".to_string()
+    };
+
+    if let Some(section) = text.sections.first_mut() {
+        section.value = details;
     }
 }
