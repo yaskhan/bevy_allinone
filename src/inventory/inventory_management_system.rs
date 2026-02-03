@@ -32,10 +32,10 @@ pub struct AddInventoryItemEvent {
 }
 
 pub fn apply_add_inventory_item_events(
-    mut events: EventReader<AddInventoryItemEvent>,
+    mut events: ResMut<Events<AddInventoryItemEvent>>,
     mut inventories: Query<(&mut Inventory, Option<&InventoryConfig>)>,
 ) {
-    for event in events.read() {
+    for event in events.drain() {
         let Ok((mut inventory, config)) = inventories.get_mut(event.owner) else { continue };
 
         let config = config.copied().unwrap_or_else(InventoryConfig::default);

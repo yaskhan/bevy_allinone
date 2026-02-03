@@ -48,7 +48,7 @@ The UI layer has the most gaps compared to the Unity implementation.
 - [ ] **Auto-Equip Rules**:
     - [x] `equipWeaponsWhenPicked`: Auto-equip weapon on pickup.
     - [x] `equipPickedWeaponOnlyItNotPreviousWeaponEquipped`: Logic to avoid replacing currently active weapon.
-    - [ ] `swapping`: Logic to swap currently held weapon with picked one if full.
+    - [x] `swapping`: Logic to swap currently held weapon with picked one if full.
 - [ ] **Ammo Integration**:
     - [x] `checkIfWeaponUseAmmoFromInventory`: Logic to sync weapon ammo clip with inventory reserves. (Implemented in `ammo_sync_system.rs`, gated by `use_ammo_from_inventory`).
 - [ ] **Audio Feedback**:

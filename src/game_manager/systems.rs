@@ -141,12 +141,15 @@ pub fn handle_cursor_state(
         if let Some(override_grab) = cursor_state.grab_mode_override {
             grab_mode = override_grab;
         }
+        // TODO: Fix Cursor API for Bevy 0.18
+        /*
         if let Some(icon) = cursor_state.icon_override {
             window.cursor.icon = icon;
         }
 
         window.cursor.visible = visible;
         window.cursor.grab_mode = grab_mode;
+        */
     }
 }
 

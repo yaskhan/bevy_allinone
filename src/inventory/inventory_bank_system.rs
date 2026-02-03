@@ -17,11 +17,11 @@ pub struct InventoryBankTransferEvent {
 }
 
 pub fn update_inventory_bank_system(
-    mut events: EventReader<InventoryBankTransferEvent>,
+    mut events: ResMut<Events<InventoryBankTransferEvent>>,
     mut inventories: Query<&mut Inventory>,
     mut banks: Query<&mut InventoryBankManager>,
 ) {
-    for event in events.read() {
+    for event in events.drain() {
         let Ok(mut bank) = banks.get_mut(event.bank) else { continue };
         let Ok(mut owner_inventory) = inventories.get_mut(event.owner) else { continue };
 

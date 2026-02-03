@@ -68,12 +68,12 @@ pub fn ensure_examine_camera(
 
 pub fn handle_examine_item(
     mut commands: Commands,
-    mut events: EventReader<ExamineInventoryItemEvent>,
+    mut events: ResMut<Events<ExamineInventoryItemEvent>>,
     registry: Res<InventoryItemPreviewRegistry>,
     settings: Res<InventoryExamineSettings>,
     existing: Query<Entity, With<InventoryExaminePreview>>,
 ) {
-    let Some(event) = events.read().last() else { return };
+    let Some(event) = events.drain().last() else { return };
 
     for entity in existing.iter() {
         commands.entity(entity).despawn_recursive();
@@ -122,7 +122,7 @@ pub fn update_examine_zoom(
     settings.preview_distance = (settings.preview_distance - scroll_delta * settings.zoom_speed)
         .clamp(settings.min_distance, settings.max_distance);
 
-    if let Ok(mut transform) = camera_query.get_single_mut() {
+    if let Ok(mut transform) = camera_query.single_mut() {
         transform.translation.z = settings.preview_distance;
     }
 }

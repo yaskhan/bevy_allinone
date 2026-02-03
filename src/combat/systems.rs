@@ -137,7 +137,7 @@ pub fn perform_melee_hitbox_damage(
                         source: Some(attacker_entity),
                         target: hit.entity,
                         position: Some(origin),
-                        direction: Some(attacker_transform.forward()),
+                        direction: Some(*attacker_transform.forward()),
                         ignore_shield: false,
                     });
                     zone.last_hit_time = now;
@@ -314,7 +314,7 @@ pub fn update_follow_thrown_weapons(
     for (entity, mut transform, mut follow) in query.iter_mut() {
         follow.lifetime -= dt;
         if follow.lifetime <= 0.0 {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
             continue;
         }
 

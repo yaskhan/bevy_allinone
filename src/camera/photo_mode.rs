@@ -57,7 +57,7 @@ pub fn handle_photo_mode_toggle(
         return;
     }
 
-    let Ok((mut transform, mut controller)) = camera_query.get_single_mut() else {
+    let Ok((mut transform, mut controller)) = camera_query.single_mut() else {
         return;
     };
 
@@ -87,7 +87,7 @@ pub fn update_photo_mode(
         return;
     }
 
-    let Ok(mut transform) = camera_query.get_single_mut() else {
+    let Ok(mut transform) = camera_query.single_mut() else {
         return;
     };
 

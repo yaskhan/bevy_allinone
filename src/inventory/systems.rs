@@ -11,12 +11,13 @@ use crate::weapons::WeaponManager;
 pub fn handle_pickup_events(
     mut commands: Commands,
     mut events: ResMut<InteractionEventQueue>,
-    mut inventory_query: Query<(&mut Inventory, Option<&InventoryConfig>)>,
+    mut inventory_query: Query<(&mut Inventory, Option<&InventoryConfig>, &GlobalTransform)>,
     item_query: Query<&PhysicalItem>,
     ability_pickup_query: Query<&AbilityPickup>,
     mut abilities_query: Query<&mut AbilityInfo>,
     mut player_abilities_query: Query<&mut PlayerAbilitiesSystem>,
-    weapon_manager_query: Query<&WeaponManager>,
+    mut weapon_manager_query: Query<&mut WeaponManager>,
+    weapon_query: Query<&crate::weapons::Weapon>,
     mut equip_events: EventWriter<RequestEquipWeaponEvent>,
 ) {
     let events_to_process: Vec<InteractionEvent> = events.0.drain(..).collect();
@@ -24,14 +25,82 @@ pub fn handle_pickup_events(
     for event in events_to_process {
         if event.interaction_type == InteractionType::Pickup {
             // Check if source has inventory
-            if let Ok((mut inventory, config_opt)) = inventory_query.get_mut(event.source) {
+            if let Ok((mut inventory, config_opt, transform)) = inventory_query.get_mut(event.source) {
                 // Check if target is a physical item
                 if let Ok(physical_item) = item_query.get(event.target) {
                     // Try add
                     if let Some(leftover) = inventory.add_item(physical_item.item.clone()) {
-                        info!("Inventory full! Could not pick up {}", leftover.name);
-                        // Optional: update physical item quantity to leftover?
-                        commands.entity(event.source).insert(InventoryPickupFeedback::FullInventory);
+                        
+                        // Swapping Logic: If inventory is full and we are picking up a weapon
+                        let mut swapped = false;
+                        if leftover.item_type == ItemType::Weapon {
+                            if let Ok(mut weapon_manager) = weapon_manager_query.get_mut(event.source) {
+                                if weapon_manager.weapons_mode_active {
+                                    if let Some(weapon_entity) = weapon_manager.weapons_list.get(weapon_manager.current_index).copied() { // check current index
+                                        if let Ok(current_weapon) = weapon_query.get(weapon_entity) {
+                                            // Find this weapon in inventory
+                                            let slot_index_opt = inventory.items.iter().position(|slot| {
+                                                 if let Some(item) = slot {
+                                                     item.name == current_weapon.weapon_name // Assume name match for now
+                                                 } else {
+                                                     false
+                                                 }
+                                            });
+
+                                            if let Some(slot_index) = slot_index_opt {
+                                                // 1. Remove from Inventory (Drop it)
+                                                if let Some(mut old_item) = inventory.items[slot_index].take() {
+                                                    // Spawn dropped item
+                                                    let spawn_pos = transform.translation() + transform.forward() * 1.0;
+                                                    commands.spawn((
+                                                        Name::new(format!("Dropped {}", old_item.name)),
+                                                        PhysicalItem { item: old_item },
+                                                        Transform::from_translation(spawn_pos),
+                                                        GlobalTransform::default(),
+                                                    ));
+                                                }
+
+                                                // 2. Remove from WeaponManager (Despawn visual)
+                                                commands.entity(weapon_entity).despawn();
+                                                weapon_manager.weapons_list.remove(weapon_manager.current_index);
+                                                // Adjust index if needed? If we remove current, usage might break if we don't reset.
+                                                // Usually safe to set index to last or 0, but we are about to equip new one.
+                                                if weapon_manager.current_index >= weapon_manager.weapons_list.len() {
+                                                    weapon_manager.current_index = weapon_manager.weapons_list.len().saturating_sub(1);
+                                                }
+                                                weapon_manager.weapons_mode_active = false; // Temporarily disable?
+
+                                                // 3. Add NEW item (now there should be space)
+                                                // Actually we made space by setting slot to None.
+                                                // inventory.add_item might put it in a different slot, but that's fine.
+                                                // Note: 'leftover' is the item that failed to add.
+                                                if inventory.add_item(leftover).is_none() {
+                                                    info!("Swapped weapon: Dropped {} for {}", current_weapon.weapon_name, physical_item.item.name);
+                                                    
+                                                    // 4. Equip NEW item
+                                                    equip_events.send(RequestEquipWeaponEvent {
+                                                        owner: event.source,
+                                                        weapon_id: physical_item.item.name.clone(),
+                                                    });
+                                                    
+                                                    // 5. Despawn picked up entity
+                                                    commands.entity(event.target).despawn();
+                                                    swapped = true;
+                                                } else {
+                                                    // Should not happen if we freed a slot and adding 1 item
+                                                    warn!("Failed to add weapon even after swap!");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if !swapped {
+                             info!("Inventory full! Could not pick up {}", leftover.name);
+                             commands.entity(event.source).insert(InventoryPickupFeedback::FullInventory);
+                        }
                     } else {
                         info!("Picked up {}", physical_item.item.name);
                         
@@ -42,11 +111,10 @@ pub fn handle_pickup_events(
                                 let mut perform_equip = true;
                                 if config.auto_equip_only_if_empty {
                                     if let Ok(weapon_manager) = weapon_manager_query.get(event.source) {
-                                        if weapon_manager.weapons_mode_active { // Simplified check: if weapons mode is active, assume something is equipped/held
+                                        if weapon_manager.weapons_mode_active && !weapon_manager.weapons_list.is_empty() { 
+                                            // Check length to be sure, implies something is equipped
                                             perform_equip = false;
                                         }
-                                        // Refined check: check if any weapon is actually marked as equipped in manager list?
-                                        // The manager.weapons_mode_active is a good high-level check for "holding a gun".
                                     }
                                 }
 

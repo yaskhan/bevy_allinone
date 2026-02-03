@@ -26,10 +26,10 @@ pub struct InventoryMenuPanelEvent {
 }
 
 pub fn update_inventory_menu_panels_system(
-    mut events: EventReader<InventoryMenuPanelEvent>,
+    mut events: ResMut<Events<InventoryMenuPanelEvent>>,
     mut query: Query<&mut InventoryMenuPanelsSystem>,
 ) {
-    for event in events.read() {
+    for event in events.drain() {
         for mut system in query.iter_mut() {
             system.current_panel = event.panel.clone();
         }
