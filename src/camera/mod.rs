@@ -9,6 +9,7 @@ mod bob;
 mod state_offsets;
 mod collision_lean;
 mod lock;
+mod lock_ui;
 mod zones;
 mod bounds;
 mod waypoints;
@@ -30,6 +31,7 @@ pub use bob::*;
 pub use state_offsets::*;
 pub use collision_lean::*;
 pub use lock::*;
+pub use lock_ui::*;
 pub use zones::*;
 pub use bounds::*;
 pub use waypoints::*;
@@ -50,6 +52,8 @@ impl Plugin for CameraPlugin {
             .register_type::<PointShake>()
             .register_type::<CameraBobState>()
             .register_type::<CameraTargetState>()
+            .register_type::<LockOnReticleRoot>()
+            .register_type::<LockOnReticleIcon>()
             .register_type::<CameraZone>()
             .register_type::<CameraZoneTracker>()
             .register_type::<CameraBounds>()
@@ -62,6 +66,9 @@ impl Plugin for CameraPlugin {
                 others::CameraOthersPlugin,
                 vehicles::CameraVehiclesPlugin,
                 bounds::CameraBoundsPlugin,
+            ))
+            .add_systems(Startup, (
+                setup_lock_on_reticle_ui,
             ))
             .add_systems(Update, (
                 update_camera_state_offsets,
@@ -82,6 +89,7 @@ impl Plugin for CameraPlugin {
                 update_camera_fov,
                 update_camera_waypoint_follow,
                 handle_camera_mode_switch,
+                update_lock_on_reticle_ui,
             ).chain());
     }
 }
