@@ -4,22 +4,27 @@ use crate::abilities::{AbilityPickup, PlayerAbilitiesSystem, AbilityInfo};
 use crate::input::InputState;
 use super::components::*;
 use super::types::{InventoryItem, ItemType};
+use super::inventory_management_system::InventoryConfig;
+use super::weapon_equip_system::RequestEquipWeaponEvent;
+use crate::weapons::WeaponManager;
 
 pub fn handle_pickup_events(
     mut commands: Commands,
     mut events: ResMut<InteractionEventQueue>,
-    mut inventory_query: Query<&mut Inventory>,
+    mut inventory_query: Query<(&mut Inventory, Option<&InventoryConfig>)>,
     item_query: Query<&PhysicalItem>,
     ability_pickup_query: Query<&AbilityPickup>,
     mut abilities_query: Query<&mut AbilityInfo>,
     mut player_abilities_query: Query<&mut PlayerAbilitiesSystem>,
+    weapon_manager_query: Query<&WeaponManager>,
+    mut equip_events: EventWriter<RequestEquipWeaponEvent>,
 ) {
     let events_to_process: Vec<InteractionEvent> = events.0.drain(..).collect();
     
     for event in events_to_process {
         if event.interaction_type == InteractionType::Pickup {
             // Check if source has inventory
-            if let Ok(mut inventory) = inventory_query.get_mut(event.source) {
+            if let Ok((mut inventory, config_opt)) = inventory_query.get_mut(event.source) {
                 // Check if target is a physical item
                 if let Ok(physical_item) = item_query.get(event.target) {
                     // Try add
@@ -29,6 +34,31 @@ pub fn handle_pickup_events(
                         commands.entity(event.source).insert(InventoryPickupFeedback::FullInventory);
                     } else {
                         info!("Picked up {}", physical_item.item.name);
+                        
+                        // Auto-equip logic
+                        if physical_item.item.item_type == ItemType::Weapon {
+                            let config = config_opt.copied().unwrap_or_else(InventoryConfig::default);
+                            if config.auto_equip_weapon_on_pickup {
+                                let mut perform_equip = true;
+                                if config.auto_equip_only_if_empty {
+                                    if let Ok(weapon_manager) = weapon_manager_query.get(event.source) {
+                                        if weapon_manager.weapons_mode_active { // Simplified check: if weapons mode is active, assume something is equipped/held
+                                            perform_equip = false;
+                                        }
+                                        // Refined check: check if any weapon is actually marked as equipped in manager list?
+                                        // The manager.weapons_mode_active is a good high-level check for "holding a gun".
+                                    }
+                                }
+
+                                if perform_equip {
+                                    equip_events.send(RequestEquipWeaponEvent {
+                                        owner: event.source,
+                                        weapon_id: physical_item.item.name.clone(),
+                                    });
+                                }
+                            }
+                        }
+
                         // Despawn physical entity
                         commands.entity(event.target).despawn();
 

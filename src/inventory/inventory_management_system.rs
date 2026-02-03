@@ -9,6 +9,8 @@ pub struct InventoryConfig {
     pub max_slots: usize,
     pub max_weight: f32,
     pub infinite_slots: bool,
+    pub auto_equip_weapon_on_pickup: bool,
+    pub auto_equip_only_if_empty: bool,
 }
 
 impl Default for InventoryConfig {
@@ -17,6 +19,8 @@ impl Default for InventoryConfig {
             max_slots: 24,
             max_weight: 100.0,
             infinite_slots: false,
+            auto_equip_weapon_on_pickup: true,
+            auto_equip_only_if_empty: true,
         }
     }
 }

@@ -47,6 +47,7 @@ pub mod inventory_drop_system;
 pub mod inventory_stack_system;
 pub mod inventory_combine_system;
 pub mod ammo_sync_system;
+pub mod auto_equip_settings;
 pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
@@ -135,6 +136,7 @@ pub use weapon_inventory_prefab_creation_system::WeaponInventoryPrefabCreationSy
 pub use item_effects::{ItemEffectRegistry, ItemEffect};
 pub use weapon_equip_system::{RequestEquipWeaponEvent, WeaponSpawnRegistry};
 pub use ammo_sync_system::sync_weapon_ammo_with_inventory;
+pub use auto_equip_settings::InventoryAutoEquipSettings;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -147,6 +149,7 @@ impl Plugin for InventoryPlugin {
         .init_resource::<InventoryExamineSettings>()
         .init_resource::<CombineRecipeRegistry>()
         .init_resource::<WeaponSpawnRegistry>()
+        .init_resource::<InventoryAutoEquipSettings>()
         .init_resource::<InventorySelection>()
         .init_resource::<InventorySlotDragState>()
         .add_event::<CurrencyTransactionEvent>()

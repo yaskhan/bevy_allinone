@@ -46,8 +46,8 @@ The UI layer has the most gaps compared to the Unity implementation.
 - [ ] **Inventory Slot Options Panel**:
     - [ ] Context menu on slot click (Use, Equip, Drop, Combine, Examine, Discard). C# has `inventoryOptionsOnSlotPanel`.
 - [ ] **Auto-Equip Rules**:
-    - [ ] `equipWeaponsWhenPicked`: Auto-equip weapon on pickup.
-    - [ ] `equipPickedWeaponOnlyItNotPreviousWeaponEquipped`: Logic to avoid replacing currently active weapon.
+    - [x] `equipWeaponsWhenPicked`: Auto-equip weapon on pickup.
+    - [x] `equipPickedWeaponOnlyItNotPreviousWeaponEquipped`: Logic to avoid replacing currently active weapon.
     - [ ] `swapping`: Logic to swap currently held weapon with picked one if full.
 - [ ] **Ammo Integration**:
     - [x] `checkIfWeaponUseAmmoFromInventory`: Logic to sync weapon ammo clip with inventory reserves. (Implemented in `ammo_sync_system.rs`, gated by `use_ammo_from_inventory`).
