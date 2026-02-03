@@ -37,6 +37,28 @@ impl Default for TurretCombat {
     }
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct TurretLaser {
+    pub enabled: bool,
+    pub damage_per_second: f32,
+    pub max_distance: f32,
+    pub color: Color,
+    pub require_line_of_sight: bool,
+}
+
+impl Default for TurretLaser {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            damage_per_second: 8.0,
+            max_distance: 25.0,
+            color: Color::srgb(1.0, 0.1, 0.1),
+            require_line_of_sight: true,
+        }
+    }
+}
+
 impl Default for Turret {
     fn default() -> Self {
         Self {
@@ -171,6 +193,58 @@ pub fn update_turret_firing(
                 ignore_shield: false,
             });
             combat.last_fire_time = now;
+        }
+    }
+}
+
+pub fn update_turret_lasers(
+    time: Res<Time>,
+    spatial_query: SpatialQuery,
+    mut damage_queue: ResMut<DamageEventQueue>,
+    turret_query: Query<(Entity, &Turret, &GlobalTransform, &TurretLaser)>,
+    target_query: Query<&GlobalTransform>,
+    mut gizmos: Gizmos,
+) {
+    let dt = time.delta_secs();
+
+    for (entity, turret, turret_transform, laser) in turret_query.iter() {
+        if !laser.enabled {
+            continue;
+        }
+
+        let Some(target_entity) = turret.target else { continue };
+        let Ok(target_gt) = target_query.get(target_entity) else { continue };
+
+        let origin = turret_transform.translation();
+        let target_pos = target_gt.translation();
+        let to_target = target_pos - origin;
+        let dist = to_target.length();
+        if dist > laser.max_distance {
+            continue;
+        }
+
+        let mut can_fire = true;
+        if laser.require_line_of_sight {
+            let dir = Dir3::new(to_target).unwrap_or(Dir3::Z);
+            let filter = SpatialQueryFilter::from_excluded_entities([entity]);
+            if let Some(hit) = spatial_query.cast_ray(origin, dir, dist, true, &filter) {
+                if hit.entity != target_entity {
+                    can_fire = false;
+                }
+            }
+        }
+
+        if can_fire {
+            gizmos.line(origin, target_pos, laser.color);
+            damage_queue.0.push(DamageEvent {
+                amount: laser.damage_per_second * dt,
+                damage_type: DamageType::Electric,
+                source: Some(entity),
+                target: target_entity,
+                position: Some(target_pos),
+                direction: Some(to_target.normalize_or_zero()),
+                ignore_shield: false,
+            });
         }
     }
 }

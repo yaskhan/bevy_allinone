@@ -48,6 +48,7 @@ impl Plugin for AiPlugin {
             .register_type::<FactionRelation>()
             .register_type::<Turret>()
             .register_type::<TurretCombat>()
+            .register_type::<TurretLaser>()
             .register_type::<AiCombatSettings>()
             .register_type::<PatrolPath>()
             .register_type::<AIPerceptionSettings>()
@@ -67,6 +68,7 @@ impl Plugin for AiPlugin {
                 update_patrol,
                 update_turrets,
                 update_turret_firing,
+                update_turret_lasers,
                 update_ai_combat,
                 update_ai_hiding,
                 draw_ai_vision_cones,
