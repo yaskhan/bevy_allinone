@@ -25,6 +25,7 @@ pub mod inventory_weight_bag_pickup;
 pub mod jetpack_fuel_pickup;
 pub mod map_pickup;
 pub mod melee_shield_pickup;
+pub mod melee_weapon_consumable_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -51,6 +52,7 @@ pub use inventory_weight_bag_pickup::InventoryWeightBagPickup;
 pub use jetpack_fuel_pickup::JetpackFuelPickup;
 pub use map_pickup::MapPickup;
 pub use melee_shield_pickup::MeleeShieldPickup;
+pub use melee_weapon_consumable_pickup::MeleeWeaponConsumablePickup;
 
 pub struct PickupsPlugin;
 

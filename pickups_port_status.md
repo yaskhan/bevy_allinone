@@ -29,7 +29,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `jetpackFuelPickup.cs`
 - [x] `mapPickup.cs`
 - [x] `meleeShieldPickup.cs`
-- [ ] `meleeWeaponConsumablePickup.cs`
+- [x] `meleeWeaponConsumablePickup.cs`
 - [ ] `meleeWeaponPickup.cs`
 - [ ] `moneyPickup.cs`
 - [ ] `oxygenPickup.cs`
