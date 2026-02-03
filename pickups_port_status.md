@@ -9,7 +9,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `explosiveBarrel.cs`
 - [x] `pickUpElementInfo.cs`
 - [x] `pickUpIcon.cs`
-- [ ] `pickUpIconInfo.cs`
+- [x] `pickUpIconInfo.cs`
 - [ ] `pickUpManager.cs`
 - [ ] `pickUpObject.cs`
 - [ ] `pickUpsScreenInfo.cs`
