@@ -11,12 +11,14 @@ use super::components::Inventory;
 use super::item_effects::{ItemEffectRegistry, ItemEffect};
 use super::use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent};
 use super::melee_weapon_equipment_system::EquipMeleeWeaponEvent;
+use super::weapon_equip_system::RequestEquipWeaponEvent;
 use crate::character::CharacterMovementState;
 
 pub fn apply_inventory_item_effects(
     mut use_events: EventReader<UseInventoryObjectEvent>,
     mut used_events: EventWriter<InventoryObjectUsedEvent>,
     mut equip_events: EventWriter<EquipMeleeWeaponEvent>,
+    mut request_weapon_equip: EventWriter<RequestEquipWeaponEvent>,
     registry: Res<ItemEffectRegistry>,
     mut inventories: Query<&mut Inventory>,
     mut health_query: Query<&mut Health>,
@@ -69,6 +71,7 @@ pub fn apply_inventory_item_effects(
             &mut weapon_manager_query,
             &mut weapon_query,
             &mut equip_events,
+            &mut request_weapon_equip,
         );
 
         if let Some(slot) = inventory.items.get_mut(slot_index) {
@@ -104,6 +107,7 @@ fn apply_effects(
     weapon_manager_query: &mut Query<&mut WeaponManager>,
     weapon_query: &mut Query<&mut Weapon>,
     equip_events: &mut EventWriter<EquipMeleeWeaponEvent>,
+    request_weapon_equip: &mut EventWriter<RequestEquipWeaponEvent>,
 ) {
     let amount_mult = quantity as f32;
     for effect in effects {
@@ -170,8 +174,11 @@ fn apply_effects(
                     }
                 }
             }
-            ItemEffect::EquipWeapon { .. } => {
-                // TODO: Integrate with ranged weapon inventory/equip system.
+            ItemEffect::EquipWeapon { weapon_id } => {
+                request_weapon_equip.send(RequestEquipWeaponEvent {
+                    owner,
+                    weapon_id: weapon_id.clone(),
+                });
             }
             ItemEffect::EquipMeleeWeapon { weapon_id } => {
                 equip_events.send(EquipMeleeWeaponEvent {

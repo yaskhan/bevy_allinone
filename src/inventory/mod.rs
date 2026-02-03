@@ -19,6 +19,7 @@ pub mod weapon_on_inventory;
 pub mod inventory_quick_access_slot_element;
 pub mod inventory_quick_access_slots_system;
 pub mod quick_access_use_system;
+pub mod hotbar_sync_system;
 pub mod inventory_list_manager_data;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
@@ -52,6 +53,7 @@ pub mod weapon_attachment_inventory_prefab_creation_system;
 pub mod weapon_inventory_prefab_creation_system;
 pub mod item_effects;
 pub mod item_usage_system;
+pub mod weapon_equip_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -79,6 +81,7 @@ pub use weapon_on_inventory::WeaponOnInventory;
 pub use inventory_quick_access_slot_element::InventoryQuickAccessSlotElement;
 pub use inventory_quick_access_slots_system::InventoryQuickAccessSlotsSystem;
 pub use quick_access_use_system::handle_quick_access_use;
+pub use hotbar_sync_system::sync_hotbar_with_inventory;
 pub use inventory_list_manager_data::InventoryListManagerData;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
@@ -118,6 +121,7 @@ pub use use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent
 pub use weapon_attachment_inventory_prefab_creation_system::WeaponAttachmentInventoryPrefabCreationSystem;
 pub use weapon_inventory_prefab_creation_system::WeaponInventoryPrefabCreationSystem;
 pub use item_effects::{ItemEffectRegistry, ItemEffect};
+pub use weapon_equip_system::RequestEquipWeaponEvent;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -138,6 +142,7 @@ impl Plugin for InventoryPlugin {
         .add_event::<UseInventoryObjectEvent>()
         .add_event::<InventoryObjectUsedEvent>()
         .add_event::<EquipMeleeWeaponEvent>()
+        .add_event::<RequestEquipWeaponEvent>()
         .add_event::<UnequipMeleeWeaponEvent>()
         .add_event::<ToggleMeleeWeaponDrawEvent>()
         .add_systems(Update, (
@@ -176,8 +181,10 @@ impl Plugin for InventoryPlugin {
             weapon_inventory_prefab_creation_system::update_weapon_inventory_prefab_creation_system,
             inventory_quick_access_slots_system::update_inventory_quick_access_slots_system,
             quick_access_use_system::handle_quick_access_use,
+            hotbar_sync_system::sync_hotbar_with_inventory,
             inventory_examine_system::handle_examine_item,
             inventory_examine_system::rotate_examine_preview,
+            weapon_equip_system::handle_request_equip_weapon,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
