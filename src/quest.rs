@@ -105,6 +105,8 @@ impl Plugin for QuestPlugin {
                 handle_objective_trigger_interactions,
                 handle_objective_trigger_enter,
                 update_quest_tracker_ui,
+                sync_quest_station_markers,
+                sync_objective_trigger_markers,
             ));
     }
 }
@@ -327,4 +329,50 @@ fn update_quest_tracker_ui(
     }
 
     text.0 = lines.join("\n");
+}
+
+fn sync_quest_station_markers(
+    mut commands: Commands,
+    query: Query<(Entity, &QuestStation), Or<(Added<QuestStation>, Changed<QuestStation>)>>,
+) {
+    for (entity, station) in query.iter() {
+        if !station.show_on_map {
+            continue;
+        }
+
+        let description = if station.map_description.is_empty() {
+            station.quest.name.clone()
+        } else {
+            station.map_description.clone()
+        };
+
+        commands.entity(entity).insert(crate::map::types::ObjectiveIcon {
+            off_screen_arrow: true,
+            icon_type: station.map_icon_type,
+            description,
+        });
+    }
+}
+
+fn sync_objective_trigger_markers(
+    mut commands: Commands,
+    query: Query<(Entity, &ObjectiveTrigger), Or<(Added<ObjectiveTrigger>, Changed<ObjectiveTrigger>)>>,
+) {
+    for (entity, trigger) in query.iter() {
+        if !trigger.show_on_map {
+            continue;
+        }
+
+        let description = if trigger.map_description.is_empty() {
+            format!("Objective {}", trigger.objective_index + 1)
+        } else {
+            trigger.map_description.clone()
+        };
+
+        commands.entity(entity).insert(crate::map::types::ObjectiveIcon {
+            off_screen_arrow: true,
+            icon_type: trigger.map_icon_type,
+            description,
+        });
+    }
 }
