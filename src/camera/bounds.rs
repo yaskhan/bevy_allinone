@@ -1,5 +1,6 @@
 use bevy::prelude::*;
-use crate::camera::types::{CameraController, CameraState};
+use crate::camera::types::{CameraController, CameraState, CameraZoneTracker};
+use crate::character::Player;
 
 pub struct CameraBoundsPlugin;
 
@@ -35,15 +36,28 @@ impl Default for CameraBounds {
 pub fn apply_camera_bounds(
     mut camera_query: Query<(&mut Transform, &CameraController, &CameraState)>,
     bounds_query: Query<(&CameraBounds, &GlobalTransform)>,
+    zone_tracker_query: Query<&CameraZoneTracker, With<Player>>,
 ) {
     let (mut transform, _controller, _state) = match camera_query.iter_mut().next() {
         Some(c) => c,
         None => return,
     };
 
-    // Find the relevant bounds (e.g., closest or specified by current zone)
-    // For now, take the first one found
-    if let Some((bounds, bounds_gt)) = bounds_query.iter().next() {
+    let mut bounds_source: Option<(&CameraBounds, &GlobalTransform)> = None;
+
+    if let Some(tracker) = zone_tracker_query.iter().next() {
+        if let Some(zone_entity) = tracker.current_zone {
+            if let Ok(found) = bounds_query.get(zone_entity) {
+                bounds_source = Some(found);
+            }
+        }
+    }
+
+    if bounds_source.is_none() {
+        bounds_source = bounds_query.iter().next();
+    }
+
+    if let Some((bounds, bounds_gt)) = bounds_source {
         let center = bounds_gt.translation();
         
         match bounds {
