@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::ai::types::*;
+use crate::combat::Health;
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -25,21 +26,48 @@ impl Default for Turret {
 
 pub fn update_turrets(
     time: Res<Time>,
-    mut query: Query<(&mut Turret, &GlobalTransform)>,
+    mut query: Query<(&mut Turret, &GlobalTransform, Option<&AiPerception>)>,
+    target_query: Query<(Entity, &GlobalTransform, &Health)>,
     mut transform_query: Query<&mut Transform>,
 ) {
     let delta = time.delta_secs();
 
-    for (mut turret, turret_transform) in query.iter_mut() {
+    for (mut turret, turret_transform, perception) in query.iter_mut() {
+        let my_pos = turret_transform.translation();
+
         if let Some(target_entity) = turret.target {
-            if let Ok(target_transform) = transform_query.get(target_entity) {
-                let target_pos = target_transform.translation;
-                let my_pos = turret_transform.translation();
-                
-                if my_pos.distance(target_pos) > turret.max_range {
+            if let Ok((_entity, target_transform, health)) = target_query.get(target_entity) {
+                if health.current <= 0.0 {
                     turret.target = None;
-                    continue;
+                } else if my_pos.distance(target_transform.translation()) > turret.max_range {
+                    turret.target = None;
                 }
+            } else {
+                turret.target = None;
+            }
+        } else if let Some(perception) = perception {
+            let mut best_target = None;
+            let mut best_dist = turret.max_range;
+
+            for &candidate in &perception.visible_targets {
+                if let Ok((entity, target_gt, health)) = target_query.get(candidate) {
+                    if health.current <= 0.0 {
+                        continue;
+                    }
+                    let dist = my_pos.distance(target_gt.translation());
+                    if dist <= best_dist {
+                        best_dist = dist;
+                        best_target = Some(entity);
+                    }
+                }
+            }
+
+            turret.target = best_target;
+        }
+
+        if let Some(target_entity) = turret.target {
+            if let Ok((_entity, target_transform, _health)) = target_query.get(target_entity) {
+                let target_pos = target_transform.translation();
 
                 // Base rotates only on Y
                 if let Some(base_entity) = turret.base_entity {
