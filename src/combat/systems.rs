@@ -5,6 +5,8 @@ use crate::input::InputState;
 use crate::stats::{StatsSystem, types::DerivedStat};
 use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
 use super::result_queue::*;
+use crate::camera::types::{CameraController, CameraState};
+use crate::weapons::types::Projectile;
 
 pub fn update_melee_attack_state(
     time: Res<Time>,
@@ -126,6 +128,129 @@ pub fn perform_melee_hitbox_damage(
                 }
             }
         }
+    }
+}
+
+pub fn update_melee_ranged_aim(
+    input: Res<InputState>,
+    mut query: Query<(&MeleeRangedWeaponSettings, &mut MeleeRangedAimState)>,
+) {
+    for (settings, mut state) in query.iter_mut() {
+        if settings.allow_hold_to_aim {
+            state.aiming = input.aim_pressed;
+        }
+    }
+}
+
+pub fn update_melee_ranged_camera(
+    mut camera_query: Query<(&CameraController, &mut CameraState)>,
+    owner_query: Query<(Entity, &MeleeRangedWeaponSettings, &MeleeRangedAimState)>,
+) {
+    for (controller, mut camera_state) in camera_query.iter_mut() {
+        let Some(target) = controller.follow_target else { continue };
+        let Ok((_owner, settings, aim_state)) = owner_query.get(target) else {
+            camera_state.fov_override = None;
+            camera_state.fov_override_speed = None;
+            continue;
+        };
+
+        if aim_state.aiming {
+            camera_state.fov_override = Some(settings.aim_fov);
+            camera_state.fov_override_speed = Some(settings.aim_fov_speed);
+        } else {
+            camera_state.fov_override = None;
+            camera_state.fov_override_speed = None;
+        }
+    }
+}
+
+pub fn perform_melee_ranged_attacks(
+    mut commands: Commands,
+    time: Res<Time>,
+    input: Res<InputState>,
+    mut query: Query<(Entity, &GlobalTransform, &MeleeCombat, &mut MeleeRangedWeaponSettings, &MeleeRangedAimState)>,
+) {
+    let now = time.elapsed_secs();
+
+    for (owner, transform, combat, mut settings, aim_state) in query.iter_mut() {
+        if !aim_state.aiming {
+            continue;
+        }
+
+        if !input.fire_just_pressed {
+            continue;
+        }
+
+        if now - settings.last_fire_time < settings.fire_cooldown {
+            continue;
+        }
+
+        let forward = transform.forward();
+        let spawn_pos = transform.translation() + forward * 0.8;
+        let velocity = forward * settings.projectile_speed;
+        let damage = combat.damage * settings.damage_multiplier;
+
+        let projectile_entity = commands.spawn((
+            Transform::from_translation(spawn_pos),
+            GlobalTransform::default(),
+            Projectile {
+                velocity,
+                damage,
+                lifetime: settings.projectile_lifetime,
+                owner,
+                mass: 0.1,
+                drag_coeff: 0.2,
+                reference_area: 0.0005,
+                penetration_power: 50.0,
+                use_gravity: true,
+                rotate_to_velocity: true,
+            },
+            Name::new("MeleeRangedProjectile"),
+        )).id();
+
+        if settings.returnable {
+            commands.entity(projectile_entity).insert(ReturnToOwner {
+                owner,
+                delay: settings.return_delay,
+                speed: settings.return_speed,
+                timer: 0.0,
+            });
+        }
+
+        settings.last_fire_time = now;
+    }
+}
+
+pub fn update_returning_projectiles(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Projectile, &mut Transform, &mut ReturnToOwner)>,
+    owner_query: Query<&GlobalTransform>,
+) {
+    let dt = time.delta_secs();
+
+    for (entity, mut projectile, mut transform, mut return_state) in query.iter_mut() {
+        return_state.timer += dt;
+        if return_state.timer < return_state.delay {
+            continue;
+        }
+
+        let Ok(owner_transform) = owner_query.get(return_state.owner) else {
+            commands.entity(entity).despawn();
+            continue;
+        };
+
+        let owner_pos = owner_transform.translation();
+        let to_owner = owner_pos - transform.translation;
+        let dist = to_owner.length();
+        if dist < 0.6 {
+            commands.entity(entity).despawn();
+            continue;
+        }
+
+        let dir = to_owner.normalize_or_zero();
+        projectile.velocity = dir * return_state.speed;
+        transform.look_to(dir, Vec3::Y);
     }
 }
 

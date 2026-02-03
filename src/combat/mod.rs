@@ -36,6 +36,9 @@ impl Plugin for CombatPlugin {
             .register_type::<AttackChain>()
             .register_type::<MeleeAttackState>()
             .register_type::<DamageZone>()
+            .register_type::<MeleeRangedWeaponSettings>()
+            .register_type::<MeleeRangedAimState>()
+            .register_type::<ReturnToOwner>()
             .register_type::<Blocking>()
             .register_type::<DamageOverTime>()
             .register_type::<DestroyableObject>()
@@ -49,6 +52,10 @@ impl Plugin for CombatPlugin {
                 systems::update_melee_attack_state,
                 systems::update_melee_hitboxes,
                 systems::perform_melee_hitbox_damage,
+                systems::update_melee_ranged_aim,
+                systems::update_melee_ranged_camera,
+                systems::perform_melee_ranged_attacks,
+                systems::update_returning_projectiles,
                 systems::regenerate_health,
                 systems::regenerate_shields,
                 systems::perform_melee_attacks,
