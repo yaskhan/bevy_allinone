@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::character::types::*;
-use crate::input::InputState;
+use crate::input::{InputState, PlayerInputSettings};
 use avian3d::prelude::*;
 use crate::physics::{GroundDetection, CustomGravity, GroundDetectionSettings};
 
@@ -15,6 +15,7 @@ pub fn spawn_character(
         CharacterAnimationState::default(),
         crate::combat::Health::default(),
         InputState::default(),
+        PlayerInputSettings::default(),
         crate::camera::CameraZoneTracker::default(),
         Transform::from_translation(position),
         GlobalTransform::default(),

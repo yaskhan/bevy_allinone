@@ -11,7 +11,7 @@ use systems::*;
 
 pub use types::{InputAction, InputBinding, BufferedAction};
 pub use resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
-pub use components::InputState;
+pub use components::{InputState, PlayerInputSettings, InputDevice, InputLocks};
 pub use systems::*;
 
 pub struct InputPlugin;

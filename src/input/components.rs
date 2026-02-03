@@ -1,6 +1,54 @@
 use bevy::prelude::*;
 use super::types::InputAction;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum InputDevice {
+    KeyboardMouse,
+    Gamepad { id: usize },
+}
+
+impl Default for InputDevice {
+    fn default() -> Self {
+        Self::KeyboardMouse
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct InputLocks {
+    pub movement: bool,
+    pub camera: bool,
+    pub actions: bool,
+}
+
+impl Default for InputLocks {
+    fn default() -> Self {
+        Self {
+            movement: false,
+            camera: false,
+            actions: false,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct PlayerInputSettings {
+    pub player_id: u8,
+    pub device: InputDevice,
+    pub locks: InputLocks,
+    pub enabled: bool,
+}
+
+impl Default for PlayerInputSettings {
+    fn default() -> Self {
+        Self {
+            player_id: 0,
+            device: InputDevice::KeyboardMouse,
+            locks: InputLocks::default(),
+            enabled: true,
+        }
+    }
+}
+
 /// Global input state resource and per-entity input component
 #[derive(Component, Resource, Debug, Reflect, Clone)]
 #[reflect(Component, Resource)]
@@ -147,5 +195,47 @@ impl InputState {
     /// Get movement axis for camera movement
     pub fn get_movement_axis(&self) -> Vec2 {
         self.movement
+    }
+
+    pub fn apply_locks(&mut self, locks: &InputLocks) {
+        if locks.movement {
+            self.movement = Vec2::ZERO;
+            self.jump_pressed = false;
+            self.crouch_pressed = false;
+            self.sprint_pressed = false;
+        }
+
+        if locks.camera {
+            self.look = Vec2::ZERO;
+            self.aim_pressed = false;
+            self.lean_left = false;
+            self.lean_right = false;
+            self.reset_camera_pressed = false;
+            self.zoom_in_pressed = false;
+            self.zoom_out_pressed = false;
+        }
+
+        if locks.actions {
+            self.interact_pressed = false;
+            self.lock_on_pressed = false;
+            self.attack_pressed = false;
+            self.block_pressed = false;
+            self.switch_camera_mode_pressed = false;
+            self.fire_pressed = false;
+            self.fire_just_pressed = false;
+            self.reload_pressed = false;
+            self.next_weapon_pressed = false;
+            self.prev_weapon_pressed = false;
+            self.toggle_inventory_pressed = false;
+            self.side_switch_pressed = false;
+            self.hide_pressed = false;
+            self.peek_pressed = false;
+            self.corner_lean_pressed = false;
+            self.ability_use_pressed = false;
+            self.ability_use_released = false;
+            self.ability_use_held = false;
+            self.select_ability = None;
+            self.select_weapon = None;
+        }
     }
 }
