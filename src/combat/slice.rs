@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
 use crate::abilities::LaserVisionSliceEventQueue;
+use crate::combat::result_queue::DamageResultQueue;
+use crate::combat::types::DamageType;
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
@@ -18,6 +20,28 @@ impl Default for Sliceable {
             slice_radius: 1.0,
             min_delay_between_slices: 0.5,
             last_slice_time: -999.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct SliceOnDamage {
+    pub enabled: bool,
+    pub min_damage: f32,
+    pub allow_blocked: bool,
+    pub radius_override: Option<f32>,
+    pub require_damage_type: Option<DamageType>,
+}
+
+impl Default for SliceOnDamage {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_damage: 5.0,
+            allow_blocked: false,
+            radius_override: None,
+            require_damage_type: None,
         }
     }
 }
@@ -59,6 +83,46 @@ pub fn queue_slice_events_from_laser(
             normal: event.direction,
             direction: event.direction,
             radius: 0.8,
+        });
+    }
+}
+
+pub fn queue_slice_events_from_damage_results(
+    damage_queue: Res<DamageResultQueue>,
+    mut slice_queue: ResMut<SliceEventQueue>,
+    query: Query<(&GlobalTransform, &SliceOnDamage, &Sliceable)>,
+) {
+    for event in damage_queue.0.iter() {
+        let Ok((transform, settings, sliceable)) = query.get(event.target) else {
+            continue;
+        };
+
+        if !settings.enabled || !sliceable.enabled {
+            continue;
+        }
+
+        if event.final_amount < settings.min_damage {
+            continue;
+        }
+
+        if event.is_block && !settings.allow_blocked {
+            continue;
+        }
+
+        if let Some(required_type) = settings.require_damage_type {
+            if event.damage_type != required_type {
+                continue;
+            }
+        }
+
+        let radius = settings.radius_override.unwrap_or(sliceable.slice_radius);
+
+        slice_queue.0.push(SliceEvent {
+            source: event.source,
+            position: transform.translation(),
+            normal: Vec3::Y,
+            direction: Vec3::Y,
+            radius,
         });
     }
 }

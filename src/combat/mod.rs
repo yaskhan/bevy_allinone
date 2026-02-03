@@ -51,11 +51,13 @@ impl Plugin for CombatPlugin {
             .register_type::<DamageScreenEffect>()
             .register_type::<DamageIndicator>()
             .register_type::<Sliceable>()
+            .register_type::<SliceOnDamage>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
                 slice::queue_slice_events_from_laser,
+                slice::queue_slice_events_from_damage_results,
                 slice::apply_slice_events,
                 systems::handle_air_attack_to_land,
                 systems::update_melee_attack_state,

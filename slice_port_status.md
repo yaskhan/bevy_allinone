@@ -20,4 +20,4 @@
 - [ ] Mesh slicing (CSG / slicer integration)
 - [ ] Cut surface caps + UVs
 - [ ] Physics bodies on sliced parts
-- [ ] DamageEvent -> SliceEvent (Slashing)
+- [x] DamageResult -> SliceEvent (configurable filter)
