@@ -367,7 +367,7 @@ pub fn handle_character_death(
         } else {
             // Standard despawn or other logic for non-ragdoll entities?
             // For now, leave them or despawn?
-            // GKit likely keeps them dead on ground.
+            // likely keeps them dead on ground.
             // If no ragdoll, we probably just want to disable collision/ai?
             // Leaving empty for now to avoid premature despawning of player.
         }

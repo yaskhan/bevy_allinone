@@ -466,7 +466,7 @@ impl StatsSystem {
         // Note: We use insert with the calculated BASE value. 
         // Real gameplay might have modifiers on top.
         // For now, let's keep them at defaults or simple attribute scaling if we want.
-        // Let's stick to simple Attribute scaling for now to demonstrate GKit parity.
+        // Let's stick to simple Attribute scaling for now to demonstrate parity.
         self.derived_stats.insert(DerivedStat::FireResistance, fire_res);
         self.derived_stats.insert(DerivedStat::PoisonResistance, poison_res);
         // Electric/Explosion stay at 0 base for now unless modified

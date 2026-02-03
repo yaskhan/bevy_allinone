@@ -28,7 +28,7 @@ pub fn handle_falling_damage(
                 source: None,
                 position: Some(Vec3::ZERO), // Or player position?
                 direction: Some(Vec3::Y),
-                ignore_shield: true, // Typically fall damage ignores shields? GKit behavior? Let's assume yes or make it config.
+                ignore_shield: true, // Typically fall damage ignores shields? behavior? Let's assume yes or make it config.
             });
             
             state.last_vertical_velocity = 0.0;
