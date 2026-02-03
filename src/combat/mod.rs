@@ -48,6 +48,7 @@ impl Plugin for CombatPlugin {
                 systems::update_timers,
                 systems::update_melee_attack_state,
                 systems::update_melee_hitboxes,
+                systems::perform_melee_hitbox_damage,
                 systems::regenerate_health,
                 systems::regenerate_shields,
                 systems::perform_melee_attacks,

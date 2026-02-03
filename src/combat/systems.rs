@@ -75,6 +75,60 @@ pub fn update_melee_hitboxes(
     }
 }
 
+pub fn perform_melee_hitbox_damage(
+    time: Res<Time>,
+    attack_db: Res<AttackDatabase>,
+    mut damage_queue: ResMut<DamageEventQueue>,
+    spatial_query: SpatialQuery,
+    attackers: Query<(Entity, &GlobalTransform, &MeleeCombat, &MeleeAttackState)>,
+    mut hitboxes: Query<(&GlobalTransform, &mut DamageZone)>,
+    targets: Query<Entity, Or<(With<Health>, With<DamageReceiver>)>>,
+) {
+    let now = time.elapsed_secs();
+
+    for (attacker_entity, attacker_transform, combat, state) in attackers.iter() {
+        let Some(chain) = attack_db.get_chain(&state.chain_id) else { continue };
+        if chain.attacks.is_empty() {
+            continue;
+        }
+        let attack = &chain.attacks[state.current_attack_index.min(chain.attacks.len() - 1)];
+        let base_damage = combat.damage * attack.damage_multiplier;
+
+        for (hitbox_transform, mut zone) in hitboxes.iter_mut() {
+            if zone.owner != attacker_entity || !zone.active {
+                continue;
+            }
+            if now - zone.last_hit_time < zone.hit_cooldown {
+                continue;
+            }
+
+            let origin = hitbox_transform.translation();
+            let shape = Collider::sphere(zone.radius);
+            if let Some(hit) = spatial_query.cast_shape(
+                &shape,
+                origin,
+                Quat::IDENTITY,
+                Vec3::Y.into(),
+                &ShapeCastConfig::default().with_max_distance(0.05),
+                &SpatialQueryFilter::default().with_excluded_entities([attacker_entity]),
+            ) {
+                if targets.get(hit.entity).is_ok() {
+                    damage_queue.0.push(DamageEvent {
+                        amount: base_damage * zone.damage_multiplier,
+                        damage_type: DamageType::Melee,
+                        source: Some(attacker_entity),
+                        target: hit.entity,
+                        position: Some(origin),
+                        direction: Some(attacker_transform.forward()),
+                        ignore_shield: false,
+                    });
+                    zone.last_hit_time = now;
+                }
+            }
+        }
+    }
+}
+
 /// System to process damage events, reduce health/shields, and show feedback.
 pub fn process_damage_events(
     mut commands: Commands,
