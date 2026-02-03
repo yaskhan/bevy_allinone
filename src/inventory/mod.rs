@@ -42,6 +42,7 @@ pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
 pub mod melee_weapon_inventory_prefab_creation_system;
+pub mod melee_weapon_equipment_system;
 pub mod player_inventory_categories_list_manager;
 pub mod use_inventory_object;
 pub mod weapon_attachment_inventory_prefab_creation_system;
@@ -96,6 +97,14 @@ pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
 pub use melee_weapon_inventory_prefab_creation_system::MeleeWeaponInventoryPrefabCreationSystem;
+pub use melee_weapon_equipment_system::{
+    WeaponMountPoint,
+    WeaponMountType,
+    MeleeWeaponEquipmentState,
+    EquipMeleeWeaponEvent,
+    UnequipMeleeWeaponEvent,
+    ToggleMeleeWeaponDrawEvent,
+};
 pub use player_inventory_categories_list_manager::PlayerInventoryCategoriesListManager;
 pub use use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent};
 pub use weapon_attachment_inventory_prefab_creation_system::WeaponAttachmentInventoryPrefabCreationSystem;
@@ -114,6 +123,9 @@ impl Plugin for InventoryPlugin {
         .add_event::<InventoryMenuPanelEvent>()
         .add_event::<UseInventoryObjectEvent>()
         .add_event::<InventoryObjectUsedEvent>()
+        .add_event::<EquipMeleeWeaponEvent>()
+        .add_event::<UnequipMeleeWeaponEvent>()
+        .add_event::<ToggleMeleeWeaponDrawEvent>()
         .add_systems(Update, (
             update_inventory,
             handle_pickup_events,
@@ -137,6 +149,10 @@ impl Plugin for InventoryPlugin {
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
+            melee_weapon_equipment_system::handle_melee_weapon_quick_access_input,
+            melee_weapon_equipment_system::handle_melee_weapon_equip,
+            melee_weapon_equipment_system::handle_melee_weapon_draw,
+            melee_weapon_equipment_system::apply_melee_weapon_draw,
             use_inventory_object::update_use_inventory_object,
             weapon_attachment_inventory_prefab_creation_system::update_weapon_attachment_inventory_prefab_creation_system,
             weapon_inventory_prefab_creation_system::update_weapon_inventory_prefab_creation_system,
