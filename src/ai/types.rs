@@ -414,6 +414,26 @@ impl Default for AiAlertSettings {
     }
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiAvoidanceSettings {
+    pub enabled: bool,
+    pub ray_distance: f32,
+    pub side_ray_distance: f32,
+    pub steer_strength: f32,
+}
+
+impl Default for AiAvoidanceSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            ray_distance: 2.0,
+            side_ray_distance: 1.5,
+            steer_strength: 0.75,
+        }
+    }
+}
+
 #[derive(Debug, Reflect, Clone)]
 pub struct NoiseEvent {
     pub position: Vec3,

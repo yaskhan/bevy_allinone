@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::character::CharacterController;
+use avian3d::prelude::*;
 use crate::input::InputState;
 use super::types::*;
 
@@ -110,6 +111,64 @@ pub fn update_ai_movement(
             } else {
                 input.movement = Vec2::ZERO;
             }
+        }
+    }
+}
+
+pub fn update_ai_avoidance(
+    spatial_query: SpatialQuery,
+    mut query: Query<(&GlobalTransform, &AiAvoidanceSettings, &mut InputState)>,
+) {
+    for (transform, settings, mut input) in query.iter_mut() {
+        if !settings.enabled {
+            continue;
+        }
+
+        let move_dir = Vec3::new(input.movement.x, 0.0, input.movement.y);
+        if move_dir.length_squared() < 0.001 {
+            continue;
+        }
+
+        let origin = transform.translation() + Vec3::Y * 0.5;
+        let dir = move_dir.normalize();
+        let filter = SpatialQueryFilter::default();
+
+        let hit = spatial_query.cast_ray(origin, Dir3::new(dir).unwrap_or(Dir3::Z), settings.ray_distance, true, &filter);
+        if hit.is_none() {
+            continue;
+        }
+
+        let right = transform.right();
+        let left = -right;
+
+        let right_hit = spatial_query.cast_ray(
+            origin,
+            Dir3::new(right).unwrap_or(Dir3::X),
+            settings.side_ray_distance,
+            true,
+            &filter,
+        );
+        let left_hit = spatial_query.cast_ray(
+            origin,
+            Dir3::new(left).unwrap_or(Dir3::NEG_X),
+            settings.side_ray_distance,
+            true,
+            &filter,
+        );
+
+        let steer_dir = if right_hit.is_none() && left_hit.is_some() {
+            right
+        } else if left_hit.is_none() && right_hit.is_some() {
+            left
+        } else if right_hit.is_none() && left_hit.is_none() {
+            right
+        } else {
+            Vec3::ZERO
+        };
+
+        if steer_dir != Vec3::ZERO {
+            let adjusted = (dir + steer_dir * settings.steer_strength).normalize_or_zero();
+            input.movement = Vec2::new(adjusted.x, adjusted.z);
         }
     }
 }

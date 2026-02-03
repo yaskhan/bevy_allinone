@@ -63,6 +63,7 @@ impl Plugin for AiPlugin {
             .register_type::<AiHearingSettings>()
             .register_type::<AiCombatRangeSettings>()
             .register_type::<AiAlertSettings>()
+            .register_type::<AiAvoidanceSettings>()
             .init_resource::<FactionSystem>()
             .init_resource::<FriendSystem>()
             .init_resource::<NoiseEventQueue>()
@@ -75,6 +76,7 @@ impl Plugin for AiPlugin {
                 update_ai_suspicion,
                 update_ai_navigation,
                 update_ai_movement,
+                update_ai_avoidance,
                 update_patrol,
                 update_turrets,
                 update_turret_firing,
