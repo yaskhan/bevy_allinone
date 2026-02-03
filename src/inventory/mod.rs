@@ -46,6 +46,7 @@ pub mod inventory_examine_system;
 pub mod inventory_drop_system;
 pub mod inventory_stack_system;
 pub mod inventory_combine_system;
+pub mod ammo_sync_system;
 pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
@@ -130,6 +131,7 @@ pub use weapon_attachment_inventory_prefab_creation_system::WeaponAttachmentInve
 pub use weapon_inventory_prefab_creation_system::WeaponInventoryPrefabCreationSystem;
 pub use item_effects::{ItemEffectRegistry, ItemEffect};
 pub use weapon_equip_system::{RequestEquipWeaponEvent, WeaponSpawnRegistry};
+pub use ammo_sync_system::sync_weapon_ammo_with_inventory;
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -184,6 +186,7 @@ impl Plugin for InventoryPlugin {
             inventory_drop_system::handle_drop_inventory_item,
             inventory_stack_system::handle_split_stack,
             inventory_combine_system::handle_combine_inventory_items,
+            ammo_sync_system::sync_weapon_ammo_with_inventory,
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,

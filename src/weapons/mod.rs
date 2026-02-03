@@ -144,7 +144,14 @@ fn update_weapons(
             if weapon.current_reload_timer <= 0.0 {
                 // Reload complete
                 weapon.is_reloading = false;
-                weapon.current_ammo = weapon.ammo_capacity;
+                if weapon.reserve_ammo < 0 {
+                    weapon.current_ammo = weapon.ammo_capacity;
+                } else {
+                    let needed = (weapon.ammo_capacity - weapon.current_ammo).max(0);
+                    let to_load = needed.min(weapon.reserve_ammo);
+                    weapon.current_ammo += to_load;
+                    weapon.reserve_ammo -= to_load;
+                }
                 info!("Reloaded {}", weapon.weapon_name);
             }
         }
