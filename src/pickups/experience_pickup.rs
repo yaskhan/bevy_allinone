@@ -7,14 +7,16 @@ use bevy::prelude::*;
 #[reflect(Component)]
 pub struct ExperiencePickup {
     pub amount: u32,
-    pub use_multiplier: bool,
+    pub use_experience_random_range: bool,
+    pub experience_random_range: Vec2,
 }
 
 impl Default for ExperiencePickup {
     fn default() -> Self {
         Self {
             amount: 0,
-            use_multiplier: true,
+            use_experience_random_range: false,
+            experience_random_range: Vec2::ZERO,
         }
     }
 }
