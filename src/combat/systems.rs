@@ -7,6 +7,8 @@ use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
 use super::result_queue::*;
 use crate::camera::types::{CameraController, CameraState};
 use crate::weapons::types::Projectile;
+use crate::character::types::CharacterMovementState;
+use crate::physics::GroundDetection;
 
 pub fn update_melee_attack_state(
     time: Res<Time>,
@@ -251,6 +253,68 @@ pub fn update_returning_projectiles(
         let dir = to_owner.normalize_or_zero();
         projectile.velocity = dir * return_state.speed;
         transform.look_to(dir, Vec3::Y);
+    }
+}
+
+pub fn handle_air_attack_to_land(
+    spatial_query: SpatialQuery,
+    mut damage_queue: ResMut<DamageEventQueue>,
+    mut query: Query<(
+        Entity,
+        &GlobalTransform,
+        &LinearVelocity,
+        &GroundDetection,
+        &CharacterMovementState,
+        &mut AirAttackToLand,
+    )>,
+    targets: Query<Entity, Or<(With<Health>, With<DamageReceiver>)>>,
+) {
+    for (entity, transform, velocity, ground, movement, mut air_attack) in query.iter_mut() {
+        if !air_attack.active {
+            continue;
+        }
+
+        if !ground.is_grounded || ground.last_is_grounded {
+            continue;
+        }
+
+        if movement.air_time < air_attack.min_air_time {
+            continue;
+        }
+
+        if movement.last_vertical_velocity.abs() < air_attack.min_impact_speed
+            && velocity.y.abs() < air_attack.min_impact_speed
+        {
+            continue;
+        }
+
+        let origin = transform.translation();
+        let shape = Collider::sphere(air_attack.radius);
+
+        if let Some(hit) = spatial_query.cast_shape(
+            &shape,
+            origin,
+            Quat::IDENTITY,
+            Dir3::Y,
+            &ShapeCastConfig::default().with_max_distance(0.01),
+            &SpatialQueryFilter::default().with_excluded_entities([entity]),
+        ) {
+            if targets.get(hit.entity).is_ok() {
+                damage_queue.0.push(DamageEvent {
+                    amount: air_attack.damage,
+                    damage_type: air_attack.damage_type,
+                    source: Some(entity),
+                    target: hit.entity,
+                    position: Some(origin),
+                    direction: Some(Vec3::Y),
+                    ignore_shield: false,
+                });
+            }
+        }
+
+        if air_attack.consume_on_land {
+            air_attack.active = false;
+        }
     }
 }
 

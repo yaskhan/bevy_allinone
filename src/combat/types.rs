@@ -249,6 +249,32 @@ impl Default for MeleeRangedAimState {
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
+pub struct AirAttackToLand {
+    pub active: bool,
+    pub damage: f32,
+    pub damage_type: DamageType,
+    pub radius: f32,
+    pub min_air_time: f32,
+    pub min_impact_speed: f32,
+    pub consume_on_land: bool,
+}
+
+impl Default for AirAttackToLand {
+    fn default() -> Self {
+        Self {
+            active: false,
+            damage: 25.0,
+            damage_type: DamageType::Melee,
+            radius: 2.5,
+            min_air_time: 0.2,
+            min_impact_speed: 4.0,
+            consume_on_land: true,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct ReturnToOwner {
     pub owner: Entity,
     pub delay: f32,

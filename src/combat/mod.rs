@@ -43,6 +43,7 @@ impl Plugin for CombatPlugin {
             .register_type::<MeleeRangedWeaponSettings>()
             .register_type::<MeleeRangedAimState>()
             .register_type::<ReturnToOwner>()
+            .register_type::<AirAttackToLand>()
             .register_type::<Blocking>()
             .register_type::<DamageOverTime>()
             .register_type::<DestroyableObject>()
@@ -56,6 +57,7 @@ impl Plugin for CombatPlugin {
                 systems::update_timers,
                 slice::queue_slice_events_from_laser,
                 slice::apply_slice_events,
+                systems::handle_air_attack_to_land,
                 systems::update_melee_attack_state,
                 systems::update_melee_hitboxes,
                 systems::perform_melee_hitbox_damage,
