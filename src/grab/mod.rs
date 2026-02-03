@@ -18,12 +18,15 @@ impl Plugin for GrabPlugin {
             .register_type::<ObjectToPlace>()
             .register_type::<PutObjectSystem>()
             .register_type::<GrabPowerer>()
+            .register_type::<GrabPowerThrow>()
             .register_type::<OutlineSettings>()
             .register_type::<GrabMeleeWeapon>()
             .register_type::<ImprovisedWeapon>()
             .register_type::<ImprovisedWeaponStats>()
             .register_type::<GrabBlockShield>()
             .register_type::<GrabMeleeAttackState>()
+            .register_type::<PowerThrown>()
+            .register_type::<GrabPowerFx>()
             .register_type::<GrabPhysicalObjectSettings>()
             .add_systems(Update, (
                 systems::handle_grab_input,
@@ -31,6 +34,7 @@ impl Plugin for GrabPlugin {
                 systems::update_held_object,
                 systems::handle_rotation,
                 systems::handle_throwing,
+                systems::handle_power_throwing,
                 systems::update_put_object_systems,
                 systems::handle_power_grabbing,
                 systems::update_power_held_objects,
@@ -41,6 +45,7 @@ impl Plugin for GrabPlugin {
                 systems::update_grab_blocking,
                 systems::perform_grab_melee_damage,
                 systems::apply_throw_damage_on_collision,
+                systems::update_power_throw_fx,
             ));
     }
 }

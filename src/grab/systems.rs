@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction};
-use crate::combat::{DamageEventQueue, DamageEvent, DamageType, DamageZone, Blocking};
+use crate::combat::{DamageEventQueue, DamageEvent, DamageType, DamageZone, Blocking, AreaEffect};
 use crate::stats::stats_system::StatsSystem;
 use crate::stats::types::DerivedStat;
 use crate::abilities::types::{SetAbilityEnabledEventQueue, SetAbilityEnabledEvent};
@@ -510,6 +510,40 @@ pub fn handle_grab_melee(
     }
 }
 
+pub fn handle_power_throwing(
+    time: Res<Time>,
+    input: Res<InputState>,
+    mut commands: Commands,
+    mut grabber_query: Query<(Entity, &mut Grabber, &GlobalTransform, &mut GrabPowerThrow)>,
+    mut event_queue: ResMut<GrabEventQueue>,
+) {
+    for (entity, mut grabber, transform, mut power_throw) in grabber_query.iter_mut() {
+        let Some(held) = grabber.held_object else { continue };
+        if !power_throw.enabled || !input.ability_use_pressed {
+            continue;
+        }
+
+        let now = time.elapsed_secs();
+        if now - power_throw.last_throw_time < power_throw.cooldown {
+            continue;
+        }
+
+        let dir = transform.forward();
+        let force = grabber.throw_force * power_throw.force_multiplier;
+        event_queue.0.push(GrabEvent::Throw(entity, held, *dir, force));
+        power_throw.last_throw_time = now;
+
+        commands.entity(held).insert(PowerThrown {
+            damage: power_throw.explosion_damage,
+            radius: power_throw.explosion_radius,
+            spawn_fx: power_throw.spawn_fx,
+            fx_color: power_throw.fx_color,
+            fx_radius: power_throw.fx_radius,
+            fx_lifetime: power_throw.fx_lifetime,
+        });
+    }
+}
+
 pub fn update_grab_melee_attacks(
     time: Res<Time>,
     mut query: Query<(&GrabMeleeWeapon, &mut GrabMeleeAttackState)>,
@@ -609,6 +643,11 @@ pub fn apply_throw_damage_on_collision(
     mut damage_queue: ResMut<DamageEventQueue>,
     collision_events: EventReader<CollisionStarted>,
     settings_query: Query<&GrabPhysicalObjectSettings>,
+    mut commands: Commands,
+    power_query: Query<&PowerThrown>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    transform_query: Query<&GlobalTransform>,
 ) {
     for event in collision_events.read() {
         let (a, b) = (event.entity1, event.entity2);
@@ -625,6 +664,53 @@ pub fn apply_throw_damage_on_collision(
                 });
             }
         }
+        if let Ok(power) = power_query.get(a) {
+            let position = transform_query
+                .get(a)
+                .map(|t| t.translation())
+                .unwrap_or(Vec3::ZERO);
+            commands.spawn((
+                AreaEffect {
+                    damage_type: DamageType::Explosion,
+                    amount: power.damage,
+                    radius: power.radius,
+                    interval: 0.05,
+                    timer: 0.0,
+                    duration: Some(0.05),
+                    ignore_shield: false,
+                    source: Some(a),
+                },
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                Name::new("PowerThrowExplosion"),
+            ));
+
+            if power.spawn_fx {
+                let mesh = meshes.add(Mesh::from(shape::Icosphere {
+                    radius: power.fx_radius,
+                    subdivisions: 2,
+                }));
+                let material = materials.add(StandardMaterial {
+                    base_color: power.fx_color,
+                    unlit: true,
+                    ..default()
+                });
+                commands.spawn((
+                    PbrBundle {
+                        mesh,
+                        material,
+                        transform: Transform::from_translation(position),
+                        ..default()
+                    },
+                    GrabPowerFx {
+                        lifetime: power.fx_lifetime,
+                    },
+                    Name::new("PowerThrowFx"),
+                ));
+            }
+
+            commands.entity(a).remove::<PowerThrown>();
+        }
         if let Ok(settings) = settings_query.get(b) {
             if settings.throw_damage > 0.0 {
                 damage_queue.0.push(DamageEvent {
@@ -637,6 +723,67 @@ pub fn apply_throw_damage_on_collision(
                     ignore_shield: false,
                 });
             }
+        }
+        if let Ok(power) = power_query.get(b) {
+            let position = transform_query
+                .get(b)
+                .map(|t| t.translation())
+                .unwrap_or(Vec3::ZERO);
+            commands.spawn((
+                AreaEffect {
+                    damage_type: DamageType::Explosion,
+                    amount: power.damage,
+                    radius: power.radius,
+                    interval: 0.05,
+                    timer: 0.0,
+                    duration: Some(0.05),
+                    ignore_shield: false,
+                    source: Some(b),
+                },
+                Transform::from_translation(position),
+                GlobalTransform::default(),
+                Name::new("PowerThrowExplosion"),
+            ));
+
+            if power.spawn_fx {
+                let mesh = meshes.add(Mesh::from(shape::Icosphere {
+                    radius: power.fx_radius,
+                    subdivisions: 2,
+                }));
+                let material = materials.add(StandardMaterial {
+                    base_color: power.fx_color,
+                    unlit: true,
+                    ..default()
+                });
+                commands.spawn((
+                    PbrBundle {
+                        mesh,
+                        material,
+                        transform: Transform::from_translation(position),
+                        ..default()
+                    },
+                    GrabPowerFx {
+                        lifetime: power.fx_lifetime,
+                    },
+                    Name::new("PowerThrowFx"),
+                ));
+            }
+
+            commands.entity(b).remove::<PowerThrown>();
+        }
+    }
+}
+
+pub fn update_power_throw_fx(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut GrabPowerFx)>,
+) {
+    let dt = time.delta_secs();
+    for (entity, mut fx) in query.iter_mut() {
+        fx.lifetime -= dt;
+        if fx.lifetime <= 0.0 {
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

@@ -254,6 +254,55 @@ impl Default for GrabMeleeWeapon {
     }
 }
 
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct GrabPowerThrow {
+    pub enabled: bool,
+    pub force_multiplier: f32,
+    pub explosion_radius: f32,
+    pub explosion_damage: f32,
+    pub cooldown: f32,
+    pub last_throw_time: f32,
+    pub spawn_fx: bool,
+    pub fx_color: Color,
+    pub fx_radius: f32,
+    pub fx_lifetime: f32,
+}
+
+impl Default for GrabPowerThrow {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            force_multiplier: 3.0,
+            explosion_radius: 3.5,
+            explosion_damage: 25.0,
+            cooldown: 1.0,
+            last_throw_time: -999.0,
+            spawn_fx: true,
+            fx_color: Color::srgb(0.4, 0.8, 1.0),
+            fx_radius: 0.2,
+            fx_lifetime: 0.6,
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct PowerThrown {
+    pub damage: f32,
+    pub radius: f32,
+    pub spawn_fx: bool,
+    pub fx_color: Color,
+    pub fx_radius: f32,
+    pub fx_lifetime: f32,
+}
+
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct GrabPowerFx {
+    pub lifetime: f32,
+}
+
 /// Marker for objects used as improvised melee weapons when grabbed.
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
