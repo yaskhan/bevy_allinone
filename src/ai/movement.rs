@@ -3,6 +3,7 @@ use crate::character::CharacterController;
 use avian3d::prelude::*;
 use crate::input::InputState;
 use super::types::*;
+use super::navigation::AiPath;
 
 pub fn update_ai_movement(
     time: Res<Time>,
