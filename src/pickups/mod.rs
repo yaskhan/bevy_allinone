@@ -5,12 +5,14 @@ pub mod crate_system;
 pub mod drop_pickup_system;
 pub mod explosive_barrel;
 pub mod pickup_element_info;
+pub mod pickup_icon;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
 pub use drop_pickup_system::DropPickUpSystem;
 pub use explosive_barrel::ExplosiveBarrel;
 pub use pickup_element_info::PickUpElementInfo;
+pub use pickup_icon::PickUpIcon;
 
 pub struct PickupsPlugin;
 
