@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use super::types::{InputAction, InputBinding, BufferedAction, InputContext};
+use super::types::{InputAction, InputBinding, BufferedAction, InputContext, ALL_INPUT_ACTIONS};
 use std::collections::HashSet;
 
 /// Mapping from actions to multiple potential bindings
@@ -166,5 +166,34 @@ impl Default for InputContextRules {
         ]));
 
         Self { blocked_actions }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ActionValue {
+    pub pressed: bool,
+    pub just_pressed: bool,
+    pub just_released: bool,
+    pub value: f32,
+}
+
+#[derive(Resource, Debug)]
+pub struct ActionState {
+    pub actions: HashMap<InputAction, ActionValue>,
+}
+
+impl Default for ActionState {
+    fn default() -> Self {
+        let mut actions = HashMap::new();
+        for action in ALL_INPUT_ACTIONS {
+            actions.insert(action, ActionValue::default());
+        }
+        Self { actions }
+    }
+}
+
+impl ActionState {
+    pub fn get(&self, action: InputAction) -> ActionValue {
+        *self.actions.get(&action).unwrap_or(&ActionValue::default())
     }
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use super::types::{InputAction, InputBinding, BufferedAction, InputContext};
-use super::resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
+use super::resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules, ActionState, ActionValue};
 use super::components::{InputState, PlayerInputSettings, InputDevice};
 use crate::game_manager::types::GameState;
 use crate::inventory::InventoryUIRoot;
@@ -222,6 +222,111 @@ pub fn player_input_sync_system(
 
         next_state.apply_locks(&settings.locks);
         *player_input = next_state;
+    }
+}
+
+pub fn update_action_state(
+    input_state: Res<InputState>,
+    context_stack: Res<InputContextStack>,
+    context_rules: Res<InputContextRules>,
+    mut action_state: ResMut<ActionState>,
+) {
+    let current_context = context_stack.current();
+    let is_blocked = |action: InputAction| -> bool {
+        context_rules
+            .blocked_actions
+            .get(&current_context)
+            .map(|set| set.contains(&action))
+            .unwrap_or(false)
+    };
+
+    for (action, value) in action_state.actions.iter_mut() {
+        if is_blocked(*action) {
+            *value = ActionValue::default();
+            continue;
+        }
+
+        *value = read_action_value(*action, &input_state);
+    }
+}
+
+fn read_action_value(action: InputAction, input_state: &InputState) -> ActionValue {
+    match action {
+        InputAction::MoveForward => ActionValue {
+            pressed: input_state.movement.y > 0.1,
+            value: input_state.movement.y.max(0.0),
+            ..default()
+        },
+        InputAction::MoveBackward => ActionValue {
+            pressed: input_state.movement.y < -0.1,
+            value: (-input_state.movement.y).max(0.0),
+            ..default()
+        },
+        InputAction::MoveLeft => ActionValue {
+            pressed: input_state.movement.x < -0.1,
+            value: (-input_state.movement.x).max(0.0),
+            ..default()
+        },
+        InputAction::MoveRight => ActionValue {
+            pressed: input_state.movement.x > 0.1,
+            value: input_state.movement.x.max(0.0),
+            ..default()
+        },
+        InputAction::Jump => ActionValue { pressed: input_state.jump_pressed, just_pressed: input_state.jump_pressed, ..default() },
+        InputAction::Sprint => ActionValue { pressed: input_state.sprint_pressed, ..default() },
+        InputAction::Crouch => ActionValue { pressed: input_state.crouch_pressed, ..default() },
+        InputAction::Interact => ActionValue { pressed: input_state.interact_pressed, just_pressed: input_state.interact_pressed, ..default() },
+        InputAction::Aim => ActionValue { pressed: input_state.aim_pressed, ..default() },
+        InputAction::LeanLeft => ActionValue { pressed: input_state.lean_left, ..default() },
+        InputAction::LeanRight => ActionValue { pressed: input_state.lean_right, ..default() },
+        InputAction::Attack => ActionValue { pressed: input_state.attack_pressed, just_pressed: input_state.attack_pressed, ..default() },
+        InputAction::Block => ActionValue { pressed: input_state.block_pressed, ..default() },
+        InputAction::SwitchCameraMode => ActionValue { pressed: input_state.switch_camera_mode_pressed, just_pressed: input_state.switch_camera_mode_pressed, ..default() },
+        InputAction::Fire => ActionValue { pressed: input_state.fire_pressed, just_pressed: input_state.fire_just_pressed, ..default() },
+        InputAction::Reload => ActionValue { pressed: input_state.reload_pressed, just_pressed: input_state.reload_pressed, ..default() },
+        InputAction::NextWeapon => ActionValue { pressed: input_state.next_weapon_pressed, just_pressed: input_state.next_weapon_pressed, ..default() },
+        InputAction::PrevWeapon => ActionValue { pressed: input_state.prev_weapon_pressed, just_pressed: input_state.prev_weapon_pressed, ..default() },
+        InputAction::ToggleInventory => ActionValue { pressed: input_state.toggle_inventory_pressed, just_pressed: input_state.toggle_inventory_pressed, ..default() },
+        InputAction::Hide => ActionValue { pressed: input_state.hide_pressed, just_pressed: input_state.hide_pressed, ..default() },
+        InputAction::Peek => ActionValue { pressed: input_state.peek_pressed, just_pressed: input_state.peek_pressed, ..default() },
+        InputAction::CornerLean => ActionValue { pressed: input_state.corner_lean_pressed, just_pressed: input_state.corner_lean_pressed, ..default() },
+        InputAction::ResetCamera => ActionValue { pressed: input_state.reset_camera_pressed, just_pressed: input_state.reset_camera_pressed, ..default() },
+        InputAction::LockOn => ActionValue { pressed: input_state.lock_on_pressed, just_pressed: input_state.lock_on_pressed, ..default() },
+        InputAction::ZoomIn => ActionValue { pressed: input_state.zoom_in_pressed, just_pressed: input_state.zoom_in_pressed, ..default() },
+        InputAction::ZoomOut => ActionValue { pressed: input_state.zoom_out_pressed, just_pressed: input_state.zoom_out_pressed, ..default() },
+        InputAction::SideSwitch => ActionValue { pressed: input_state.side_switch_pressed, just_pressed: input_state.side_switch_pressed, ..default() },
+        InputAction::AbilityUse => ActionValue {
+            pressed: input_state.ability_use_held,
+            just_pressed: input_state.ability_use_pressed,
+            just_released: input_state.ability_use_released,
+            ..default()
+        },
+        InputAction::SelectWeapon1
+        | InputAction::SelectWeapon2
+        | InputAction::SelectWeapon3
+        | InputAction::SelectWeapon4
+        | InputAction::SelectWeapon5
+        | InputAction::SelectWeapon6
+        | InputAction::SelectWeapon7
+        | InputAction::SelectWeapon8
+        | InputAction::SelectWeapon9
+        | InputAction::SelectWeapon0 => ActionValue {
+            pressed: input_state.select_weapon.is_some(),
+            just_pressed: input_state.select_weapon.is_some(),
+            ..default()
+        },
+        InputAction::AbilitySelect1
+        | InputAction::AbilitySelect2
+        | InputAction::AbilitySelect3
+        | InputAction::AbilitySelect4
+        | InputAction::AbilitySelect5
+        | InputAction::AbilitySelect6
+        | InputAction::AbilitySelect7
+        | InputAction::AbilitySelect8 => ActionValue {
+            pressed: input_state.select_ability.is_some(),
+            just_pressed: input_state.select_ability.is_some(),
+            ..default()
+        },
     }
 }
 

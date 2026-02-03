@@ -11,7 +11,7 @@ use components::*;
 use systems::*;
 
 pub use types::{InputAction, InputBinding, BufferedAction};
-pub use resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
+pub use resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules, ActionState, ActionValue};
 pub use components::{InputState, PlayerInputSettings, InputDevice, InputLocks};
 pub use touch::{TouchControlRoot, TouchActionButton, TouchJoystick, TouchJoystickThumb, TouchControlsSettings};
 pub use systems::*;
@@ -29,6 +29,7 @@ impl Plugin for InputPlugin {
             .init_resource::<InputContextStack>()
             .init_resource::<InputContextRules>()
             .init_resource::<TouchControlsSettings>()
+            .init_resource::<ActionState>()
             
             // Register components
             .register_type::<InputState>()
@@ -36,6 +37,7 @@ impl Plugin for InputPlugin {
             .add_systems(Update, (
                 update_input_context,
                 update_input_state,
+                update_action_state,
                 touch::update_touch_controls_visibility,
                 touch::update_touch_buttons,
                 touch::update_touch_joystick,
