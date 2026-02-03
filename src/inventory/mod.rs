@@ -47,6 +47,8 @@ pub mod player_inventory_categories_list_manager;
 pub mod use_inventory_object;
 pub mod weapon_attachment_inventory_prefab_creation_system;
 pub mod weapon_inventory_prefab_creation_system;
+pub mod item_effects;
+pub mod item_usage_system;
 
 use bevy::prelude::*;
 use types::*;
@@ -109,6 +111,7 @@ pub use player_inventory_categories_list_manager::PlayerInventoryCategoriesListM
 pub use use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent};
 pub use weapon_attachment_inventory_prefab_creation_system::WeaponAttachmentInventoryPrefabCreationSystem;
 pub use weapon_inventory_prefab_creation_system::WeaponInventoryPrefabCreationSystem;
+pub use item_effects::{ItemEffectRegistry, ItemEffect};
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -116,6 +119,7 @@ pub struct InventoryPlugin;
 impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<InventoryListManagerData>()
+        .init_resource::<ItemEffectRegistry>()
         .add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
@@ -146,6 +150,8 @@ impl Plugin for InventoryPlugin {
             inventory_list_manager::update_inventory_list_manager,
             inventory_menu_panels_system::update_inventory_menu_panels_system,
             inventory_prefab_creation_system::update_inventory_prefab_creation_system,
+            item_effects::register_item_effects,
+            item_usage_system::apply_inventory_item_effects,
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
