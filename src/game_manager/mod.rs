@@ -15,10 +15,12 @@ impl Plugin for GameManagerPlugin {
             .init_resource::<types::GameManagerSettings>()
             .init_resource::<types::PrefabRegistry>()
             .init_resource::<types::PlayerManager>()
+            .init_resource::<types::SwitchPlayerQueue>()
             .add_systems(Update, (
                 systems::update_play_time,
                 systems::toggle_pause,
-                systems::switch_player,
+                systems::switch_player_input,
+                systems::handle_switch_player,
             ));
     }
 }

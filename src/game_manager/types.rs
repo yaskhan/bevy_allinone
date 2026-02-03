@@ -42,11 +42,22 @@ pub struct PrefabRegistry {
     pub prefabs: HashMap<String, Handle<Scene>>,
 }
 
-#[derive(Resource, Default, Debug, Reflect)]
+#[derive(Resource, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct PlayerManager {
     pub players: Vec<Entity>,
     pub current_player_index: usize,
+    pub enable_ai_on_inactive: bool,
+}
+
+impl Default for PlayerManager {
+    fn default() -> Self {
+        Self {
+            players: Vec::new(),
+            current_player_index: 0,
+            enable_ai_on_inactive: true,
+        }
+    }
 }
 
 impl PlayerManager {
@@ -54,6 +65,15 @@ impl PlayerManager {
         self.players.get(self.current_player_index).copied()
     }
 }
+
+#[derive(Debug, Clone, Copy, Event)]
+pub struct SwitchPlayerEvent {
+    pub target_index: Option<usize>,
+    pub target_entity: Option<Entity>,
+}
+
+#[derive(Resource, Default)]
+pub struct SwitchPlayerQueue(pub Vec<SwitchPlayerEvent>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SaveData {
