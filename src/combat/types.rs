@@ -201,6 +201,106 @@ impl Default for MeleeCombat {
     }
 }
 
+#[derive(Debug, Clone, Reflect)]
+pub struct AttackDefinition {
+    pub name: String,
+    pub damage_multiplier: f32,
+    pub range: f32,
+    pub duration: f32,
+    pub hitbox_start: f32,
+    pub hitbox_end: f32,
+    pub combo_window: f32,
+    pub animation_clip: String,
+}
+
+impl Default for AttackDefinition {
+    fn default() -> Self {
+        Self {
+            name: "Attack".to_string(),
+            damage_multiplier: 1.0,
+            range: 2.0,
+            duration: 0.6,
+            hitbox_start: 0.15,
+            hitbox_end: 0.35,
+            combo_window: 0.25,
+            animation_clip: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Reflect)]
+pub struct AttackChain {
+    pub id: String,
+    pub attacks: Vec<AttackDefinition>,
+}
+
+impl Default for AttackChain {
+    fn default() -> Self {
+        Self {
+            id: "Default".to_string(),
+            attacks: Vec::new(),
+        }
+    }
+}
+
+#[derive(Resource, Debug, Default, Reflect)]
+#[reflect(Resource)]
+pub struct AttackDatabase {
+    pub chains: Vec<AttackChain>,
+}
+
+impl AttackDatabase {
+    pub fn get_chain(&self, id: &str) -> Option<&AttackChain> {
+        self.chains.iter().find(|chain| chain.id == id)
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MeleeAttackState {
+    pub chain_id: String,
+    pub current_attack_index: usize,
+    pub timer: f32,
+    pub hitbox_active: bool,
+    pub combo_timer: f32,
+}
+
+impl Default for MeleeAttackState {
+    fn default() -> Self {
+        Self {
+            chain_id: "Default".to_string(),
+            current_attack_index: 0,
+            timer: 0.0,
+            hitbox_active: false,
+            combo_timer: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct DamageZone {
+    pub owner: Entity,
+    pub radius: f32,
+    pub damage_multiplier: f32,
+    pub active: bool,
+    pub hit_cooldown: f32,
+    pub last_hit_time: f32,
+}
+
+impl Default for DamageZone {
+    fn default() -> Self {
+        Self {
+            owner: Entity::PLACEHOLDER,
+            radius: 0.4,
+            damage_multiplier: 1.0,
+            active: false,
+            hit_cooldown: 0.2,
+            last_hit_time: -999.0,
+        }
+    }
+}
+
 /// Blocking component.
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
