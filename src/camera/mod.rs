@@ -12,6 +12,7 @@ mod lock;
 mod zones;
 mod bounds;
 mod waypoints;
+mod photo_mode;
 
 // New Submodules
 pub mod effect;
@@ -32,6 +33,7 @@ pub use lock::*;
 pub use zones::*;
 pub use bounds::*;
 pub use waypoints::*;
+pub use photo_mode::*;
 
 pub struct CameraPlugin;
 
@@ -51,6 +53,8 @@ impl Plugin for CameraPlugin {
             .register_type::<CameraZone>()
             .register_type::<CameraZoneTracker>()
             .register_type::<CameraBounds>()
+            .init_resource::<PhotoModeSettings>()
+            .init_resource::<PhotoModeState>()
             .add_plugins((
                 effect::CameraEffectPlugin,
                 captures::CameraCapturesPlugin,
@@ -66,6 +70,8 @@ impl Plugin for CameraPlugin {
                 update_camera_zones,
                 apply_camera_zone_settings,
                 update_camera_rotation,
+                handle_photo_mode_toggle,
+                update_photo_mode,
             ).chain())
             .add_systems(Update, (
                 update_camera_shake,
