@@ -16,6 +16,7 @@ pub mod ammo_pickup;
 pub mod energy_pickup;
 pub mod experience_multiplier_pickup;
 pub mod experience_pickup;
+pub mod general_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -33,6 +34,7 @@ pub use ammo_pickup::AmmoPickup;
 pub use energy_pickup::EnergyPickup;
 pub use experience_multiplier_pickup::ExperienceMultiplierPickup;
 pub use experience_pickup::ExperiencePickup;
+pub use general_pickup::GeneralPickup;
 
 pub struct PickupsPlugin;
 

@@ -20,7 +20,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `energyPickup.cs`
 - [x] `experienceMultiplierPickup.cs`
 - [x] `experiencePickup.cs`
-- [ ] `generalPickup.cs`
+- [x] `generalPickup.cs`
 - [ ] `grabObjectsStrengthPickup.cs`
 - [ ] `healthPickup.cs`
 - [ ] `inventoryExtraSpacePickup.cs`
