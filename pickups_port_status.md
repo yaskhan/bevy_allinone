@@ -22,7 +22,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `experiencePickup.cs`
 - [x] `generalPickup.cs`
 - [x] `grabObjectsStrengthPickup.cs`
-- [ ] `healthPickup.cs`
+- [x] `healthPickup.cs`
 - [ ] `inventoryExtraSpacePickup.cs`
 - [ ] `inventoryPickup.cs`
 - [ ] `inventoryWeightBagPickup.cs`
