@@ -72,11 +72,30 @@ pub fn update_ai_perception(
 
 pub fn update_ai_hearing(
     mut queue: ResMut<NoiseEventQueue>,
-    mut ai_query: Query<(&GlobalTransform, &mut AiController, &AIPerceptionSettings)>,
+    mut ai_query: Query<(
+        &GlobalTransform,
+        &mut AiController,
+        &AIPerceptionSettings,
+        Option<&AiHearingSettings>,
+    )>,
 ) {
     for event in queue.0.iter() {
-        for (transform, mut ai, settings) in ai_query.iter_mut() {
+        for (transform, mut ai, settings, hearing) in ai_query.iter_mut() {
             if ai.is_paused { continue; }
+            if let Some(hearing) = hearing {
+                if !hearing.enabled {
+                    continue;
+                }
+                if event.volume < hearing.min_decibels {
+                    continue;
+                }
+                if hearing.investigate_only_if_idle
+                    && ai.state != AiBehaviorState::Idle
+                    && ai.state != AiBehaviorState::Suspect
+                {
+                    continue;
+                }
+            }
             let dist = transform.translation().distance(event.position);
             if dist <= settings.hearing_range * event.volume {
                 // Investigate noise

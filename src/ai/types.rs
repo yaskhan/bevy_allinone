@@ -356,6 +356,64 @@ pub struct AIPerceptionSettings {
     pub layer_mask: u32,
 }
 
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiHearingSettings {
+    pub enabled: bool,
+    pub min_decibels: f32,
+    pub investigate_only_if_idle: bool,
+}
+
+impl Default for AiHearingSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_decibels: 0.1,
+            investigate_only_if_idle: true,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiCombatRangeSettings {
+    pub min_distance_to_draw: f32,
+    pub min_distance_to_shoot: f32,
+    pub melee_range: f32,
+    pub ranged_range: f32,
+}
+
+impl Default for AiCombatRangeSettings {
+    fn default() -> Self {
+        Self {
+            min_distance_to_draw: 3.0,
+            min_distance_to_shoot: 6.0,
+            melee_range: 2.0,
+            ranged_range: 15.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiAlertSettings {
+    pub enabled: bool,
+    pub radius: f32,
+    pub cooldown: f32,
+    pub last_alert_time: f32,
+}
+
+impl Default for AiAlertSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            radius: 12.0,
+            cooldown: 1.5,
+            last_alert_time: -999.0,
+        }
+    }
+}
+
 #[derive(Debug, Reflect, Clone)]
 pub struct NoiseEvent {
     pub position: Vec3,
