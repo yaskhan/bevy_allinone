@@ -12,6 +12,7 @@ mod combat;
 mod behavior;
 mod hiding;
 mod movement;
+mod navigation;
 mod vehicle_ai;
 
 pub use types::*;
@@ -24,6 +25,7 @@ pub use combat::*;
 pub use behavior::*;
 pub use hiding::*;
 pub use movement::*;
+pub use navigation::*;
 pub use vehicle_ai::*;
 
 pub struct AiPlugin;
@@ -53,6 +55,9 @@ impl Plugin for AiPlugin {
             .register_type::<PatrolPath>()
             .register_type::<AIPerceptionSettings>()
             .register_type::<AiMovement>()
+            .register_type::<AiNavWaypoint>()
+            .register_type::<AiPath>()
+            .register_type::<AiNavigationSettings>()
             .register_type::<VehicleAI>()
             .register_type::<WaypointPath>()
             .register_type::<AiHearingSettings>()
@@ -68,6 +73,7 @@ impl Plugin for AiPlugin {
                 handle_friend_commands,
                 update_ai_behavior,
                 update_ai_suspicion,
+                update_ai_navigation,
                 update_ai_movement,
                 update_patrol,
                 update_turrets,
