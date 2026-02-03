@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::currency::{AddCurrencyEventQueue, AddCurrencyEvent, CurrencyType};
-use crate::experience::types::{ExperienceObtainedQueue, ExperienceObtainedEvent};
+use crate::experience::types::{ExperienceObtainedQueue, ExperienceObtainedEvent, PlayerExperience, ExperienceSettings};
 use crate::inventory::{Inventory, types::{InventoryItem, ItemType}};
 use crate::abilities::OxygenSystem;
 use crate::weapons::{Weapon, WeaponManager};
@@ -15,6 +15,7 @@ use super::melee_weapon_pickup::MeleeWeaponPickup;
 use super::oxygen_pickup::OxygenPickup;
 use super::money_pickup::MoneyPickup;
 use super::experience_pickup::ExperiencePickup;
+use super::experience_multiplier_pickup::ExperienceMultiplierPickup;
 use super::weapon_pickup::WeaponPickup;
 
 pub fn process_pickup_events(
@@ -26,6 +27,8 @@ pub fn process_pickup_events(
     mut oxygen_query: Query<&mut OxygenSystem>,
     mut currency_events: ResMut<AddCurrencyEventQueue>,
     mut experience_queue: ResMut<ExperienceObtainedQueue>,
+    settings: Res<ExperienceSettings>,
+    mut player_experience_query: Query<&mut PlayerExperience>,
     weapon_pickup_query: Query<&WeaponPickup>,
     melee_weapon_pickup_query: Query<&MeleeWeaponPickup>,
     melee_weapon_consumable_pickup_query: Query<&MeleeWeaponConsumablePickup>,
@@ -33,6 +36,7 @@ pub fn process_pickup_events(
     oxygen_pickup_query: Query<&OxygenPickup>,
     money_pickup_query: Query<&MoneyPickup>,
     experience_pickup_query: Query<&ExperiencePickup>,
+    experience_multiplier_pickup_query: Query<&ExperienceMultiplierPickup>,
 ) {
     for event in events.0.drain(..) {
         let mut picked = false;
@@ -82,6 +86,17 @@ pub fn process_pickup_events(
         if !picked {
             if let Ok(pickup) = experience_pickup_query.get(event.target) {
                 picked = handle_experience_pickup(event.source, pickup, &mut experience_queue);
+            }
+        }
+
+        if !picked {
+            if let Ok(pickup) = experience_multiplier_pickup_query.get(event.target) {
+                picked = handle_experience_multiplier_pickup(
+                    event.source,
+                    pickup,
+                    &settings,
+                    &mut player_experience_query,
+                );
             }
         }
 
@@ -339,6 +354,28 @@ fn handle_experience_pickup(
         amount,
         source_position: None,
     });
+
+    true
+}
+
+fn handle_experience_multiplier_pickup(
+    player: Entity,
+    pickup: &ExperienceMultiplierPickup,
+    settings: &ExperienceSettings,
+    player_experience_query: &mut Query<&mut PlayerExperience>,
+) -> bool {
+    let Ok(mut player_xp) = player_experience_query.get_mut(player) else {
+        warn!("Experience multiplier pickup missing PlayerExperience on {:?}", player);
+        return false;
+    };
+
+    if !settings.xp_multiplier_enabled {
+        warn!("Experience multiplier pickup ignored (multiplier disabled).");
+        return false;
+    }
+
+    player_xp.xp_multiplier = pickup.experience_multiplier_amount;
+    player_xp.xp_multiplier_timer = pickup.experience_multiplier_duration;
 
     true
 }
