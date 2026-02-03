@@ -329,6 +329,32 @@ impl Default for VehicleAudio {
         }
     }
 }
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct VehicleGravity {
+    pub align_to_surface: bool,
+    pub hover_height: f32,
+    pub hover_strength: f32,
+    pub alignment_speed: f32,
+    pub gravity_strength: f32,
+    pub max_ray_distance: f32,
+    pub surface_mask: u32,
+}
+
+impl Default for VehicleGravity {
+    fn default() -> Self {
+        Self {
+            align_to_surface: true,
+            hover_height: 1.5,
+            hover_strength: 20.0,
+            alignment_speed: 6.0,
+            gravity_strength: 9.81,
+            max_ray_distance: 4.0,
+            surface_mask: 0xFFFF,
+        }
+    }
+}
 #[derive(Component, Reflect, Clone)]
 #[reflect(Component)]
 pub struct VehicleStats {

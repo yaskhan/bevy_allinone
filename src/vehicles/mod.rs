@@ -13,6 +13,7 @@ pub mod vehicle_interface;
 pub mod vehicle_laser;
 pub mod controllers;
 pub mod hoverboard_animation;
+pub mod gravity;
 pub mod vehicle_ai_navmesh;
 pub mod waypoints;
 
@@ -38,6 +39,7 @@ pub use controllers::SphereController;
 pub use controllers::TurretController;
 pub use controllers::VehicleController;
 pub use hoverboard_animation::HoverBoardAnimationSystem;
+pub use gravity::update_vehicle_gravity;
 pub use vehicle_ai_navmesh::VehicleAINavMesh;
 pub use waypoints::WaypointCircuit;
 pub use waypoints::WaypointProgressTracker;
@@ -86,6 +88,7 @@ impl Plugin for VehiclesPlugin {
             .register_type::<TurretController>()
             .register_type::<VehicleController>()
             .register_type::<HoverBoardAnimationSystem>()
+            .register_type::<types::VehicleGravity>()
             .register_type::<VehicleAINavMesh>()
             .register_type::<WaypointCircuit>()
             .register_type::<WaypointProgressTracker>()
@@ -110,6 +113,7 @@ impl Plugin for VehiclesPlugin {
                 seating::manage_vehicle_passengers,
                 effects::update_skidmarks,
                 chassis::update_vehicle_chassis,
+                gravity::update_vehicle_gravity,
                 audio::update_vehicle_audio,
                 hud::update_vehicle_hud,
                 hoverboard_waypoints::update_hoverboard_waypoints,
