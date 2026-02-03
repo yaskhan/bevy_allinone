@@ -20,6 +20,7 @@ pub mod general_pickup;
 pub mod grab_objects_strength_pickup;
 pub mod health_pickup;
 pub mod inventory_extra_space_pickup;
+pub mod inventory_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -41,6 +42,7 @@ pub use general_pickup::GeneralPickup;
 pub use grab_objects_strength_pickup::GrabObjectsStrengthPickup;
 pub use health_pickup::HealthPickup;
 pub use inventory_extra_space_pickup::InventoryExtraSpacePickup;
+pub use inventory_pickup::InventoryPickup;
 
 pub struct PickupsPlugin;
 

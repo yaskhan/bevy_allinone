@@ -24,7 +24,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `grabObjectsStrengthPickup.cs`
 - [x] `healthPickup.cs`
 - [x] `inventoryExtraSpacePickup.cs`
-- [ ] `inventoryPickup.cs`
+- [x] `inventoryPickup.cs`
 - [ ] `inventoryWeightBagPickup.cs`
 - [ ] `jetpackFuelPickup.cs`
 - [ ] `mapPickup.cs`
