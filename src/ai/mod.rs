@@ -58,6 +58,7 @@ impl Plugin for AiPlugin {
             .register_type::<AiNavWaypoint>()
             .register_type::<AiPath>()
             .register_type::<AiNavigationSettings>()
+            .init_resource::<AiNavGraph>()
             .register_type::<VehicleAI>()
             .register_type::<WaypointPath>()
             .register_type::<AiHearingSettings>()
@@ -74,6 +75,7 @@ impl Plugin for AiPlugin {
                 handle_friend_commands,
                 update_ai_behavior,
                 update_ai_suspicion,
+                rebuild_nav_graph,
                 update_ai_navigation,
                 update_ai_movement,
                 update_ai_avoidance,

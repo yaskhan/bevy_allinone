@@ -4,6 +4,31 @@ use std::collections::{BinaryHeap, HashMap};
 
 use super::types::*;
 
+#[derive(Resource, Debug)]
+pub struct AiNavGraph {
+    pub nodes: Vec<(Entity, Vec3)>,
+    pub last_build_time: f32,
+    pub rebuild_interval: f32,
+}
+
+pub fn rebuild_nav_graph(
+    time: Res<Time>,
+    mut graph: ResMut<AiNavGraph>,
+    waypoint_query: Query<(Entity, &GlobalTransform, &AiNavWaypoint)>,
+) {
+    let now = time.elapsed_secs();
+    if now - graph.last_build_time < graph.rebuild_interval {
+        return;
+    }
+
+    graph.nodes = waypoint_query
+        .iter()
+        .filter(|(_, _, w)| w.is_active)
+        .map(|(e, gt, _)| (e, gt.translation()))
+        .collect();
+    graph.last_build_time = now;
+}
+
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AiNavWaypoint {
@@ -45,6 +70,16 @@ impl Default for AiNavigationSettings {
     }
 }
 
+impl Default for AiNavGraph {
+    fn default() -> Self {
+        Self {
+            nodes: Vec::new(),
+            last_build_time: -999.0,
+            rebuild_interval: 2.0,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct QueueNode {
     cost: u32,
@@ -65,18 +100,12 @@ impl PartialOrd for QueueNode {
 
 pub fn update_ai_navigation(
     time: Res<Time>,
-    waypoint_query: Query<(Entity, &GlobalTransform, &AiNavWaypoint)>,
+    graph: Res<AiNavGraph>,
     mut ai_query: Query<(Entity, &GlobalTransform, &mut AiMovement, &mut AiNavigationSettings, Option<&mut AiPath>)>,
     mut commands: Commands,
 ) {
     let now = time.elapsed_secs();
-    let waypoints: Vec<(Entity, Vec3)> = waypoint_query
-        .iter()
-        .filter(|(_, _, w)| w.is_active)
-        .map(|(e, gt, _)| (e, gt.translation()))
-        .collect();
-
-    if waypoints.is_empty() {
+    if graph.nodes.is_empty() {
         return;
     }
 
@@ -90,14 +119,14 @@ pub fn update_ai_navigation(
             continue;
         }
 
-        let start = find_closest_waypoint(transform.translation(), &waypoints);
-        let goal = find_closest_waypoint(destination, &waypoints);
+        let start = find_closest_waypoint(transform.translation(), &graph.nodes);
+        let goal = find_closest_waypoint(destination, &graph.nodes);
         nav_settings.last_repath_time = now;
 
         let Some((start_ent, _)) = start else { continue };
         let Some((goal_ent, _)) = goal else { continue };
 
-        let path = compute_path(start_ent, goal_ent, &waypoints, nav_settings.waypoint_connection_radius);
+        let path = compute_path(start_ent, goal_ent, &graph.nodes, nav_settings.waypoint_connection_radius);
         if path.is_empty() {
             if nav_settings.accept_partial_path {
                 continue;
@@ -108,7 +137,7 @@ pub fn update_ai_navigation(
 
         let mut points = Vec::new();
         for node in path {
-            if let Some((_e, pos)) = waypoints.iter().find(|(e, _)| *e == node) {
+            if let Some((_e, pos)) = graph.nodes.iter().find(|(e, _)| *e == node) {
                 points.push(*pos);
             }
         }
