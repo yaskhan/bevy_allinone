@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::ai::types::*;
+use rand::Rng;
 
 #[derive(Component, Debug, Reflect, Default)]
 #[reflect(Component)]
@@ -32,7 +33,7 @@ pub fn update_ai_combat(
 ) {
     let now = time.elapsed_secs();
 
-    for (transform, mut ai, perception, mut settings, mut input, brain_opt, ranged, _melee, _close, _powers) in query.iter_mut() {
+    for (transform, mut ai, perception, mut settings, mut input, brain_opt, ranged, melee, close, powers) in query.iter_mut() {
         if ai.state != AiBehaviorState::Combat && ai.state != AiBehaviorState::Attack {
             continue;
         }
@@ -57,11 +58,48 @@ pub fn update_ai_combat(
             let dist = target_pos.distance(transform.translation());
 
             if let Some(brain) = brain_opt {
-                if brain.strategy == AiCombatStrategy::Ranged {
-                    if let Some(mut ranged_settings) = ranged {
-                        update_ranged_combat(delta, dist, ai.attack_range, &mut ranged_settings, &mut input);
+                match brain.strategy {
+                    AiCombatStrategy::Ranged => {
+                        if let Some(mut ranged_settings) = ranged {
+                            update_ranged_combat(delta, dist, ai.attack_range, &mut ranged_settings, &mut input);
+                        }
+                        continue;
                     }
-                    continue;
+                    AiCombatStrategy::MeleeAdvanced => {
+                        if let Some(mut melee_settings) = melee {
+                            update_melee_combat(
+                                now,
+                                dist,
+                                ai.attack_range,
+                                &mut melee_settings,
+                                &mut input,
+                            );
+                        }
+                        continue;
+                    }
+                    AiCombatStrategy::CloseCombat => {
+                        if let Some(mut close_settings) = close {
+                            update_close_combat(
+                                now,
+                                dist,
+                                ai.attack_range,
+                                &mut close_settings,
+                                &mut input,
+                            );
+                        }
+                        continue;
+                    }
+                    AiCombatStrategy::Powers => {
+                        if let Some(mut powers_settings) = powers {
+                            update_powers_combat(
+                                now,
+                                dist,
+                                &mut powers_settings,
+                                &mut input,
+                            );
+                        }
+                        continue;
+                    }
                 }
             }
 
@@ -146,5 +184,78 @@ fn update_ranged_combat(
         }
     } else {
         input.fire_pressed = false;
+    }
+}
+
+fn update_melee_combat(
+    now: f32,
+    dist: f32,
+    attack_range: f32,
+    settings: &mut AiMeleeCombatSettings,
+    input: &mut crate::input::InputState,
+) {
+    if dist > attack_range {
+        input.attack_pressed = false;
+        input.block_pressed = false;
+        return;
+    }
+
+    let can_attack = now - settings.last_attack_time >= settings.min_time_between_attacks;
+    if can_attack {
+        input.attack_pressed = true;
+        settings.last_attack_time = now;
+    } else {
+        input.attack_pressed = false;
+    }
+
+    let mut rng = rand::rng();
+    if rng.random::<f32>() < settings.block_probability {
+        input.block_pressed = true;
+    }
+    if rng.random::<f32>() < settings.parry_probability {
+        input.block_pressed = true;
+    }
+
+    if rng.random::<f32>() < settings.combo_probability {
+        input.attack_pressed = true;
+    }
+}
+
+fn update_close_combat(
+    now: f32,
+    dist: f32,
+    attack_range: f32,
+    settings: &mut AiCloseCombatSettings,
+    input: &mut crate::input::InputState,
+) {
+    if dist > attack_range {
+        input.attack_pressed = false;
+        return;
+    }
+
+    if now - settings.last_attack_time >= settings.min_time_between_attacks {
+        input.attack_pressed = true;
+        settings.last_attack_time = now;
+    } else {
+        input.attack_pressed = false;
+    }
+}
+
+fn update_powers_combat(
+    now: f32,
+    dist: f32,
+    settings: &mut AiPowersCombatSettings,
+    input: &mut crate::input::InputState,
+) {
+    if dist < settings.min_range || dist > settings.max_range {
+        input.ability_use_pressed = false;
+        return;
+    }
+
+    if now - settings.last_cast_time >= settings.cooldown {
+        input.ability_use_pressed = true;
+        settings.last_cast_time = now;
+    } else {
+        input.ability_use_pressed = false;
     }
 }
