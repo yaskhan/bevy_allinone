@@ -23,6 +23,7 @@ pub mod inventory_extra_space_pickup;
 pub mod inventory_pickup;
 pub mod inventory_weight_bag_pickup;
 pub mod jetpack_fuel_pickup;
+pub mod map_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -47,6 +48,7 @@ pub use inventory_extra_space_pickup::InventoryExtraSpacePickup;
 pub use inventory_pickup::InventoryPickup;
 pub use inventory_weight_bag_pickup::InventoryWeightBagPickup;
 pub use jetpack_fuel_pickup::JetpackFuelPickup;
+pub use map_pickup::MapPickup;
 
 pub struct PickupsPlugin;
 
