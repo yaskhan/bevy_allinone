@@ -161,6 +161,122 @@ pub struct AiStateVisuals {
     pub icon_spawn_interval: f32,
 }
 
+#[derive(Component, Debug, Reflect, Default)]
+#[reflect(Component)]
+pub struct AiCombatBrain {
+    pub strategy: AiCombatStrategy,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+pub enum AiCombatStrategy {
+    CloseCombat,
+    MeleeAdvanced,
+    Ranged,
+    Powers,
+}
+
+impl Default for AiCombatStrategy {
+    fn default() -> Self {
+        AiCombatStrategy::Ranged
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiRangedCombatSettings {
+    pub burst_size: u8,
+    pub burst_interval: f32,
+    pub burst_cooldown: f32,
+    pub fire_timer: f32,
+    pub burst_remaining: u8,
+    pub reload_time: f32,
+    pub reload_timer: f32,
+    pub clip_size: i32,
+    pub ammo_in_clip: i32,
+    pub accuracy: f32,
+    pub aim_time: f32,
+    pub aim_timer: f32,
+}
+
+impl Default for AiRangedCombatSettings {
+    fn default() -> Self {
+        Self {
+            burst_size: 3,
+            burst_interval: 0.12,
+            burst_cooldown: 0.6,
+            fire_timer: 0.0,
+            burst_remaining: 0,
+            reload_time: 1.6,
+            reload_timer: 0.0,
+            clip_size: 30,
+            ammo_in_clip: 30,
+            accuracy: 0.85,
+            aim_time: 0.15,
+            aim_timer: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiMeleeCombatSettings {
+    pub min_time_between_attacks: f32,
+    pub last_attack_time: f32,
+    pub block_probability: f32,
+    pub parry_probability: f32,
+    pub combo_probability: f32,
+}
+
+impl Default for AiMeleeCombatSettings {
+    fn default() -> Self {
+        Self {
+            min_time_between_attacks: 0.6,
+            last_attack_time: 0.0,
+            block_probability: 0.2,
+            parry_probability: 0.1,
+            combo_probability: 0.25,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiCloseCombatSettings {
+    pub min_time_between_attacks: f32,
+    pub last_attack_time: f32,
+}
+
+impl Default for AiCloseCombatSettings {
+    fn default() -> Self {
+        Self {
+            min_time_between_attacks: 0.8,
+            last_attack_time: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct AiPowersCombatSettings {
+    pub ability_name: String,
+    pub cooldown: f32,
+    pub last_cast_time: f32,
+    pub min_range: f32,
+    pub max_range: f32,
+}
+
+impl Default for AiPowersCombatSettings {
+    fn default() -> Self {
+        Self {
+            ability_name: "Ability".to_string(),
+            cooldown: 2.0,
+            last_cast_time: 0.0,
+            min_range: 2.0,
+            max_range: 20.0,
+        }
+    }
+}
+
 impl Default for AiStateVisuals {
     fn default() -> Self {
         Self {
