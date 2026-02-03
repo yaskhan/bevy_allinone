@@ -8,6 +8,7 @@ pub mod area_effect;
 pub mod damage_ui;
 pub mod sync;
 pub mod result_queue;
+pub mod slice;
 
 pub use types::*;
 pub use systems::*;
@@ -17,6 +18,7 @@ pub use area_effect::*;
 pub use damage_ui::*;
 pub use sync::*;
 pub use result_queue::*;
+pub use slice::*;
 
 pub struct CombatPlugin;
 
@@ -26,6 +28,8 @@ impl Plugin for CombatPlugin {
             .init_resource::<DamageEventQueue>()
             .init_resource::<DeathEventQueue>()
             .init_resource::<DamageResultQueue>()
+            .init_resource::<SliceEventQueue>()
+            .init_resource::<SliceResultQueue>()
             .init_resource::<DamageFeedbackSettings>()
             .init_resource::<AttackDatabase>()
             .register_type::<Health>()
@@ -45,10 +49,13 @@ impl Plugin for CombatPlugin {
             .register_type::<AreaEffect>()
             .register_type::<DamageScreenEffect>()
             .register_type::<DamageIndicator>()
+            .register_type::<Sliceable>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
+                slice::queue_slice_events_from_laser,
+                slice::apply_slice_events,
                 systems::update_melee_attack_state,
                 systems::update_melee_hitboxes,
                 systems::perform_melee_hitbox_damage,
