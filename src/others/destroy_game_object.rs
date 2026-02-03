@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Destroys an entity after a delay.
 ///
-/// GKC reference: `destroyGameObject.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DestroyGameObject {

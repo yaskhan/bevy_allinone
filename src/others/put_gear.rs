@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple gear placement component.
 ///
-/// GKC reference: `putGear.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PutGear {

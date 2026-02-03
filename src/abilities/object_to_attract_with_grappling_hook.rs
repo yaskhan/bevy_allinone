@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Object that can be attracted by the grappling hook.
 ///
-/// GKC reference: `objectToAttractWithGrapplingHook.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ObjectToAttractWithGrapplingHook {

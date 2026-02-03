@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Displays console log lines on screen.
 ///
-/// GKC reference: `consoleLogOnScreenSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ConsoleLogOnScreenSystem {

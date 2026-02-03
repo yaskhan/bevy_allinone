@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple lens flare placeholder.
 ///
-/// GKC reference: `simpleLensFlareSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleLensFlareSystem {

@@ -3,7 +3,7 @@ use super::types::VehicleIKTargets;
 
 /// IK driving system for vehicle passengers.
 ///
-/// GKC reference: `IKDrivingSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct IKDrivingSystem {

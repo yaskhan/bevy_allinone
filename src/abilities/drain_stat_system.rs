@@ -25,7 +25,7 @@ impl Default for DrainStatInfo {
 
 /// Drain stats from targets and add to player.
 ///
-/// GKC reference: `drainStatSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DrainStatSystem {

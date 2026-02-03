@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Sets the parent of an entity.
 ///
-/// GKC reference: `setObjectParentSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SetObjectParentSystem {

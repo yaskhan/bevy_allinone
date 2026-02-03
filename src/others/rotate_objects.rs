@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Rotates objects continuously.
 ///
-/// GKC reference: `rotateObjects.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct RotateObjects {

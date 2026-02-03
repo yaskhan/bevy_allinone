@@ -3,7 +3,7 @@ use super::{PickUpElementInfo, PickUpIconInfo};
 
 /// Manages pickup list and settings.
 ///
-/// GKC reference: `pickUpManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpManager {

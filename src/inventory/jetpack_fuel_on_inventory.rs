@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Jetpack fuel pickup info when stored in inventory.
 ///
-/// GKC reference: `jetpackFuelOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct JetpackFuelOnInventory {

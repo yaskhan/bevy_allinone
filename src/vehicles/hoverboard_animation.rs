@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Hoverboard animation settings.
 ///
-/// GKC reference: `hoverBoardAnimationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HoverBoardAnimationSystem {

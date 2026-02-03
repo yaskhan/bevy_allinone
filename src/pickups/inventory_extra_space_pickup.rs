@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Inventory extra space pickup data.
 ///
-/// GKC reference: `inventoryExtraSpacePickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryExtraSpacePickup {

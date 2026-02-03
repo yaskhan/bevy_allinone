@@ -3,7 +3,7 @@ use bevy::animation::AnimationPlayer;
 
 /// Pauses or resumes animation playback.
 ///
-/// GKC reference: `pauseAnimationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PauseAnimationSystem {

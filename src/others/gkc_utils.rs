@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Utility helpers.
 ///
-/// GKC reference: `GKC_Utils.cs`
+///
 pub struct GkcUtils;
 
 impl GkcUtils {

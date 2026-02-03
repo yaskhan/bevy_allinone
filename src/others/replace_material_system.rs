@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Replaces material properties (simplified to color).
 ///
-/// GKC reference: `replaceMaterialSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ReplaceMaterialSystem {

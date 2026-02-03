@@ -5,7 +5,7 @@ use super::types::InventoryItem;
 
 /// Creates consumable inventory prefabs as physical items.
 ///
-/// GKC reference: `consumableInventoryPrefabCreationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ConsumableInventoryPrefabCreationSystem {

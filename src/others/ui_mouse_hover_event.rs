@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// UI mouse hover event marker.
 ///
-/// GKC reference: `UIMouseHoverEvent.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct UIMouseHoverEvent {

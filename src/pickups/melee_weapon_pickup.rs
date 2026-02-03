@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Melee weapon pickup data.
 ///
-/// GKC reference: `meleeWeaponPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MeleeWeaponPickup {

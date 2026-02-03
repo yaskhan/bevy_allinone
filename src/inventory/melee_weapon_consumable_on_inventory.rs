@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Melee weapon consumable pickup info when stored in inventory.
 ///
-/// GKC reference: `meleeWeaponConsumableOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MeleeWeaponConsumableOnInventory {

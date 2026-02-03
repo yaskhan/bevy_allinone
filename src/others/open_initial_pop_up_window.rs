@@ -4,7 +4,7 @@ use super::initial_pop_up_window::InitialPopUpWindow;
 
 /// Opens an initial pop-up window.
 ///
-/// GKC reference: `openInitialPopUpWindow.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct OpenInitialPopUpWindow {

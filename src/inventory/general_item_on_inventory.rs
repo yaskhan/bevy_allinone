@@ -5,7 +5,7 @@ use super::types::InventoryItem;
 
 /// Generic inventory item that can be picked up.
 ///
-/// GKC reference: `generalItemOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GeneralItemOnInventory {

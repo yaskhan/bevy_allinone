@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Grab objects strength pickup data.
 ///
-/// GKC reference: `grabObjectsStrengthPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GrabObjectsStrengthPickup {

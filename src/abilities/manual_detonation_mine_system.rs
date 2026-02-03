@@ -23,7 +23,7 @@ impl Default for ManualDetonationMineObject {
 
 /// Manual detonation mine system.
 ///
-/// GKC reference: `manualDetonationMineSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ManualDetonationMineSystem {

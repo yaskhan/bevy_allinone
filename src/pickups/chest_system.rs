@@ -3,7 +3,7 @@ use super::PickUpElementInfo;
 
 /// Chest pickup container.
 ///
-/// GKC reference: `chestSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ChestSystem {

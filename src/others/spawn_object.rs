@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Spawns an object placeholder.
 ///
-/// GKC reference: `spawnObject.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SpawnObject {

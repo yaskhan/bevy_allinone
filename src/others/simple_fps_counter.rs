@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple FPS counter.
 ///
-/// GKC reference: `SimpleFPSCounter.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleFpsCounter {

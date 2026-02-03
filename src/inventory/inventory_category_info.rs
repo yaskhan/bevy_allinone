@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Category metadata for inventory grouping.
 ///
-/// GKC reference: `inventoryCategoryInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryCategoryInfo {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Sets a fixed rotation on an entity.
 ///
-/// GKC reference: `setFixedRotation.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SetFixedRotation {

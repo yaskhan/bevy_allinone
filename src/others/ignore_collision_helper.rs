@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Stores entities to ignore collisions with.
 ///
-/// GKC reference: `ignoreCollisionHelper.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct IgnoreCollisionHelper {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Example component for head explode effect.
 ///
-/// GKC reference: `headExplodeExample.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HeadExplodeExample {

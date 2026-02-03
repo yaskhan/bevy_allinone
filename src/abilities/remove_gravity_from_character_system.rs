@@ -12,7 +12,7 @@ pub struct RemoveGravityEventQueue(pub Vec<RemoveGravityEvent>);
 
 /// Temporarily remove gravity from character.
 ///
-/// GKC reference: `removeGravityFromCharacterSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct RemoveGravityFromCharacterSystem {

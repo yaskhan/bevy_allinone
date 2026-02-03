@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Sets active state on a target entity.
 ///
-/// GKC reference: `setGameObjectActiveState.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SetGameObjectActiveState {

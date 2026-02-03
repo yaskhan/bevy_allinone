@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Manages optional features.
 ///
-/// GKC reference: `featuresManager.cs`
+///
 #[derive(Resource, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct FeaturesManager {

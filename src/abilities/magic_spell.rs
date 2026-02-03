@@ -4,7 +4,7 @@ use super::types::*;
 
 /// Magic spell ability settings.
 ///
-/// GKC reference: `magicSpellActionSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MagicSpellAbility {

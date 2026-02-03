@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Pickup object marker.
 ///
-/// GKC reference: `pickUpObject.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpObject {

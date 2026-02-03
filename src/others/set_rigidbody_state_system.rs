@@ -3,7 +3,7 @@ use avian3d::prelude::{LinearVelocity, AngularVelocity};
 
 /// Enables or disables rigidbody motion.
 ///
-/// GKC reference: `setRigidbodyStateSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SetRigidbodyStateSystem {

@@ -3,7 +3,7 @@ use super::PickUpIconInfo;
 
 /// Manages pickup icons for player.
 ///
-/// GKC reference: `playerPickupIconManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerPickupIconManager {

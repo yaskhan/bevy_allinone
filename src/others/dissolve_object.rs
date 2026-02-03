@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Dissolve effect controller.
 ///
-/// GKC reference: `dissolveObject.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DissolveObject {

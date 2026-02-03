@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Skill point pickup data.
 ///
-/// GKC reference: `skillPointPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SkillPointPickup {

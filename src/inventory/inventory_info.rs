@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// General info about an inventory owner.
 ///
-/// GKC reference: `inventoryInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryInfo {

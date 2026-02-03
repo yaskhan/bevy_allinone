@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Tag and layer metadata.
 ///
-/// GKC reference: `tagLayerSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct TagLayerSystem {

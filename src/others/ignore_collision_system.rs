@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Defines collision ignore rules.
 ///
-/// GKC reference: `ignoreCollisionSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct IgnoreCollisionSystem {

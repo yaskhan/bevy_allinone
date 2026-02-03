@@ -26,7 +26,7 @@ pub struct TeleportEndEventQueue(pub Vec<TeleportEndEvent>);
 
 /// Teleport ability controller.
 ///
-/// GKC reference: `Custom Abilities/playerTeleportSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerTeleportAbility {

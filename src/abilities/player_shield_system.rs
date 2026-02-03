@@ -3,7 +3,7 @@ use super::ability_info::AbilityInfo;
 
 /// Player shield ability.
 ///
-/// GKC reference: `playerShieldSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerShieldSystem {

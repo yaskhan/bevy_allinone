@@ -3,7 +3,7 @@ use avian3d::prelude::LinearVelocity;
 
 /// Adds force to an object using LinearVelocity as a fallback.
 ///
-/// GKC reference: `addForceToObjectSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AddForceToObjectSystem {

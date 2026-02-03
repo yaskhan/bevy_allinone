@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Sets rotation using a quaternion.
 ///
-/// GKC reference: `simpleSetQuaternionRotation.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleSetQuaternionRotation {

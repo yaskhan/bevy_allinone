@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Stamina pickup data.
 ///
-/// GKC reference: `staminaPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct StaminaPickup {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple audio playback trigger.
 ///
-/// GKC reference: `simpleAudioPlay.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleAudioPlay {

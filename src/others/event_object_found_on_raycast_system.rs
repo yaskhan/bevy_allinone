@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Emits events when a raycast hits an object.
 ///
-/// GKC reference: `eventObjectFoundOnRaycastSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct EventObjectFoundOnRaycastSystem {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Oxygen pickup info when stored in inventory.
 ///
-/// GKC reference: `oxygenOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct OxygenOnInventory {

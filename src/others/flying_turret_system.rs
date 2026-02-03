@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple flying turret controller.
 ///
-/// GKC reference: `flyingTurretSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct FlyingTurretSystem {

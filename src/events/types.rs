@@ -15,7 +15,7 @@ pub enum EventParameter {
 pub struct RemoteEventReceiver {
     /// List of event names this entity listens for
     // In a real Bevy app, we might just use specific components, 
-    // but to port the logic we keep the string-based mapping.
+    // but we keep the string-based mapping.
     pub events: Vec<String>,
 }
 

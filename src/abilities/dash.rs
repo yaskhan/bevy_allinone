@@ -4,7 +4,7 @@ use super::ability_info::AbilityInfo;
 
 /// Dash ability controller.
 ///
-/// GKC reference: `dashSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DashAbility {

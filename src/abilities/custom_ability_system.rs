@@ -28,7 +28,7 @@ pub struct CustomAbilityDeactivateEventQueue(pub Vec<CustomAbilityEvent>);
 
 /// Generic custom ability behavior.
 ///
-/// GKC reference: `customAbilitySystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct CustomAbilitySystem {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Follows another object's position (late update).
 ///
-/// GKC reference: `followObjectPositionUpdateSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct FollowObjectPositionUpdateSystem {

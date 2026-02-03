@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Ship interface info for vehicle UI.
 ///
-/// GKC reference: `shipInterfaceInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ShipInterfaceInfo {

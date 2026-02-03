@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Waypoints for hoverboard paths.
 ///
-/// GKC reference: `hoverBoardWayPoints.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HoverBoardWaypoints {

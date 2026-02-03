@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Trajectory preview system for thrown objects.
 ///
-/// GKC reference: `throwObjectTrayectorySystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ThrowObjectTrajectory {

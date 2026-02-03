@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Zone definition for wall running.
 ///
-/// GKC reference: `wallRunningZoneSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct WallRunningZone {

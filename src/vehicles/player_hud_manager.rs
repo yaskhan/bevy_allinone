@@ -3,7 +3,7 @@ use super::types::{Vehicle, VehicleStats};
 
 /// Player HUD manager for vehicle-related UI.
 ///
-/// GKC reference: `playerHUDManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerHudManager {

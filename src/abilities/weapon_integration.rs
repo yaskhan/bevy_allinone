@@ -5,7 +5,7 @@ use super::player_abilities::PlayerAbilitiesSystem;
 
 /// Integration hooks between weapons and abilities.
 ///
-/// GKC reference: `playerWeaponSystem.cs`, `playerWeaponsManager.cs`
+///
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct AbilityWeaponIntegration {

@@ -8,7 +8,7 @@ pub struct InventoryBankUIRoot;
 
 /// Displays bank inventory status.
 ///
-/// GKC reference: `inventoryBankUISystem.cs`
+///
 pub fn setup_inventory_bank_ui(mut commands: Commands) {
     commands
         .spawn((

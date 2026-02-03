@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// UI options for an inventory slot.
 ///
-/// GKC reference: `inventorySlotOptionsButtons.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventorySlotOptionsButtons {

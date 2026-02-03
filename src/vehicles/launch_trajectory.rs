@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Launch trajectory helper for vehicle projectiles.
 ///
-/// GKC reference: `launchTrayectory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct LaunchTrajectory {

@@ -4,7 +4,7 @@ use avian3d::prelude::LinearVelocity;
 
 /// Vehicle AI nav mesh controller.
 ///
-/// GKC reference: `vehicleAINavMesh.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VehicleAINavMesh {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Captures item visuals for inventory icons.
 ///
-/// GKC reference: `inventoryCaptureManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryCaptureManager {

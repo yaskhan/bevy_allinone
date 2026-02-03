@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Vehicle builder utility.
 ///
-/// GKC reference: `vehicleBuilder.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VehicleBuilder {

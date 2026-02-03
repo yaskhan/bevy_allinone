@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Oxygen pickup data.
 ///
-/// GKC reference: `oxygenPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct OxygenPickup {

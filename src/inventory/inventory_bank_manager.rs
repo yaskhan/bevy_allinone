@@ -4,7 +4,7 @@ use super::components::Inventory;
 
 /// Manages a shared bank inventory.
 ///
-/// GKC reference: `inventoryBankManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryBankManager {

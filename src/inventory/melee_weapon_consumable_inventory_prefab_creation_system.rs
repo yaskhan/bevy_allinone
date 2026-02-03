@@ -5,7 +5,7 @@ use super::types::InventoryItem;
 
 /// Creates melee weapon consumable prefabs as physical items.
 ///
-/// GKC reference: `meleeWeaponConsumableInventoryPrefabCreationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MeleeWeaponConsumableInventoryPrefabCreationSystem {

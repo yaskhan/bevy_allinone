@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Mechanical part metadata.
 ///
-/// GKC reference: `mechanismPart.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MechanismPart {

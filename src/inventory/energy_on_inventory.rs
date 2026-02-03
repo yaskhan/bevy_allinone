@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Energy pickup info when stored in inventory.
 ///
-/// GKC reference: `energyOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct EnergyOnInventory {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple lamp component.
 ///
-/// GKC reference: `simpleLamp.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleLamp {

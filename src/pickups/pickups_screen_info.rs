@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Pickup screen UI settings.
 ///
-/// GKC reference: `pickUpsScreenInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpsScreenInfo {

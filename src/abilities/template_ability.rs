@@ -3,7 +3,7 @@ use super::ability_info::AbilityInfo;
 
 /// Template ability behavior for custom abilities.
 ///
-/// GKC reference: `Custom Abilities/templateAbilitySystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct TemplateAbilitySystem {

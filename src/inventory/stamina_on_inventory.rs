@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Stamina pickup info when stored in inventory.
 ///
-/// GKC reference: `staminaOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct StaminaOnInventory {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Oxygen management system.
 ///
-/// GKC reference: `oxygenSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct OxygenSystem {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Metadata for an audio source.
 ///
-/// GKC reference: `audioSourceInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AudioSourceInfo {

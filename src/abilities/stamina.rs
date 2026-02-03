@@ -4,7 +4,7 @@ use crate::stats::types::DerivedStat;
 
 /// Stamina management system.
 ///
-/// GKC reference: `staminaSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct StaminaSystem {

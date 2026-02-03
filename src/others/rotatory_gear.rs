@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Rotatory gear component.
 ///
-/// GKC reference: `rotatoryGear.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct RotatoryGear {

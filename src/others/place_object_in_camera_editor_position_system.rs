@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Places object at a saved editor position.
 ///
-/// GKC reference: `placeObjectInCameraEditorPositionSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlaceObjectInCameraEditorPositionSystem {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Shows game info HUD.
 ///
-/// GKC reference: `showGameInfoHud.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ShowGameInfoHud {

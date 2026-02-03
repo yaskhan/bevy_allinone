@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Ability pickup marker.
 ///
-/// GKC reference: `pickupType.cs` (Ability activation on pickup)
+/// (Ability activation on pickup)
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AbilityPickup {

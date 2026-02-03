@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple action button data.
 ///
-/// GKC reference: `simpleActionButton.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleActionButton {

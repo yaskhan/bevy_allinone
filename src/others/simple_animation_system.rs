@@ -3,7 +3,7 @@ use bevy::animation::AnimationPlayer;
 
 /// Simple animation controller.
 ///
-/// GKC reference: `simpleAnimationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleAnimationSystem {

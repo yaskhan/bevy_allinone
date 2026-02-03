@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// UI element data for quick access slots.
 ///
-/// GKC reference: `inventoryQuickAccessSlotElement.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryQuickAccessSlotElement {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Fade object visibility over time.
 ///
-/// GKC reference: `fadeObject.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct FadeObject {

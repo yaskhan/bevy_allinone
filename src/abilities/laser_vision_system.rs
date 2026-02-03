@@ -16,7 +16,7 @@ pub struct LaserVisionToggleEventQueue(pub Vec<(Entity, bool)>);
 
 /// Laser vision ability system.
 ///
-/// GKC reference: `laserVisionSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct LaserVisionSystem {

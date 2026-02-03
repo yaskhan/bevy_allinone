@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Bezier spline data.
 ///
-/// GKC reference: `BezierSpline.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct BezierSpline {

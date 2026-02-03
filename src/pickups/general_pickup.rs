@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// General pickup data.
 ///
-/// GKC reference: `generalPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GeneralPickup {

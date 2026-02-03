@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Shield pickup data.
 ///
-/// GKC reference: `shieldPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ShieldPickup {

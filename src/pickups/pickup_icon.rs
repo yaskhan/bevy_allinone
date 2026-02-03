@@ -3,7 +3,7 @@ use super::PickUpIconInfo;
 
 /// Pickup icon marker.
 ///
-/// GKC reference: `pickUpIcon.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpIcon {

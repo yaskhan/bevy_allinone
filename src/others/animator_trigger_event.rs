@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Triggers an animation event on demand.
 ///
-/// GKC reference: `animatorTriggerEvent.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AnimatorTriggerEvent {

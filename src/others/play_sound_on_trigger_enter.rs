@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Plays a sound when a trigger is entered.
 ///
-/// GKC reference: `playSoundOnTriggerEnter.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlaySoundOnTriggerEnter {

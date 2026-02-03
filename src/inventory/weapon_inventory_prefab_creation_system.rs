@@ -5,7 +5,7 @@ use super::types::InventoryItem;
 
 /// Creates weapon prefabs as physical items.
 ///
-/// GKC reference: `weaponInventoryPrefabCreationSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct WeaponInventoryPrefabCreationSystem {

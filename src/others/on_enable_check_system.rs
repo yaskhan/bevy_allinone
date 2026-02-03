@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Detects enable state changes.
 ///
-/// GKC reference: `onEnableCheckSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct OnEnableCheckSystem {

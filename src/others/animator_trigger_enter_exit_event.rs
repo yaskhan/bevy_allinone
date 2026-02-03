@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Trigger animation events on enter/exit.
 ///
-/// GKC reference: `animatorTriggerEnterExitEvent.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AnimatorTriggerEnterExitEvent {

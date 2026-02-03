@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Manages category list for player's inventory.
 ///
-/// GKC reference: `playerInventoryCategoriesListManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerInventoryCategoriesListManager {

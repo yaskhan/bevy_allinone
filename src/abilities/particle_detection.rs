@@ -23,7 +23,7 @@ pub struct ParticleTriggerEventQueue(pub Vec<ParticleTriggerEvent>);
 
 /// Helper component for particle collision detection.
 ///
-/// GKC reference: `particleCollisionDetection.cs`
+///
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct ParticleCollisionDetector {
@@ -32,7 +32,7 @@ pub struct ParticleCollisionDetector {
 
 /// Helper component for particle trigger detection.
 ///
-/// GKC reference: `particleTriggerDetection.cs`
+///
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct ParticleTriggerDetector {

@@ -11,7 +11,7 @@ pub struct InventoryListEntry {
 
 /// Manages the inventory list data for UI.
 ///
-/// GKC reference: `inventoryListManager.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryListManager {

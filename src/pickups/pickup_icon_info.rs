@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Pickup icon metadata.
 ///
-/// GKC reference: `pickUpIconInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpIconInfo {

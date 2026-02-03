@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Health pickup data.
 ///
-/// GKC reference: `healthPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HealthPickup {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Stores player editor options.
 ///
-/// GKC reference: `playerOptionsEditorSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerOptionsEditorSystem {

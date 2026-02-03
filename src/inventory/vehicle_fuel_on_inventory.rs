@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Vehicle fuel pickup info when stored in inventory.
 ///
-/// GKC reference: `vehicleFuelOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VehicleFuelOnInventory {

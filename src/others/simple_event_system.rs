@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Simple event system component.
 ///
-/// GKC reference: `simpleEventSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SimpleEventSystem {

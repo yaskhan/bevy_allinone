@@ -3,7 +3,7 @@ use super::grappling_hook_target::GrapplingHookTarget;
 
 /// Tracks available grappling hook targets for a player.
 ///
-/// GKC reference: `grapplingHookTargetsSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GrapplingHookTargetsSystem {

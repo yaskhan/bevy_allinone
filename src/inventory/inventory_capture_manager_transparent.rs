@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Transparent capture mode for inventory icons.
 ///
-/// GKC reference: `inventoryCaptureManagerTransparent.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryCaptureManagerTransparent {

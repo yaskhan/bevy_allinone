@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Collision type categories.
 ///
-/// GKC reference: `checkCollisionType.cs`
+///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 pub enum CollisionType {
     Unknown,

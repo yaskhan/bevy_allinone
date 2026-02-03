@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Task counter tracking.
 ///
-/// GKC reference: `taskCounterSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct TaskCounterSystem {

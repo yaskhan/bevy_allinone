@@ -4,7 +4,7 @@ use super::bezier_spline::BezierSpline;
 
 /// Moves along a Bezier spline.
 ///
-/// GKC reference: `SplineWalker.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SplineWalker {

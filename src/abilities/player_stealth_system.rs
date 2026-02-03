@@ -12,7 +12,7 @@ pub struct PlayerStealthEventQueue(pub Vec<PlayerStealthEvent>);
 
 /// Player stealth ability system.
 ///
-/// GKC reference: `playerStealthSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerStealthSystem {

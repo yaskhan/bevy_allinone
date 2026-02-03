@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Grappling hook target marker.
 ///
-/// GKC reference: `grapplingHookTarget.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GrapplingHookTarget {

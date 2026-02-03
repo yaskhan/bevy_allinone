@@ -7,7 +7,7 @@ use super::ability_info::AbilityInfo;
 
 /// Grappling hook system (core).
 ///
-/// GKC reference: `grapplingHookSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GrapplingHookSystem {

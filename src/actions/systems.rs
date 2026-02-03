@@ -302,7 +302,7 @@ pub fn update_action_system(
                             // Calculate target world transform
                             // Assuming match_target_transform is local to the action entity
                             // If it's absolute, we use it directly. Assuming relative for now as per comment.
-                            // But for simplicity in this port, let's treat match_target_transform as an offset from action root
+                            // But for simplicity, let's treat match_target_transform as an offset from action root
                             
                             let action_rotation = action_glob_transform.compute_transform().rotation;
                             let action_translation = action_glob_transform.translation();

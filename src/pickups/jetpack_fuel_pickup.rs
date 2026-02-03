@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Jetpack fuel pickup data.
 ///
-/// GKC reference: `jetpackFuelPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct JetpackFuelPickup {

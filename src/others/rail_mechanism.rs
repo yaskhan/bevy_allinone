@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Moves along a rail path.
 ///
-/// GKC reference: `railMechanism.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct RailMechanism {

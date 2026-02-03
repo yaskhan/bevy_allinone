@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Initial pop-up window data.
 ///
-/// GKC reference: `initialPopUpWindow.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InitialPopUpWindow {

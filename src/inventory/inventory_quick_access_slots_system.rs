@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Manages quick access slots for inventory.
 ///
-/// GKC reference: `inventoryQuickAccessSlotsSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryQuickAccessSlotsSystem {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Hides a specific body part entity.
 ///
-/// GKC reference: `hideBodyPartOnCharacterSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HideBodyPartOnCharacterSystem {

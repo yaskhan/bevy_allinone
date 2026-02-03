@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Health pickup info when stored in inventory.
 ///
-/// GKC reference: `healthOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HealthOnInventory {

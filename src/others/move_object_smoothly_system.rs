@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Moves an object smoothly toward a target.
 ///
-/// GKC reference: `moveObjectSmoothlySystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MoveObjectSmoothlySystem {

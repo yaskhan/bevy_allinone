@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Scan element metadata.
 ///
-/// GKC reference: `scanElementInfo.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ScanElementInfo {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Ammo pickup info when stored in inventory.
 ///
-/// GKC reference: `ammoOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AmmoOnInventory {

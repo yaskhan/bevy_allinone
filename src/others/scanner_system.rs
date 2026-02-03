@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Scanner system component.
 ///
-/// GKC reference: `scannerSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ScannerSystem {

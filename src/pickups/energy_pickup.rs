@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Energy pickup data.
 ///
-/// GKC reference: `energyPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct EnergyPickup {

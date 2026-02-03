@@ -3,7 +3,7 @@ use super::types::{Vehicle, VehicleType};
 
 /// Aircraft controller settings.
 ///
-/// GKC reference: `airCraftController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct AirCraftController {
@@ -18,7 +18,7 @@ impl Default for AirCraftController {
 
 /// Car controller settings.
 ///
-/// GKC reference: `carController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct CarController {
@@ -33,7 +33,7 @@ impl Default for CarController {
 
 /// Dummy vehicle controller.
 ///
-/// GKC reference: `dummyVehicleController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct DummyVehicleController {
@@ -48,7 +48,7 @@ impl Default for DummyVehicleController {
 
 /// Empty vehicle controller.
 ///
-/// GKC reference: `emptyVehicleController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct EmptyVehicleController {
@@ -63,7 +63,7 @@ impl Default for EmptyVehicleController {
 
 /// Flying controller.
 ///
-/// GKC reference: `flyingController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct FlyingController {
@@ -78,7 +78,7 @@ impl Default for FlyingController {
 
 /// Hoverboard controller.
 ///
-/// GKC reference: `hoverBoardController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HoverBoardController {
@@ -93,7 +93,7 @@ impl Default for HoverBoardController {
 
 /// Hovercraft controller.
 ///
-/// GKC reference: `hoverCraftController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct HoverCraftController {
@@ -108,7 +108,7 @@ impl Default for HoverCraftController {
 
 /// Motor bike controller.
 ///
-/// GKC reference: `motorBikeController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct MotorBikeController {
@@ -123,7 +123,7 @@ impl Default for MotorBikeController {
 
 /// Sphere controller.
 ///
-/// GKC reference: `sphereController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct SphereController {
@@ -138,7 +138,7 @@ impl Default for SphereController {
 
 /// Turret controller.
 ///
-/// GKC reference: `turretController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct TurretController {
@@ -153,7 +153,7 @@ impl Default for TurretController {
 
 /// Generic vehicle controller.
 ///
-/// GKC reference: `vehicleController.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VehicleController {

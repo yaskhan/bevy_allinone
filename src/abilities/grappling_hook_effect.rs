@@ -3,7 +3,7 @@ use crate::input::InputState;
 
 /// Grappling hook visual effect controller.
 ///
-/// GKC reference: `grapplingHookEffect.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct GrapplingHookEffect {

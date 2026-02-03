@@ -4,7 +4,7 @@ use super::player_abilities::PlayerAbilitiesSystem;
 
 /// UI marker for ability wheel text output.
 ///
-/// GKC reference: `playerAbilitiesUISystem.cs`
+///
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct AbilityWheelUI {
@@ -14,7 +14,7 @@ pub struct AbilityWheelUI {
 
 /// UI marker for a single ability slot element.
 ///
-/// GKC reference: `abilitySlotElement.cs`
+///
 #[derive(Component, Debug, Default, Reflect)]
 #[reflect(Component)]
 pub struct AbilitySlotElement {

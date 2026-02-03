@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Vehicle interface configuration.
 ///
-/// GKC reference: `vehicleInterface.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct VehicleInterface {

@@ -4,7 +4,7 @@ use super::ability_info::AbilityInfo;
 
 /// Player gravity ability.
 ///
-/// GKC reference: `playerGravitySystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlayerGravityAbility {

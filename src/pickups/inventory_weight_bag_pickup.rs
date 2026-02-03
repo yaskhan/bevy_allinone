@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Inventory weight bag pickup data.
 ///
-/// GKC reference: `inventoryWeightBagPickup.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryWeightBagPickup {

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Shows temporary messages on HUD.
 ///
-/// GKC reference: `showMessageOnHUDSystem.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ShowMessageOnHudSystem {

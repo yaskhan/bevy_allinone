@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Pickup type enumeration.
 ///
-/// GKC reference: `pickupType.cs`
+///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
 pub enum PickupKind {
     Ammo,
@@ -37,9 +37,9 @@ impl Default for PickupKind {
     }
 }
 
-/// Shared pickup settings (base type in GKC).
+/// Shared pickup settings.
 ///
-/// GKC reference: `pickupType.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickupTypeSettings {

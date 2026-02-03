@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Generic object info when stored in inventory.
 ///
-/// GKC reference: `objectOnInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct ObjectOnInventory {

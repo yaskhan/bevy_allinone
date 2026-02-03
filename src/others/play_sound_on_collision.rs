@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 /// Plays a sound when collision occurs.
 ///
-/// GKC reference: `playSoundOnCollision.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PlaySoundOnCollision {
