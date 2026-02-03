@@ -510,6 +510,74 @@ pub fn handle_grab_melee(
     }
 }
 
+pub fn handle_placement_slots(
+    input: Res<InputState>,
+    mut slot_query: Query<(Entity, &mut PlacementSlot, &GlobalTransform)>,
+    mut grabber_query: Query<(Entity, &mut Grabber)>,
+    mut object_query: Query<(Entity, &ObjectToPlace, &mut Transform, Option<&mut LinearVelocity>, Option<&mut RigidBody>, Option<&mut GravityScale>)>,
+    mut placement_events: ResMut<PlacementEventQueue>,
+) {
+    if !input.interact_pressed {
+        return;
+    }
+
+    for (grabber_entity, mut grabber) in grabber_query.iter_mut() {
+        let Some(held_entity) = grabber.held_object else { continue };
+        let Ok((object_entity, object_to_place, mut object_transform, mut velocity_opt, mut rb_opt, mut gravity_opt)) =
+            object_query.get_mut(held_entity) else { continue };
+
+        for (slot_entity, mut slot, slot_xf) in slot_query.iter_mut() {
+            if slot.is_occupied {
+                continue;
+            }
+
+            let slot_pos = slot_xf.translation();
+            let dist = object_transform.translation.distance(slot_pos);
+            if dist > slot.max_distance {
+                continue;
+            }
+
+            if !slot.accepted_names.is_empty()
+                && !slot.accepted_names.iter().any(|name| name == &object_to_place.object_name)
+            {
+                continue;
+            }
+
+            let world_pos = slot_xf.transform_point(slot.snap_offset.translation);
+            let world_rot = slot_xf.rotation() * slot.snap_offset.rotation;
+            object_transform.translation = world_pos;
+            object_transform.rotation = world_rot;
+
+            if let Some(mut velocity) = velocity_opt.as_mut() {
+                velocity.0 = Vec3::ZERO;
+            }
+            if let Some(mut gravity) = gravity_opt.as_mut() {
+                if slot.disable_physics_on_place {
+                    gravity.0 = 0.0;
+                }
+            }
+            if let Some(mut rb) = rb_opt.as_mut() {
+                if slot.disable_physics_on_place {
+                    *rb = RigidBody::Static;
+                }
+            }
+
+            grabber.held_object = None;
+            slot.is_occupied = true;
+            slot.current_object = Some(object_entity);
+
+            if slot.use_events {
+                placement_events.0.push(PlacementEvent {
+                    slot: slot_entity,
+                    placed_object: object_entity,
+                });
+            }
+
+            break;
+        }
+    }
+}
+
 pub fn handle_power_throwing(
     time: Res<Time>,
     input: Res<InputState>,

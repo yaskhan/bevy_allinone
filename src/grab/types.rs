@@ -254,6 +254,42 @@ impl Default for GrabMeleeWeapon {
     }
 }
 
+/// Slot that accepts objects for placement (fuse box, pedestal, etc.)
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct PlacementSlot {
+    pub accepted_names: Vec<String>,
+    pub snap_offset: Transform,
+    pub is_occupied: bool,
+    pub current_object: Option<Entity>,
+    pub max_distance: f32,
+    pub disable_physics_on_place: bool,
+    pub use_events: bool,
+}
+
+impl Default for PlacementSlot {
+    fn default() -> Self {
+        Self {
+            accepted_names: Vec::new(),
+            snap_offset: Transform::default(),
+            is_occupied: false,
+            current_object: None,
+            max_distance: 0.6,
+            disable_physics_on_place: true,
+            use_events: false,
+        }
+    }
+}
+
+#[derive(Event, Debug, Clone)]
+pub struct PlacementEvent {
+    pub slot: Entity,
+    pub placed_object: Entity,
+}
+
+#[derive(Resource, Default)]
+pub struct PlacementEventQueue(pub Vec<PlacementEvent>);
+
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
 pub struct GrabPowerThrow {

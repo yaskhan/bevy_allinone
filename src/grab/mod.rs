@@ -28,6 +28,8 @@ impl Plugin for GrabPlugin {
             .register_type::<PowerThrown>()
             .register_type::<GrabPowerFx>()
             .register_type::<GrabPhysicalObjectSettings>()
+            .register_type::<PlacementSlot>()
+            .init_resource::<PlacementEventQueue>()
             .add_systems(Update, (
                 systems::handle_grab_input,
                 systems::process_grab_events,
@@ -36,6 +38,7 @@ impl Plugin for GrabPlugin {
                 systems::handle_throwing,
                 systems::handle_power_throwing,
                 systems::update_put_object_systems,
+                systems::handle_placement_slots,
                 systems::handle_power_grabbing,
                 systems::update_power_held_objects,
                 systems::update_outlines,
