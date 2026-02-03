@@ -5,7 +5,7 @@ Source: `gkit/Scripts/PickUps/`
 ## Core
 - [x] `chestSystem.cs`
 - [x] `crate.cs`
-- [ ] `dropPickUpSystem.cs`
+- [x] `dropPickUpSystem.cs`
 - [ ] `explosiveBarrel.cs`
 - [ ] `pickUpElementInfo.cs`
 - [ ] `pickUpIcon.cs`
