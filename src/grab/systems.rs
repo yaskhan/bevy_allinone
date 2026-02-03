@@ -5,6 +5,7 @@ use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
 use crate::stats::stats_system::StatsSystem;
 use crate::stats::types::DerivedStat;
 use super::types::*;
+use bevy::audio::{AudioSource, PlaybackSettings};
 
 /// System to handle grab/drop input.
 pub fn handle_grab_input(
@@ -39,7 +40,7 @@ pub fn process_grab_events(
     mut event_queue: ResMut<GrabEventQueue>,
     mut grabber_query: Query<&mut Grabber>,
     mut powerer_query: Query<&mut GrabPowerer>,
-    mut grabbable_query: Query<(&Grabbable, &mut LinearVelocity, Option<&mut Mass>, Option<&mut Collider>)>,
+    mut grabbable_query: Query<(&Grabbable, &mut LinearVelocity, Option<&mut Mass>, Option<&mut Collider>, Option<&mut GravityScale>, Option<&mut Damping>)>,
     weapon_query: Query<&GrabMeleeWeapon>,
     parent_redirect_query: Query<&GrabObjectParent>,
     event_system_query: Query<&GrabObjectEventSystem>,
@@ -63,13 +64,34 @@ pub fn process_grab_events(
 
                         // Apply physical settings
                         if let Ok(settings) = physical_settings_query.get(target_entity) {
-                            if let Ok((_g, _v, mut mass, mut _collider)) = grabbable_query.get_mut(target_entity) {
+                            if let Ok((_g, _v, mut mass, mut _collider, mut gravity, mut damping)) = grabbable_query.get_mut(target_entity) {
                                 if settings.set_mass {
                                     if let Some(ref mut m) = mass {
                                         m.0 = settings.mass_value;
                                     }
                                 }
                                 // Collider toggle usually needs to be deferred or handled via commands
+                                if settings.disable_gravity_on_grab {
+                                    if let Some(ref mut g) = gravity {
+                                        g.0 = 0.0;
+                                    }
+                                }
+                                if let Some(drag) = settings.drag_override {
+                                    if let Some(ref mut damping) = damping {
+                                        damping.linear = drag;
+                                    }
+                                }
+                                if let Some(angular_drag) = settings.angular_drag_override {
+                                    if let Some(ref mut damping) = damping {
+                                        damping.angular = angular_drag;
+                                    }
+                                }
+                            }
+                            if let Some(sound) = &settings.grab_sound {
+                                commands.spawn((
+                                    AudioPlayer::<AudioSource>(sound.clone()),
+                                    PlaybackSettings::ONCE,
+                                ));
                             }
                         }
 
@@ -124,6 +146,22 @@ pub fn process_grab_events(
 
                 commands.entity(target_entity).remove::<ImprovisedWeapon>();
                 commands.entity(target_entity).remove::<GrabMeleeAttackState>();
+
+                if let Ok(settings) = physical_settings_query.get(target_entity) {
+                    if let Some(sound) = &settings.drop_sound {
+                        commands.spawn((
+                            AudioPlayer::<AudioSource>(sound.clone()),
+                            PlaybackSettings::ONCE,
+                        ));
+                    }
+                    if settings.disable_gravity_on_grab {
+                        if let Ok((_g, _v, _mass, _collider, mut gravity, _damping)) = grabbable_query.get_mut(target_entity) {
+                            if let Some(ref mut g) = gravity {
+                                g.0 = 1.0;
+                            }
+                        }
+                    }
+                }
             }
             GrabEvent::Throw(grabber_entity, target_entity, direction, force) => {
                 let mut thrown = false;
@@ -143,7 +181,7 @@ pub fn process_grab_events(
                 }
                 
                 if thrown {
-                    if let Ok((_grabbable, mut velocity, _, _)) = grabbable_query.get_mut(target_entity) {
+                    if let Ok((_grabbable, mut velocity, _, _, _, _)) = grabbable_query.get_mut(target_entity) {
                         velocity.0 += direction * (force * 0.1); 
                         info!("Object thrown with force: {}", force);
 
@@ -484,6 +522,42 @@ pub fn perform_grab_melee_damage(
                     target: hit.entity,
                     position: Some(origin + *forward * hit.distance),
                     direction: Some(*forward),
+                    ignore_shield: false,
+                });
+            }
+        }
+    }
+}
+
+pub fn apply_throw_damage_on_collision(
+    mut damage_queue: ResMut<DamageEventQueue>,
+    collision_events: EventReader<CollisionStarted>,
+    settings_query: Query<&GrabPhysicalObjectSettings>,
+) {
+    for event in collision_events.read() {
+        let (a, b) = (event.entity1, event.entity2);
+        if let Ok(settings) = settings_query.get(a) {
+            if settings.throw_damage > 0.0 {
+                damage_queue.0.push(DamageEvent {
+                    amount: settings.throw_damage,
+                    damage_type: DamageType::Melee,
+                    source: Some(a),
+                    target: b,
+                    position: None,
+                    direction: None,
+                    ignore_shield: false,
+                });
+            }
+        }
+        if let Ok(settings) = settings_query.get(b) {
+            if settings.throw_damage > 0.0 {
+                damage_queue.0.push(DamageEvent {
+                    amount: settings.throw_damage,
+                    damage_type: DamageType::Melee,
+                    source: Some(b),
+                    target: a,
+                    position: None,
+                    direction: None,
                     ignore_shield: false,
                 });
             }

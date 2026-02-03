@@ -284,6 +284,13 @@ pub struct GrabPhysicalObjectSettings {
     pub tag_when_active: String,
     pub tag_when_inactive: String,
     pub disable_collider_on_grab: bool,
+    pub grab_sound: Option<Handle<AudioSource>>,
+    pub drop_sound: Option<Handle<AudioSource>>,
+    pub collision_sound: Option<Handle<AudioSource>>,
+    pub disable_gravity_on_grab: bool,
+    pub drag_override: Option<f32>,
+    pub angular_drag_override: Option<f32>,
+    pub throw_damage: f32,
 }
 
 impl Default for GrabPhysicalObjectSettings {
@@ -295,6 +302,13 @@ impl Default for GrabPhysicalObjectSettings {
             tag_when_active: "Grabbable".to_string(),
             tag_when_inactive: "Default".to_string(),
             disable_collider_on_grab: false,
+            grab_sound: None,
+            drop_sound: None,
+            collision_sound: None,
+            disable_gravity_on_grab: false,
+            drag_override: None,
+            angular_drag_override: None,
+            throw_damage: 10.0,
         }
     }
 }

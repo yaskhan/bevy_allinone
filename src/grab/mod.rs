@@ -36,6 +36,7 @@ impl Plugin for GrabPlugin {
                 systems::handle_grab_melee,
                 systems::update_grab_melee_attacks,
                 systems::perform_grab_melee_damage,
+                systems::apply_throw_damage_on_collision,
             ));
     }
 }
