@@ -2,6 +2,7 @@ pub mod types;
 pub mod resources;
 pub mod components;
 pub mod systems;
+pub mod touch;
 
 use bevy::prelude::*;
 use types::*;
@@ -12,6 +13,7 @@ use systems::*;
 pub use types::{InputAction, InputBinding, BufferedAction};
 pub use resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
 pub use components::{InputState, PlayerInputSettings, InputDevice, InputLocks};
+pub use touch::{TouchControlRoot, TouchActionButton, TouchJoystick, TouchJoystickThumb, TouchControlsSettings};
 pub use systems::*;
 
 pub struct InputPlugin;
@@ -26,6 +28,7 @@ impl Plugin for InputPlugin {
             .init_resource::<InputConfig>()
             .init_resource::<InputContextStack>()
             .init_resource::<InputContextRules>()
+            .init_resource::<TouchControlsSettings>()
             
             // Register components
             .register_type::<InputState>()
@@ -33,6 +36,9 @@ impl Plugin for InputPlugin {
             .add_systems(Update, (
                 update_input_context,
                 update_input_state,
+                touch::update_touch_controls_visibility,
+                touch::update_touch_buttons,
+                touch::update_touch_joystick,
                 handle_rebinding,
                 cleanup_input_buffer,
                 player_input_sync_system,
