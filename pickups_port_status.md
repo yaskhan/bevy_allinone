@@ -39,5 +39,5 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `skillPointPickup.cs`
 - [x] `staminaPickup.cs`
 - [x] `vehicleFuelPickup.cs`
-- [ ] `weaponAttachmentPickup.cs`
+- [x] `weaponAttachmentPickup.cs`
 - [ ] `weaponPickup.cs`

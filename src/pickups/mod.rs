@@ -34,6 +34,7 @@ pub mod shield_pickup;
 pub mod skill_point_pickup;
 pub mod stamina_pickup;
 pub mod vehicle_fuel_pickup;
+pub mod weapon_attachment_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -69,6 +70,7 @@ pub use shield_pickup::ShieldPickup;
 pub use skill_point_pickup::SkillPointPickup;
 pub use stamina_pickup::StaminaPickup;
 pub use vehicle_fuel_pickup::VehicleFuelPickup;
+pub use weapon_attachment_pickup::WeaponAttachmentPickup;
 
 pub struct PickupsPlugin;
 
