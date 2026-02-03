@@ -6,6 +6,75 @@ use crate::stats::{StatsSystem, types::DerivedStat};
 use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
 use super::result_queue::*;
 
+pub fn update_melee_attack_state(
+    time: Res<Time>,
+    input: Res<InputState>,
+    attack_db: Res<AttackDatabase>,
+    mut query: Query<(&mut MeleeCombat, &mut MeleeAttackState)>,
+) {
+    let dt = time.delta_secs();
+
+    for (mut combat, mut state) in query.iter_mut() {
+        state.timer += dt;
+        if state.combo_timer > 0.0 {
+            state.combo_timer = (state.combo_timer - dt).max(0.0);
+        }
+
+        let Some(chain) = attack_db.get_chain(&state.chain_id) else {
+            continue;
+        };
+        if chain.attacks.is_empty() {
+            continue;
+        }
+
+        let attack = &chain.attacks[state.current_attack_index.min(chain.attacks.len() - 1)];
+        if state.timer >= attack.duration {
+            state.timer = 0.0;
+            state.hitbox_active = false;
+            state.combo_timer = attack.combo_window;
+            combat.is_attacking = false;
+        }
+
+        if input.attack_pressed && !combat.is_attacking {
+            if state.combo_timer > 0.0 {
+                state.current_attack_index = (state.current_attack_index + 1) % chain.attacks.len();
+            } else {
+                state.current_attack_index = 0;
+            }
+
+            combat.is_attacking = true;
+            combat.attack_timer = attack.duration;
+            combat.last_attack_finish_time = time.elapsed_secs() + attack.duration;
+            combat.combo_count = state.current_attack_index + 1;
+
+            state.timer = 0.0;
+            state.hitbox_active = false;
+        }
+    }
+}
+
+pub fn update_melee_hitboxes(
+    attack_db: Res<AttackDatabase>,
+    mut attackers: Query<(Entity, &MeleeAttackState)>,
+    mut hitboxes: Query<&mut DamageZone>,
+) {
+    for (owner, state) in attackers.iter_mut() {
+        let Some(chain) = attack_db.get_chain(&state.chain_id) else { continue };
+        if chain.attacks.is_empty() {
+            continue;
+        }
+        let attack = &chain.attacks[state.current_attack_index.min(chain.attacks.len() - 1)];
+        let active = state.timer >= attack.hitbox_start && state.timer <= attack.hitbox_end;
+
+        for mut zone in hitboxes.iter_mut() {
+            if zone.owner != owner {
+                continue;
+            }
+            zone.active = active;
+        }
+    }
+}
+
 /// System to process damage events, reduce health/shields, and show feedback.
 pub fn process_damage_events(
     mut commands: Commands,
@@ -259,10 +328,13 @@ pub fn perform_melee_attacks(
     input: Res<InputState>,
     mut damage_queue: ResMut<DamageEventQueue>,
     spatial_query: SpatialQuery,
-    mut attackers: Query<(Entity, &GlobalTransform, &mut MeleeCombat)>,
+    mut attackers: Query<(Entity, &GlobalTransform, &mut MeleeCombat, Option<&MeleeAttackState>)>,
     targets: Query<Entity, Or<(With<Health>, With<DamageReceiver>)>>,
 ) {
-    for (attacker_entity, transform, mut combat) in attackers.iter_mut() {
+    for (attacker_entity, transform, mut combat, attack_state) in attackers.iter_mut() {
+        if attack_state.is_some() {
+            continue;
+        }
         if input.attack_pressed && combat.attack_timer <= 0.0 {
             let now = time.elapsed_secs();
             

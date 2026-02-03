@@ -27,10 +27,15 @@ impl Plugin for CombatPlugin {
             .init_resource::<DeathEventQueue>()
             .init_resource::<DamageResultQueue>()
             .init_resource::<DamageFeedbackSettings>()
+            .init_resource::<AttackDatabase>()
             .register_type::<Health>()
             .register_type::<Shield>()
             .register_type::<DamageReceiver>()
             .register_type::<MeleeCombat>()
+            .register_type::<AttackDefinition>()
+            .register_type::<AttackChain>()
+            .register_type::<MeleeAttackState>()
+            .register_type::<DamageZone>()
             .register_type::<Blocking>()
             .register_type::<DamageOverTime>()
             .register_type::<DestroyableObject>()
@@ -41,6 +46,8 @@ impl Plugin for CombatPlugin {
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
+                systems::update_melee_attack_state,
+                systems::update_melee_hitboxes,
                 systems::regenerate_health,
                 systems::regenerate_shields,
                 systems::perform_melee_attacks,
