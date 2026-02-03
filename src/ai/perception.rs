@@ -132,3 +132,64 @@ pub fn draw_ai_vision_cones(
         gizmos.ray(pos, right_dir * range, color);
     }
 }
+
+pub fn update_ai_alert_allies(
+    time: Res<Time>,
+    faction_system: Res<FactionSystem>,
+    mut ai_query: Query<(Entity, &GlobalTransform, &AiController, &mut AiAlertSettings, Option<&CharacterFaction>)>,
+    mut ally_query: Query<(Entity, &GlobalTransform, &mut AiController, Option<&CharacterFaction>)>,
+    target_query: Query<&GlobalTransform>,
+) {
+    let now = time.elapsed_secs();
+
+    for (entity, transform, ai, mut alert, ai_faction) in ai_query.iter_mut() {
+        if !alert.enabled {
+            continue;
+        }
+        if ai.target.is_none() {
+            continue;
+        }
+        if ai.state != AiBehaviorState::Chase
+            && ai.state != AiBehaviorState::Attack
+            && ai.state != AiBehaviorState::Combat
+        {
+            continue;
+        }
+        if now - alert.last_alert_time < alert.cooldown {
+            continue;
+        }
+
+        let ai_faction_name = ai_faction.map(|f| f.name.as_str()).unwrap_or("Default");
+        let origin = transform.translation();
+        let Some(target_entity) = ai.target else { continue };
+        let target_pos = match target_query.get(target_entity) {
+            Ok(xf) => xf.translation(),
+            Err(_) => continue,
+        };
+
+        for (ally_entity, ally_transform, mut ally_ai, ally_faction) in ally_query.iter_mut() {
+            if ally_entity == entity {
+                continue;
+            }
+            let ally_faction_name = ally_faction.map(|f| f.name.as_str()).unwrap_or("Default");
+            if faction_system.get_relation(ai_faction_name, ally_faction_name) != FactionRelation::Friend {
+                continue;
+            }
+
+            let dist = origin.distance(ally_transform.translation());
+            if dist > alert.radius {
+                continue;
+            }
+
+            ally_ai.target = Some(target_entity);
+            ally_ai.target_last_position = Some(target_pos);
+            if ally_transform.translation().distance(target_pos) <= ally_ai.attack_range {
+                ally_ai.state = AiBehaviorState::Attack;
+            } else {
+                ally_ai.state = AiBehaviorState::Chase;
+            }
+        }
+
+        alert.last_alert_time = now;
+    }
+}

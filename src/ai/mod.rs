@@ -64,6 +64,7 @@ impl Plugin for AiPlugin {
             .add_systems(Update, (
                 update_ai_perception,
                 update_ai_hearing,
+                update_ai_alert_allies,
                 handle_friend_commands,
                 update_ai_behavior,
                 update_ai_suspicion,
