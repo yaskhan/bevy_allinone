@@ -3,6 +3,9 @@ use super::types::*;
 use crate::character::Player;
 use crate::ai::{AiController, AiBehaviorState};
 use crate::camera::types::CameraController;
+use crate::game_manager::types::GameState;
+use crate::input::InputState;
+use crate::inventory::InventoryUIRoot;
 
 pub fn update_play_time(
     time: Res<Time>,
@@ -97,6 +100,45 @@ pub fn handle_switch_player(
         }
 
         info!("Switched active player to {:?}", new_player);
+    }
+}
+
+pub fn handle_cursor_state(
+    mut windows: Query<&mut Window>,
+    settings: Res<CursorManagerSettings>,
+    state: Res<State<GameState>>,
+    inventory_query: Query<&Visibility, With<InventoryUIRoot>>,
+) {
+    let inventory_open = inventory_query
+        .iter()
+        .any(|visibility| *visibility != Visibility::Hidden);
+
+    let paused = *state == GameState::Paused;
+    let show_cursor = (paused && settings.show_cursor_when_paused)
+        || (inventory_open && settings.show_cursor_when_inventory_open);
+
+    for mut window in windows.iter_mut() {
+        if show_cursor {
+            window.cursor.visible = true;
+            window.cursor.grab_mode = CursorGrabMode::None;
+        } else if settings.lock_in_game {
+            window.cursor.visible = false;
+            window.cursor.grab_mode = CursorGrabMode::Locked;
+        } else {
+            window.cursor.visible = true;
+            window.cursor.grab_mode = CursorGrabMode::None;
+        }
+    }
+}
+
+pub fn handle_pause_input_state(
+    state: Res<State<GameState>>,
+    mut input_state: ResMut<InputState>,
+) {
+    if *state == GameState::Paused {
+        input_state.set_input_enabled(false);
+    } else {
+        input_state.set_input_enabled(true);
     }
 }
 

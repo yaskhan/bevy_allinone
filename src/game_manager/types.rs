@@ -35,6 +35,24 @@ impl Default for GameManagerSettings {
     }
 }
 
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
+pub struct CursorManagerSettings {
+    pub lock_in_game: bool,
+    pub show_cursor_when_paused: bool,
+    pub show_cursor_when_inventory_open: bool,
+}
+
+impl Default for CursorManagerSettings {
+    fn default() -> Self {
+        Self {
+            lock_in_game: true,
+            show_cursor_when_paused: true,
+            show_cursor_when_inventory_open: true,
+        }
+    }
+}
+
 #[derive(Resource, Default, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct PrefabRegistry {
