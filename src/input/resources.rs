@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
-use super::types::{InputAction, InputBinding, BufferedAction};
+use super::types::{InputAction, InputBinding, BufferedAction, InputContext};
+use std::collections::HashSet;
 
 /// Mapping from actions to multiple potential bindings
 #[derive(Resource, Debug, Reflect)]
@@ -111,4 +112,59 @@ impl Default for InputConfig {
 #[derive(Resource, Debug, Default)]
 pub struct RebindState {
     pub action: Option<InputAction>,
+}
+
+/// Current input context stack (top is active).
+#[derive(Resource, Debug)]
+pub struct InputContextStack {
+    pub stack: Vec<InputContext>,
+}
+
+impl Default for InputContextStack {
+    fn default() -> Self {
+        Self {
+            stack: vec![InputContext::Gameplay],
+        }
+    }
+}
+
+impl InputContextStack {
+    pub fn current(&self) -> InputContext {
+        *self.stack.last().unwrap_or(&InputContext::Gameplay)
+    }
+}
+
+#[derive(Resource, Debug)]
+pub struct InputContextRules {
+    pub blocked_actions: HashMap<InputContext, HashSet<InputAction>>,
+}
+
+impl Default for InputContextRules {
+    fn default() -> Self {
+        let mut blocked_actions = HashMap::new();
+        blocked_actions.insert(InputContext::Menu, HashSet::from([
+            InputAction::MoveForward,
+            InputAction::MoveBackward,
+            InputAction::MoveLeft,
+            InputAction::MoveRight,
+            InputAction::Jump,
+            InputAction::Sprint,
+            InputAction::Crouch,
+            InputAction::Attack,
+            InputAction::Block,
+            InputAction::Aim,
+            InputAction::Fire,
+            InputAction::Reload,
+            InputAction::NextWeapon,
+            InputAction::PrevWeapon,
+        ]));
+
+        blocked_actions.insert(InputContext::Vehicle, HashSet::from([
+            InputAction::Jump,
+            InputAction::Crouch,
+            InputAction::AbilityUse,
+        ]));
+
+        Self { blocked_actions }
+    }
 }

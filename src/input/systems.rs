@@ -1,7 +1,10 @@
 use bevy::prelude::*;
-use super::types::{InputAction, InputBinding, BufferedAction};
-use super::resources::{InputMap, InputBuffer, InputConfig, RebindState};
+use super::types::{InputAction, InputBinding, BufferedAction, InputContext};
+use super::resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
 use super::components::InputState;
+use crate::game_manager::types::GameState;
+use crate::inventory::InventoryUIRoot;
+use crate::character::{CharacterMovementState, Player};
 
 /// Update input state from devices based on current InputMap
 pub fn update_input_state(
@@ -11,12 +14,26 @@ pub fn update_input_state(
     input_map: Res<InputMap>,
     mut input_state: ResMut<super::components::InputState>, // Using component as resource here since we derive Resource on it
     mut input_buffer: ResMut<InputBuffer>,
+    context_stack: Res<InputContextStack>,
+    context_rules: Res<InputContextRules>,
 ) {
     if !input_state.enabled {
         return;
     }
 
+    let current_context = context_stack.current();
+    let is_blocked = |action: InputAction| -> bool {
+        context_rules
+            .blocked_actions
+            .get(&current_context)
+            .map(|set| set.contains(&action))
+            .unwrap_or(false)
+    };
+
     let check_action = |action: InputAction| -> bool {
+        if is_blocked(action) {
+            return false;
+        }
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
                 InputBinding::Key(code) => keyboard.pressed(code.clone()),
@@ -28,6 +45,9 @@ pub fn update_input_state(
     };
 
     let check_action_just_pressed = |action: InputAction| -> bool {
+        if is_blocked(action) {
+            return false;
+        }
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
                 InputBinding::Key(code) => keyboard.just_pressed(code.clone()),
@@ -39,6 +59,9 @@ pub fn update_input_state(
     };
 
     let check_action_just_released = |action: InputAction| -> bool {
+        if is_blocked(action) {
+            return false;
+        }
         if let Some(bindings) = input_map.bindings.get(&action) {
             bindings.iter().any(|binding| match binding {
                 InputBinding::Key(code) => keyboard.just_released(code.clone()),
@@ -181,4 +204,28 @@ pub fn player_input_sync_system(
     for mut player_input in query.iter_mut() {
         *player_input = input_state.clone();
     }
+}
+
+pub fn update_input_context(
+    state: Res<State<GameState>>,
+    inventory_query: Query<&Visibility, With<InventoryUIRoot>>,
+    player_query: Query<&CharacterMovementState, With<Player>>,
+    mut context_stack: ResMut<InputContextStack>,
+) {
+    let inventory_open = inventory_query
+        .iter()
+        .any(|visibility| *visibility != Visibility::Hidden);
+
+    let in_vehicle = player_query.iter().any(|movement| movement.is_in_vehicle);
+
+    let desired = if *state == GameState::Paused || inventory_open {
+        InputContext::Menu
+    } else if in_vehicle {
+        InputContext::Vehicle
+    } else {
+        InputContext::Gameplay
+    };
+
+    context_stack.stack.clear();
+    context_stack.stack.push(desired);
 }

@@ -53,6 +53,13 @@ pub enum InputAction {
     AbilitySelect8,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+pub enum InputContext {
+    Gameplay,
+    Menu,
+    Vehicle,
+}
+
 /// Input binding types
 #[derive(Debug, Clone, Reflect)]
 pub enum InputBinding {

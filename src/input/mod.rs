@@ -10,7 +10,7 @@ use components::*;
 use systems::*;
 
 pub use types::{InputAction, InputBinding, BufferedAction};
-pub use resources::{InputMap, InputBuffer, InputConfig, RebindState};
+pub use resources::{InputMap, InputBuffer, InputConfig, RebindState, InputContextStack, InputContextRules};
 pub use components::InputState;
 pub use systems::*;
 
@@ -24,11 +24,14 @@ impl Plugin for InputPlugin {
             .init_resource::<RebindState>()
             .init_resource::<InputBuffer>()
             .init_resource::<InputConfig>()
+            .init_resource::<InputContextStack>()
+            .init_resource::<InputContextRules>()
             
             // Register components
             .register_type::<InputState>()
             
             .add_systems(Update, (
+                update_input_context,
                 update_input_state,
                 handle_rebinding,
                 cleanup_input_buffer,
