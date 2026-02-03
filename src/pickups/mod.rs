@@ -3,10 +3,12 @@ use bevy::prelude::*;
 pub mod chest_system;
 pub mod crate_system;
 pub mod drop_pickup_system;
+pub mod explosive_barrel;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
 pub use drop_pickup_system::DropPickUpSystem;
+pub use explosive_barrel::ExplosiveBarrel;
 
 pub struct PickupsPlugin;
 
