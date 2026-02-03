@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 
 use crate::inventory::{Inventory, types::{InventoryItem, ItemType}};
+use crate::abilities::OxygenSystem;
 use crate::weapons::{Weapon, WeaponManager};
 
 use super::events::PickupEventQueue;
 use super::melee_weapon_consumable_pickup::MeleeWeaponConsumablePickup;
 use super::melee_shield_pickup::MeleeShieldPickup;
 use super::melee_weapon_pickup::MeleeWeaponPickup;
+use super::oxygen_pickup::OxygenPickup;
 use super::weapon_pickup::WeaponPickup;
 
 pub fn process_pickup_events(
@@ -15,10 +17,12 @@ pub fn process_pickup_events(
     mut weapon_manager_query: Query<&mut WeaponManager>,
     mut weapon_query: Query<(Entity, &mut Weapon, Option<&mut Visibility>)>,
     mut inventory_query: Query<&mut Inventory>,
+    mut oxygen_query: Query<&mut OxygenSystem>,
     weapon_pickup_query: Query<&WeaponPickup>,
     melee_weapon_pickup_query: Query<&MeleeWeaponPickup>,
     melee_weapon_consumable_pickup_query: Query<&MeleeWeaponConsumablePickup>,
     melee_shield_pickup_query: Query<&MeleeShieldPickup>,
+    oxygen_pickup_query: Query<&OxygenPickup>,
 ) {
     for event in events.0.drain(..) {
         let mut picked = false;
@@ -50,6 +54,12 @@ pub fn process_pickup_events(
         if !picked {
             if let Ok(pickup) = melee_shield_pickup_query.get(event.target) {
                 picked = handle_melee_shield_pickup(event.source, pickup, &mut inventory_query);
+            }
+        }
+
+        if !picked {
+            if let Ok(pickup) = oxygen_pickup_query.get(event.target) {
+                picked = handle_oxygen_pickup(event.source, pickup, &mut oxygen_query);
             }
         }
 
@@ -234,4 +244,23 @@ fn handle_melee_shield_pickup(
     };
 
     inventory.add_item(item).is_none()
+}
+
+fn handle_oxygen_pickup(
+    player: Entity,
+    pickup: &OxygenPickup,
+    oxygen_query: &mut Query<&mut OxygenSystem>,
+) -> bool {
+    let Ok(mut oxygen) = oxygen_query.get_mut(player) else {
+        warn!("Oxygen pickup missing oxygen system on {:?}", player);
+        return false;
+    };
+
+    if pickup.refill_oxygen {
+        oxygen.current_oxygen = oxygen.max_oxygen;
+    } else {
+        oxygen.current_oxygen = (oxygen.current_oxygen + pickup.amount).min(oxygen.max_oxygen);
+    }
+
+    true
 }
