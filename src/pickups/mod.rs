@@ -12,6 +12,8 @@ pub mod pickup_object;
 pub mod pickups_screen_info;
 pub mod player_pickup_icon_manager;
 pub mod pickup_type;
+pub mod events;
+pub mod systems;
 pub mod ammo_pickup;
 pub mod energy_pickup;
 pub mod experience_multiplier_pickup;
@@ -49,6 +51,7 @@ pub use pickup_object::PickUpObject;
 pub use pickups_screen_info::PickUpsScreenInfo;
 pub use player_pickup_icon_manager::PlayerPickupIconManager;
 pub use pickup_type::{PickupKind, PickupTypeSettings};
+pub use events::{PickupEvent, PickupEventQueue};
 pub use ammo_pickup::AmmoPickup;
 pub use energy_pickup::EnergyPickup;
 pub use experience_multiplier_pickup::ExperienceMultiplierPickup;
@@ -78,9 +81,11 @@ pub struct PickupsPlugin;
 
 impl Plugin for PickupsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (
-            chest_system::update_chest_system,
-            drop_pickup_system::update_drop_pickup_system,
-        ));
+        app.init_resource::<PickupEventQueue>()
+            .add_systems(Update, (
+                chest_system::update_chest_system,
+                drop_pickup_system::update_drop_pickup_system,
+                systems::process_pickup_events,
+            ));
     }
 }

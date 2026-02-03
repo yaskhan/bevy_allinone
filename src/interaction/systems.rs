@@ -191,6 +191,7 @@ pub fn process_interactions(
     mut input_buffer: ResMut<InputBuffer>,
     current_interactable: Res<CurrentInteractable>,
     mut events: ResMut<InteractionEventQueue>,
+    mut pickup_events: ResMut<crate::pickups::PickupEventQueue>,
     mut interactables: Query<(&mut Interactable, Option<&mut InteractionData>, Option<&mut UsableDevice>)>,
     mut player_query: Query<(Entity, &mut UsingDevicesSystem), With<InteractionDetector>>,
     mut electronic_device_activation_queue: ResMut<crate::devices::electronic_device::ElectronicDeviceActivationEventQueue>,
@@ -256,6 +257,13 @@ pub fn process_interactions(
                     target: entity,
                     interaction_type: interactable.interaction_type,
                 });
+
+                if interactable.interaction_type == InteractionType::Pickup {
+                    pickup_events.0.push(crate::pickups::PickupEvent {
+                        source: source_entity,
+                        target: entity,
+                    });
+                }
 
                 // Specifically trigger Electronic Device activation if applicable
                 electronic_device_activation_queue.0.push(crate::devices::electronic_device::ElectronicDeviceActivationEvent {
