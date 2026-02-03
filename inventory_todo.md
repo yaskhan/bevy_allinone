@@ -27,7 +27,7 @@ The UI layer has the most gaps compared to the Unity implementation.
     - [ ] Create detailed item icons.
     - [ ] Add background panels and blur effects (if desired).
 - [ ] **Interactive Features**
-    - [ ] **Drag & Drop**: Implement drag-and-drop reordering of items.
+    - [x] **Drag & Drop**: Implement drag-and-drop reordering of items.
     - [x] **Selection**: persistent selection state to show details in a side panel.
 - [ ] **Info Panels / Tooltips**
     - [x] Show `Description` and `Object Info` in a dedicated UI panel when an item is selected.

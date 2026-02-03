@@ -260,6 +260,41 @@ pub fn handle_inventory_selection(
     }
 }
 
+pub fn handle_inventory_drag_and_drop(
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut drag_state: ResMut<InventorySlotDragState>,
+    slot_query: Query<(&Interaction, &InventoryUISlot)>,
+    mut inventory_query: Query<&mut Inventory, With<InteractionDetector>>,
+) {
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        for (interaction, slot) in slot_query.iter() {
+            if *interaction == Interaction::Pressed {
+                drag_state.dragging = Some(slot.index);
+                break;
+            }
+        }
+    }
+
+    if mouse_buttons.just_released(MouseButton::Left) {
+        let Some(from_index) = drag_state.dragging.take() else { return };
+        let mut target_index = None;
+        for (interaction, slot) in slot_query.iter() {
+            if *interaction == Interaction::Pressed || *interaction == Interaction::Hovered {
+                target_index = Some(slot.index);
+                break;
+            }
+        }
+
+        if let Some(to_index) = target_index {
+            if let Some(mut inventory) = inventory_query.iter_mut().next() {
+                if from_index < inventory.items.len() && to_index < inventory.items.len() {
+                    inventory.items.swap(from_index, to_index);
+                }
+            }
+        }
+    }
+}
+
 pub fn update_inventory_details_panel(
     selection: Res<InventorySelection>,
     inventory_query: Query<&Inventory, With<InteractionDetector>>,

@@ -98,3 +98,8 @@ pub struct InventorySelection {
 
 #[derive(Component)]
 pub struct InventoryDetailsText;
+
+#[derive(Resource, Default)]
+pub struct InventorySlotDragState {
+    pub dragging: Option<usize>,
+}
