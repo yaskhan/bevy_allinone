@@ -16,8 +16,8 @@ Based on the comparison with the legacy C# `inventoryManager.cs`, here is the br
 ### Equipment & Interaction
 - [x] **Quick Access Slots** (`InventoryQuickAccessSlotsSystem`)
 - [x] **Equipping Weapons** (`melee_weapon_equipment_system.rs`, `weapon_equip_system.rs`)
-- [/] **Usage** (`use_inventory_object.rs`)
-    - *Status:* Basic event flow exists. Needs specific effect implementations matching all C# item types.
+- [x] **Usage** (`use_inventory_object.rs`)
+    - *Status:* Item effects implemented via `item_effects.rs` + `item_usage_system.rs`.
 
 ### User Interface (UI) - **Priorities**
 The UI layer has the most gaps compared to the Unity implementation.
