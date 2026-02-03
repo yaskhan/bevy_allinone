@@ -17,7 +17,7 @@ Source: `gkit/Scripts/PickUps/`
 
 ## Pickups Behaviour
 - [x] `ammoPickup.cs`
-- [ ] `energyPickup.cs`
+- [x] `energyPickup.cs`
 - [ ] `experienceMultiplierPickup.cs`
 - [ ] `experiencePickup.cs`
 - [ ] `generalPickup.cs`
