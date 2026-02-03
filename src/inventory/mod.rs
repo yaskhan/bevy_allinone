@@ -39,6 +39,8 @@ pub mod inventory_menu_icon_element;
 pub mod inventory_menu_panels_system;
 pub mod inventory_object_to_equip_info;
 pub mod inventory_prefab_creation_system;
+pub mod inventory_management_system;
+pub mod inventory_examine_system;
 pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
@@ -97,6 +99,8 @@ pub use inventory_menu_icon_element::InventoryMenuIconElement;
 pub use inventory_menu_panels_system::{InventoryMenuPanelEvent, InventoryMenuPanelsSystem};
 pub use inventory_object_to_equip_info::InventoryObjectToEquipInfo;
 pub use inventory_prefab_creation_system::InventoryPrefabCreationSystem;
+pub use inventory_management_system::{InventoryConfig, AddInventoryItemEvent};
+pub use inventory_examine_system::{ExamineInventoryItemEvent, InventoryItemPreviewRegistry, InventoryExamineSettings};
 pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
@@ -122,11 +126,15 @@ impl Plugin for InventoryPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<InventoryListManagerData>()
         .init_resource::<ItemEffectRegistry>()
+        .init_resource::<InventoryItemPreviewRegistry>()
+        .init_resource::<InventoryExamineSettings>()
         .add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
         .add_event::<InventoryBankTransferEvent>()
         .add_event::<InventoryMenuPanelEvent>()
+        .add_event::<AddInventoryItemEvent>()
+        .add_event::<ExamineInventoryItemEvent>()
         .add_event::<UseInventoryObjectEvent>()
         .add_event::<InventoryObjectUsedEvent>()
         .add_event::<EquipMeleeWeaponEvent>()
@@ -152,6 +160,7 @@ impl Plugin for InventoryPlugin {
             inventory_list_manager::update_inventory_list_manager,
             inventory_menu_panels_system::update_inventory_menu_panels_system,
             inventory_prefab_creation_system::update_inventory_prefab_creation_system,
+            inventory_management_system::apply_add_inventory_item_events,
             item_effects::register_item_effects,
             item_usage_system::apply_inventory_item_effects,
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
@@ -167,10 +176,13 @@ impl Plugin for InventoryPlugin {
             weapon_inventory_prefab_creation_system::update_weapon_inventory_prefab_creation_system,
             inventory_quick_access_slots_system::update_inventory_quick_access_slots_system,
             quick_access_use_system::handle_quick_access_use,
+            inventory_examine_system::handle_examine_item,
+            inventory_examine_system::rotate_examine_preview,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,
             inventory_bank_ui_system::setup_inventory_bank_ui,
+            inventory_examine_system::ensure_examine_camera,
         ));
     }
 }
