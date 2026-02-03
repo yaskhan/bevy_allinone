@@ -44,6 +44,7 @@ pub mod inventory_management_system;
 pub mod inventory_examine_system;
 pub mod inventory_drop_system;
 pub mod inventory_stack_system;
+pub mod inventory_combine_system;
 pub mod inventory_slot_options_buttons;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
@@ -108,6 +109,7 @@ pub use inventory_management_system::{InventoryConfig, AddInventoryItemEvent};
 pub use inventory_examine_system::{ExamineInventoryItemEvent, InventoryItemPreviewRegistry, InventoryExamineSettings};
 pub use inventory_drop_system::DropInventoryItemEvent;
 pub use inventory_stack_system::SplitStackEvent;
+pub use inventory_combine_system::{CombineInventoryItemsEvent, CombineRecipeRegistry};
 pub use inventory_slot_options_buttons::InventorySlotOptionsButtons;
 pub use melee_shield_inventory_prefab_creation_system::MeleeShieldInventoryPrefabCreationSystem;
 pub use melee_weapon_consumable_inventory_prefab_creation_system::MeleeWeaponConsumableInventoryPrefabCreationSystem;
@@ -136,6 +138,7 @@ impl Plugin for InventoryPlugin {
         .init_resource::<ItemEffectRegistry>()
         .init_resource::<InventoryItemPreviewRegistry>()
         .init_resource::<InventoryExamineSettings>()
+        .init_resource::<CombineRecipeRegistry>()
         .add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
@@ -145,6 +148,7 @@ impl Plugin for InventoryPlugin {
         .add_event::<ExamineInventoryItemEvent>()
         .add_event::<DropInventoryItemEvent>()
         .add_event::<SplitStackEvent>()
+        .add_event::<CombineInventoryItemsEvent>()
         .add_event::<UseInventoryObjectEvent>()
         .add_event::<InventoryObjectUsedEvent>()
         .add_event::<EquipMeleeWeaponEvent>()
@@ -176,6 +180,7 @@ impl Plugin for InventoryPlugin {
             item_usage_system::apply_inventory_item_effects,
             inventory_drop_system::handle_drop_inventory_item,
             inventory_stack_system::handle_split_stack,
+            inventory_combine_system::handle_combine_inventory_items,
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
