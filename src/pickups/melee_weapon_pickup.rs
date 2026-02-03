@@ -8,6 +8,7 @@ use bevy::prelude::*;
 pub struct MeleeWeaponPickup {
     pub weapon_id: String,
     pub weapon_name: String,
+    pub store_picked_weapons_on_inventory: bool,
 }
 
 impl Default for MeleeWeaponPickup {
@@ -15,6 +16,7 @@ impl Default for MeleeWeaponPickup {
         Self {
             weapon_id: String::new(),
             weapon_name: String::new(),
+            store_picked_weapons_on_inventory: false,
         }
     }
 }
