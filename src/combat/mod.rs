@@ -10,6 +10,7 @@ pub mod sync;
 pub mod result_queue;
 pub mod slice;
 pub mod impact;
+pub mod decals;
 
 pub use types::*;
 pub use systems::*;
@@ -21,6 +22,7 @@ pub use sync::*;
 pub use result_queue::*;
 pub use slice::*;
 pub use impact::*;
+pub use decals::*;
 
 pub struct CombatPlugin;
 
@@ -36,6 +38,8 @@ impl Plugin for CombatPlugin {
             .init_resource::<SliceFxSettings>()
             .init_resource::<SurfaceFxDatabase>()
             .init_resource::<SurfaceFxSettings>()
+            .init_resource::<DecalRegistry>()
+            .init_resource::<DecalSettings>()
             .init_resource::<DamageFeedbackSettings>()
             .init_resource::<AttackDatabase>()
             .register_type::<Health>()
@@ -65,10 +69,13 @@ impl Plugin for CombatPlugin {
             .register_type::<SliceChunk>()
             .register_type::<SurfaceType>()
             .register_type::<SurfaceFxMarker>()
+            .register_type::<Decal>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
+                decals::spawn_decals_from_damage,
+                decals::update_decals,
                 impact::spawn_surface_fx_from_damage,
                 impact::update_surface_fx_markers,
                 slice::queue_slice_events_from_laser,
