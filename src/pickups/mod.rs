@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
 pub mod chest_system;
+pub mod crate_system;
 
 pub use chest_system::ChestSystem;
+pub use crate_system::CrateSystem;
 
 pub struct PickupsPlugin;
 
