@@ -31,7 +31,7 @@ The UI layer has the most gaps compared to the Unity implementation.
     - [x] **Selection**: persistent selection state to show details in a side panel.
 - [ ] **Info Panels / Tooltips**
     - [x] Show `Description` and `Object Info` in a dedicated UI panel when an item is selected.
-    - [ ] "Full Inventory" / "Too Heavy" on-screen feedback messages.
+    - [x] "Full Inventory" / "Too Heavy" on-screen feedback messages.
 - [ ] **Zoom Controls**
     - [x] Implement input handling to zoom in/out with scroll wheel during item examination.
 

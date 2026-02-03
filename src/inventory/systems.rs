@@ -26,6 +26,7 @@ pub fn handle_pickup_events(
                     if let Some(leftover) = inventory.add_item(physical_item.item.clone()) {
                         info!("Inventory full! Could not pick up {}", leftover.name);
                         // Optional: update physical item quantity to leftover?
+                        commands.entity(event.source).insert(InventoryPickupFeedback::FullInventory);
                     } else {
                         info!("Picked up {}", physical_item.item.name);
                         // Despawn physical entity
@@ -172,15 +173,25 @@ pub fn setup_inventory_ui(mut commands: Commands) {
                 ));
             });
 
-            // Weight Info (Footer)
+            // Warning + Weight Info (Footer)
             parent.spawn((
                 Node {
                     width: Val::Percent(100.0),
-                    height: Val::Px(30.0),
+                    height: Val::Px(60.0),
                     margin: UiRect { top: Val::Auto, ..default() },
+                    flex_direction: FlexDirection::Column,
                     ..default()
                 },
             )).with_children(|footer| {
+                footer.spawn((
+                    Text::new(""),
+                    TextFont {
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.5, 0.5)),
+                    InventoryWarningText,
+                ));
                 footer.spawn((
                     Text::new("Weight: 0.0 / 100.0"),
                     TextFont {
@@ -315,5 +326,45 @@ pub fn update_inventory_details_panel(
 
     if let Some(section) = text.sections.first_mut() {
         section.value = details;
+    }
+}
+
+#[derive(Component, Debug, Clone, Copy)]
+pub enum InventoryPickupFeedback {
+    FullInventory,
+    TooHeavy,
+}
+
+#[derive(Component)]
+pub struct InventoryWarningTimer(pub Timer);
+
+pub fn apply_inventory_warning_feedback(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut warning_query: Query<&mut Text, With<InventoryWarningText>>,
+    mut feedback_query: Query<(Entity, &InventoryPickupFeedback, Option<&mut InventoryWarningTimer>)>,
+) {
+    let Ok(mut text) = warning_query.get_single_mut() else { return };
+    let mut message = None;
+
+    for (entity, feedback, mut timer) in feedback_query.iter_mut() {
+        if let Some(timer) = timer.as_mut() {
+            timer.0.tick(time.delta());
+            if timer.0.finished() {
+                commands.entity(entity).remove::<InventoryPickupFeedback>();
+                commands.entity(entity).remove::<InventoryWarningTimer>();
+                continue;
+            }
+        } else {
+            commands.entity(entity).insert(InventoryWarningTimer(Timer::from_seconds(2.0, TimerMode::Once)));
+        }
+        message = Some(match feedback {
+            InventoryPickupFeedback::FullInventory => "Inventory Full",
+            InventoryPickupFeedback::TooHeavy => "Too Heavy",
+        });
+    }
+
+    if let Some(section) = text.sections.first_mut() {
+        section.value = message.unwrap_or_default().to_string();
     }
 }

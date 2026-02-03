@@ -103,3 +103,6 @@ pub struct InventoryDetailsText;
 pub struct InventorySlotDragState {
     pub dragging: Option<usize>,
 }
+
+#[derive(Component)]
+pub struct InventoryWarningText;

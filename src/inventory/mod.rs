@@ -69,6 +69,7 @@ pub use types::{InventoryItem, ItemType};
 pub use components::{Inventory, Equipment, PhysicalItem, InventoryUIRoot, InventoryUISlot, InventorySlotIcon, InventorySlotCount};
 pub use components::InventorySelection;
 pub use components::InventorySlotDragState;
+pub use components::InventoryWarningText;
 pub use systems::*;
 pub use ammo_inventory_prefab_creation_system::AmmoInventoryPrefabCreationSystem;
 pub use ammo_on_inventory::AmmoOnInventory;
@@ -172,6 +173,7 @@ impl Plugin for InventoryPlugin {
             handle_inventory_selection,
             update_inventory_details_panel,
             handle_inventory_drag_and_drop,
+            apply_inventory_warning_feedback,
             ammo_inventory_prefab_creation_system::update_ammo_inventory_prefab_creation_system,
             carry_physically_object_from_inventory::update_carry_physically_object_from_inventory,
             consumable_inventory_prefab_creation_system::update_consumable_inventory_prefab_creation_system,
