@@ -36,6 +36,13 @@ pub fn update_camera_state_offsets(
         state.is_aiming = controller.mode == CameraMode::ThirdPerson && input.aim_pressed;
         state.is_crouching = movement.is_crouching;
 
+        let state_name = resolve_state_name(&movement, &state);
+        if state_name != controller.current_state_name {
+            controller.current_state_name = state_name.to_string();
+        }
+
+        let state_info = find_state_info(controller, &controller.current_state_name);
+
         let mut target_pivot_offset = controller.default_pivot_offset;
         
         if state.is_crouching {
@@ -51,10 +58,58 @@ pub fn update_camera_state_offsets(
             }
         }
 
+        if let Some(info) = state_info {
+            target_pivot_offset += info.pivot_position_offset;
+            controller.min_vertical_angle = info.y_limits.x;
+            controller.max_vertical_angle = info.y_limits.y;
+            state.fov_override = Some(info.initial_fov);
+            state.fov_override_speed = Some(info.fov_transition_speed);
+            controller.use_collision = info.camera_collision_active;
+        } else {
+            state.fov_override = None;
+            state.fov_override_speed = None;
+        }
+
         // 4. Smoothly Update Current Pivot
         let target_pivot_world = target_transform.translation + target_transform.rotation * target_pivot_offset;
         
         let pivot_alpha = 1.0 - (-controller.pivot_smooth_speed * dt).exp();
         state.current_pivot = state.current_pivot.lerp(target_pivot_world, pivot_alpha);
     }
+}
+
+fn resolve_state_name(movement: &CharacterMovementState, state: &CameraState) -> &'static str {
+    if movement.is_in_vehicle {
+        return "Vehicle";
+    }
+    if movement.wall_running_active {
+        return "WallRun";
+    }
+    if movement.crouch_sliding_active {
+        return "Slide";
+    }
+    if state.is_aiming {
+        return "Aim";
+    }
+    if movement.is_crouching {
+        return "Crouch";
+    }
+    if movement.is_sprinting {
+        return "Sprint";
+    }
+    if movement.is_running {
+        return "Run";
+    }
+    "Default"
+}
+
+fn find_state_info<'a>(
+    controller: &'a CameraController,
+    state_name: &str,
+) -> Option<&'a CameraStateInfo> {
+    let target = state_name.to_lowercase();
+    controller
+        .states
+        .iter()
+        .find(|state| state.name.to_lowercase() == target)
 }
