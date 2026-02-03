@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+use rand::Rng;
+
+use crate::currency::{AddCurrencyEventQueue, AddCurrencyEvent, CurrencyType};
 use crate::inventory::{Inventory, types::{InventoryItem, ItemType}};
 use crate::abilities::OxygenSystem;
 use crate::weapons::{Weapon, WeaponManager};
@@ -9,6 +12,7 @@ use super::melee_weapon_consumable_pickup::MeleeWeaponConsumablePickup;
 use super::melee_shield_pickup::MeleeShieldPickup;
 use super::melee_weapon_pickup::MeleeWeaponPickup;
 use super::oxygen_pickup::OxygenPickup;
+use super::money_pickup::MoneyPickup;
 use super::weapon_pickup::WeaponPickup;
 
 pub fn process_pickup_events(
@@ -18,11 +22,13 @@ pub fn process_pickup_events(
     mut weapon_query: Query<(Entity, &mut Weapon, Option<&mut Visibility>)>,
     mut inventory_query: Query<&mut Inventory>,
     mut oxygen_query: Query<&mut OxygenSystem>,
+    mut currency_events: ResMut<AddCurrencyEventQueue>,
     weapon_pickup_query: Query<&WeaponPickup>,
     melee_weapon_pickup_query: Query<&MeleeWeaponPickup>,
     melee_weapon_consumable_pickup_query: Query<&MeleeWeaponConsumablePickup>,
     melee_shield_pickup_query: Query<&MeleeShieldPickup>,
     oxygen_pickup_query: Query<&OxygenPickup>,
+    money_pickup_query: Query<&MoneyPickup>,
 ) {
     for event in events.0.drain(..) {
         let mut picked = false;
@@ -60,6 +66,12 @@ pub fn process_pickup_events(
         if !picked {
             if let Ok(pickup) = oxygen_pickup_query.get(event.target) {
                 picked = handle_oxygen_pickup(event.source, pickup, &mut oxygen_query);
+            }
+        }
+
+        if !picked {
+            if let Ok(pickup) = money_pickup_query.get(event.target) {
+                picked = handle_money_pickup(event.source, pickup, &mut currency_events);
             }
         }
 
@@ -263,4 +275,37 @@ fn handle_oxygen_pickup(
     }
 
     true
+}
+
+fn handle_money_pickup(
+    player: Entity,
+    pickup: &MoneyPickup,
+    currency_events: &mut ResMut<AddCurrencyEventQueue>,
+) -> bool {
+    let amount = if pickup.use_money_random_range {
+        let mut rng = rand::rng();
+        let min = pickup.money_random_range.x.min(pickup.money_random_range.y);
+        let max = pickup.money_random_range.x.max(pickup.money_random_range.y);
+        rng.random_range(min..=max)
+    } else {
+        pickup.amount
+    };
+
+    let currency_type = parse_currency_type(&pickup.currency_type);
+    currency_events.0.push(AddCurrencyEvent {
+        entity: player,
+        amount,
+        currency_type,
+    });
+
+    true
+}
+
+fn parse_currency_type(name: &str) -> CurrencyType {
+    match name.to_lowercase().as_str() {
+        "silver" => CurrencyType::Silver,
+        "copper" => CurrencyType::Copper,
+        "special" => CurrencyType::Special,
+        _ => CurrencyType::Gold,
+    }
 }
