@@ -153,6 +153,7 @@ impl Plugin for InventoryPlugin {
             melee_weapon_equipment_system::handle_melee_weapon_equip,
             melee_weapon_equipment_system::handle_melee_weapon_draw,
             melee_weapon_equipment_system::apply_melee_weapon_draw,
+            melee_weapon_equipment_system::update_melee_weapon_offsets,
             use_inventory_object::update_use_inventory_object,
             weapon_attachment_inventory_prefab_creation_system::update_weapon_attachment_inventory_prefab_creation_system,
             weapon_inventory_prefab_creation_system::update_weapon_inventory_prefab_creation_system,

@@ -9,6 +9,7 @@ pub mod damage_ui;
 pub mod sync;
 pub mod result_queue;
 pub mod slice;
+pub mod impact;
 
 pub use types::*;
 pub use systems::*;
@@ -19,6 +20,7 @@ pub use damage_ui::*;
 pub use sync::*;
 pub use result_queue::*;
 pub use slice::*;
+pub use impact::*;
 
 pub struct CombatPlugin;
 
@@ -28,9 +30,12 @@ impl Plugin for CombatPlugin {
             .init_resource::<DamageEventQueue>()
             .init_resource::<DeathEventQueue>()
             .init_resource::<DamageResultQueue>()
+            .init_resource::<MeleeHitboxEventQueue>()
             .init_resource::<SliceEventQueue>()
             .init_resource::<SliceResultQueue>()
             .init_resource::<SliceFxSettings>()
+            .init_resource::<SurfaceFxDatabase>()
+            .init_resource::<SurfaceFxSettings>()
             .init_resource::<DamageFeedbackSettings>()
             .init_resource::<AttackDatabase>()
             .register_type::<Health>()
@@ -44,6 +49,9 @@ impl Plugin for CombatPlugin {
             .register_type::<MeleeRangedWeaponSettings>()
             .register_type::<MeleeRangedAimState>()
             .register_type::<ReturnToOwner>()
+            .register_type::<FollowThrownWeapon>()
+            .register_type::<MeleeWeaponRangedAttack>()
+            .register_type::<MeleeWeaponTransformData>()
             .register_type::<AirAttackToLand>()
             .register_type::<Blocking>()
             .register_type::<DamageOverTime>()
@@ -54,23 +62,31 @@ impl Plugin for CombatPlugin {
             .register_type::<Sliceable>()
             .register_type::<SliceOnDamage>()
             .register_type::<SliceFxMarker>()
+            .register_type::<SliceChunk>()
+            .register_type::<SurfaceType>()
+            .register_type::<SurfaceFxMarker>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
                 systems::update_timers,
+                impact::spawn_surface_fx_from_damage,
+                impact::update_surface_fx_markers,
                 slice::queue_slice_events_from_laser,
                 slice::queue_slice_events_from_damage_results,
                 slice::apply_slice_events,
                 slice::handle_slice_results,
                 slice::update_slice_fx_markers,
+                slice::update_slice_chunks,
                 systems::handle_air_attack_to_land,
                 systems::update_melee_attack_state,
+                systems::apply_melee_hitbox_events,
                 systems::update_melee_hitboxes,
                 systems::perform_melee_hitbox_damage,
                 systems::update_melee_ranged_aim,
                 systems::update_melee_ranged_camera,
                 systems::perform_melee_ranged_attacks,
                 systems::update_returning_projectiles,
+                systems::update_follow_thrown_weapons,
                 systems::regenerate_health,
                 systems::regenerate_shields,
                 systems::perform_melee_attacks,

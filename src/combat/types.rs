@@ -153,6 +153,15 @@ pub struct DeathEvent {
 #[derive(Resource, Default)]
 pub struct DeathEventQueue(pub Vec<DeathEvent>);
 
+#[derive(Debug, Clone)]
+pub struct MeleeHitboxEvent {
+    pub owner: Entity,
+    pub active: bool,
+}
+
+#[derive(Resource, Default)]
+pub struct MeleeHitboxEventQueue(pub Vec<MeleeHitboxEvent>);
+
 
 /// Damage type enumeration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
@@ -215,6 +224,11 @@ pub struct MeleeRangedWeaponSettings {
     pub returnable: bool,
     pub return_delay: f32,
     pub return_speed: f32,
+    pub spawn_follow_object: bool,
+    pub follow_offset: Vec3,
+    pub follow_marker_radius: f32,
+    pub follow_marker_color: Color,
+    pub follow_lifetime: f32,
 }
 
 impl Default for MeleeRangedWeaponSettings {
@@ -231,6 +245,11 @@ impl Default for MeleeRangedWeaponSettings {
             returnable: false,
             return_delay: 0.5,
             return_speed: 22.0,
+            spawn_follow_object: false,
+            follow_offset: Vec3::new(0.0, 0.0, 0.0),
+            follow_marker_radius: 0.08,
+            follow_marker_color: Color::srgb(0.2, 0.8, 1.0),
+            follow_lifetime: 3.0,
         }
     }
 }
@@ -289,6 +308,45 @@ impl Default for ReturnToOwner {
             delay: 0.0,
             speed: 20.0,
             timer: 0.0,
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct FollowThrownWeapon {
+    pub target: Entity,
+    pub lifetime: f32,
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MeleeWeaponRangedAttack {
+    pub projectile_spawn_offset: Vec3,
+}
+
+impl Default for MeleeWeaponRangedAttack {
+    fn default() -> Self {
+        Self {
+            projectile_spawn_offset: Vec3::new(0.0, 0.0, 0.3),
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct MeleeWeaponTransformData {
+    pub holster_offset: Transform,
+    pub hand_offset: Transform,
+    pub aim_offset: Transform,
+}
+
+impl Default for MeleeWeaponTransformData {
+    fn default() -> Self {
+        Self {
+            holster_offset: Transform::default(),
+            hand_offset: Transform::default(),
+            aim_offset: Transform::default(),
         }
     }
 }

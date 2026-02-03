@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use avian3d::prelude::*;
 
 use crate::abilities::LaserVisionSliceEventQueue;
 use crate::combat::result_queue::DamageResultQueue;
@@ -32,11 +33,22 @@ pub struct SliceFxMarker {
 
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
+pub struct SliceChunk {
+    pub lifetime: f32,
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
 pub struct Sliceable {
     pub enabled: bool,
     pub slice_radius: f32,
     pub min_delay_between_slices: f32,
     pub last_slice_time: f32,
+    pub spawn_simple_chunks: bool,
+    pub chunk_size: Vec3,
+    pub chunk_lifetime: f32,
+    pub chunk_impulse: f32,
+    pub despawn_original: bool,
 }
 
 impl Default for Sliceable {
@@ -46,6 +58,11 @@ impl Default for Sliceable {
             slice_radius: 1.0,
             min_delay_between_slices: 0.5,
             last_slice_time: -999.0,
+            spawn_simple_chunks: true,
+            chunk_size: Vec3::splat(0.4),
+            chunk_lifetime: 4.0,
+            chunk_impulse: 3.0,
+            despawn_original: true,
         }
     }
 }
@@ -198,6 +215,7 @@ pub fn handle_slice_results(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     settings: Res<SliceFxSettings>,
+    target_query: Query<(&GlobalTransform, &Sliceable, Option<&Handle<StandardMaterial>>)>,
 ) {
     if !settings.spawn_debug_marker {
         results.0.clear();
@@ -231,6 +249,57 @@ pub fn handle_slice_results(
             },
             Name::new("SliceFxMarker"),
         ));
+
+        let Ok((target_transform, sliceable, target_material)) = target_query.get(result.target) else {
+            continue;
+        };
+
+        if sliceable.spawn_simple_chunks {
+            let chunk_mesh = meshes.add(Mesh::from(shape::Box::new(
+                sliceable.chunk_size.x,
+                sliceable.chunk_size.y,
+                sliceable.chunk_size.z,
+            )));
+
+            let material_handle = target_material
+                .cloned()
+                .unwrap_or_else(|| materials.add(StandardMaterial {
+                    base_color: Color::srgb(0.6, 0.6, 0.6),
+                    ..default()
+                }));
+
+            let normal = result.normal.normalize_or_zero();
+            let offset = normal * (sliceable.chunk_size.length() * 0.25);
+
+            for dir in [-1.0f32, 1.0f32] {
+                let position = target_transform.translation() + offset * dir;
+                let impulse = normal * sliceable.chunk_impulse * dir;
+
+                commands.spawn((
+                    PbrBundle {
+                        mesh: chunk_mesh.clone(),
+                        material: material_handle.clone(),
+                        transform: Transform::from_translation(position),
+                        ..default()
+                    },
+                    RigidBody::Dynamic,
+                    Collider::cuboid(
+                        sliceable.chunk_size.x * 0.5,
+                        sliceable.chunk_size.y * 0.5,
+                        sliceable.chunk_size.z * 0.5,
+                    ),
+                    LinearVelocity(impulse),
+                    SliceChunk {
+                        lifetime: sliceable.chunk_lifetime,
+                    },
+                    Name::new("SliceChunk"),
+                ));
+            }
+
+            if sliceable.despawn_original {
+                commands.entity(result.target).despawn_recursive();
+            }
+        }
     }
 }
 
@@ -244,6 +313,20 @@ pub fn update_slice_fx_markers(
         marker.lifetime -= dt;
         if marker.lifetime <= 0.0 {
             commands.entity(entity).despawn();
+        }
+    }
+}
+
+pub fn update_slice_chunks(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut SliceChunk)>,
+) {
+    let dt = time.delta_secs();
+    for (entity, mut chunk) in query.iter_mut() {
+        chunk.lifetime -= dt;
+        if chunk.lifetime <= 0.0 {
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

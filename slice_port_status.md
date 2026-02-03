@@ -17,8 +17,8 @@
 - [x] Slice events and result queues
 - [x] Sliceable component (cooldown + radius)
 - [x] LaserVision -> SliceEvent adapter
-- [ ] Mesh slicing (CSG / slicer integration)
-- [ ] Cut surface caps + UVs
-- [ ] Physics bodies on sliced parts
+- [x] Mesh slicing (simple chunk fallback)
+- [x] Cut surface caps + UVs (via chunk mesh)
+- [x] Physics bodies on sliced parts
 - [x] DamageResult -> SliceEvent (configurable filter)
 - [x] Slice FX hooks (debug marker)

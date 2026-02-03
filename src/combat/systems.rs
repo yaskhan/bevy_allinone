@@ -7,6 +7,7 @@ use crate::player::ragdoll::{ActivateRagdollQueue, ActivateRagdollEvent};
 use super::result_queue::*;
 use crate::camera::types::{CameraController, CameraState};
 use crate::weapons::types::Projectile;
+use crate::inventory::MeleeWeaponEquipmentState;
 use crate::character::types::CharacterMovementState;
 use crate::physics::GroundDetection;
 
@@ -75,6 +76,19 @@ pub fn update_melee_hitboxes(
                 continue;
             }
             zone.active = active;
+        }
+    }
+}
+
+pub fn apply_melee_hitbox_events(
+    mut event_queue: ResMut<MeleeHitboxEventQueue>,
+    mut hitboxes: Query<&mut DamageZone>,
+) {
+    for event in event_queue.0.drain(..) {
+        for mut zone in hitboxes.iter_mut() {
+            if zone.owner == event.owner {
+                zone.active = event.active;
+            }
         }
     }
 }
@@ -170,7 +184,11 @@ pub fn perform_melee_ranged_attacks(
     mut commands: Commands,
     time: Res<Time>,
     input: Res<InputState>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut query: Query<(Entity, &GlobalTransform, &MeleeCombat, &mut MeleeRangedWeaponSettings, &MeleeRangedAimState)>,
+    equipment_query: Query<&MeleeWeaponEquipmentState>,
+    weapon_query: Query<(&GlobalTransform, &MeleeWeaponRangedAttack)>,
 ) {
     let now = time.elapsed_secs();
 
@@ -188,7 +206,15 @@ pub fn perform_melee_ranged_attacks(
         }
 
         let forward = transform.forward();
-        let spawn_pos = transform.translation() + forward * 0.8;
+        let mut spawn_pos = transform.translation() + forward * 0.8;
+
+        if let Ok(state) = equipment_query.get(owner) {
+            if let Some(weapon_entity) = state.weapon_entity {
+                if let Ok((weapon_transform, ranged_data)) = weapon_query.get(weapon_entity) {
+                    spawn_pos = weapon_transform.transform_point(ranged_data.projectile_spawn_offset);
+                }
+            }
+        }
         let velocity = forward * settings.projectile_speed;
         let damage = combat.damage * settings.damage_multiplier;
 
@@ -217,6 +243,32 @@ pub fn perform_melee_ranged_attacks(
                 speed: settings.return_speed,
                 timer: 0.0,
             });
+        }
+
+        if settings.spawn_follow_object {
+            let mesh = meshes.add(Mesh::from(shape::Icosphere {
+                radius: settings.follow_marker_radius,
+                subdivisions: 2,
+            }));
+            let material = materials.add(StandardMaterial {
+                base_color: settings.follow_marker_color,
+                unlit: true,
+                ..default()
+            });
+
+            commands.spawn((
+                PbrBundle {
+                    mesh,
+                    material,
+                    transform: Transform::from_translation(spawn_pos + settings.follow_offset),
+                    ..default()
+                },
+                FollowThrownWeapon {
+                    target: projectile_entity,
+                    lifetime: settings.follow_lifetime,
+                },
+                Name::new("ThrownWeaponFollow"),
+            ));
         }
 
         settings.last_fire_time = now;
@@ -253,6 +305,26 @@ pub fn update_returning_projectiles(
         let dir = to_owner.normalize_or_zero();
         projectile.velocity = dir * return_state.speed;
         transform.look_to(dir, Vec3::Y);
+    }
+}
+
+pub fn update_follow_thrown_weapons(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &mut FollowThrownWeapon)>,
+    target_query: Query<&GlobalTransform>,
+) {
+    let dt = time.delta_secs();
+    for (entity, mut transform, mut follow) in query.iter_mut() {
+        follow.lifetime -= dt;
+        if follow.lifetime <= 0.0 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
+        if let Ok(target_transform) = target_query.get(follow.target) {
+            transform.translation = target_transform.translation();
+        }
     }
 }
 

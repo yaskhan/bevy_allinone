@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::InputState;
+use crate::combat::{MeleeWeaponRangedAttack, MeleeWeaponTransformData};
 use super::inventory_quick_access_slots_system::InventoryQuickAccessSlotsSystem;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
@@ -118,6 +119,8 @@ pub fn handle_melee_weapon_equip(
                 Name::new(format!("MeleeWeapon {}", event.weapon_id)),
                 Transform::default(),
                 GlobalTransform::default(),
+                MeleeWeaponRangedAttack::default(),
+                MeleeWeaponTransformData::default(),
             ))
             .id();
 
@@ -128,6 +131,27 @@ pub fn handle_melee_weapon_equip(
         }
 
         state.weapon_entity = Some(weapon_entity);
+    }
+}
+
+pub fn update_melee_weapon_offsets(
+    input: Res<InputState>,
+    state_query: Query<&MeleeWeaponEquipmentState>,
+    mut weapon_query: Query<(&mut Transform, &MeleeWeaponTransformData)>,
+) {
+    for state in state_query.iter() {
+        let Some(weapon_entity) = state.weapon_entity else { continue };
+        let Ok((mut transform, offsets)) = weapon_query.get_mut(weapon_entity) else { continue };
+
+        if state.drawn {
+            if input.aim_pressed {
+                *transform = offsets.aim_offset;
+            } else {
+                *transform = offsets.hand_offset;
+            }
+        } else {
+            *transform = offsets.holster_offset;
+        }
     }
 }
 
