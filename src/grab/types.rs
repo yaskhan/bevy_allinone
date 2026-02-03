@@ -217,9 +217,12 @@ impl Default for OutlineSettings {
 pub struct GrabAttackInfo {
     pub name: String,
     pub damage: f32,
+    pub damage_multiplier: f32,
     pub attack_type: String, // e.g., "Slash", "Bash"
     pub stamina_cost: f32,
     pub duration: f32,
+    pub force_on_hit: f32,
+    pub animation_id: String,
 }
 
 /// Component to allow using a grabbed object as a melee weapon.
@@ -233,6 +236,7 @@ pub struct GrabMeleeWeapon {
     pub throw_speed: f32,
     pub return_speed: f32,
     pub damage_type_id: i32,
+    pub unlock_abilities: Vec<String>,
 }
 
 impl Default for GrabMeleeWeapon {
@@ -245,6 +249,7 @@ impl Default for GrabMeleeWeapon {
             throw_speed: 20.0,
             return_speed: 30.0,
             damage_type_id: 0,
+            unlock_abilities: Vec::new(),
         }
     }
 }
@@ -256,11 +261,39 @@ pub struct ImprovisedWeapon;
 
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
+pub struct ImprovisedWeaponStats {
+    pub damage: f32,
+    pub damage_multiplier: f32,
+    pub stamina_cost: f32,
+    pub range: f32,
+    pub valid_attacks: Vec<String>,
+}
+
+impl Default for ImprovisedWeaponStats {
+    fn default() -> Self {
+        Self {
+            damage: 8.0,
+            damage_multiplier: 1.0,
+            stamina_cost: 8.0,
+            range: 1.2,
+            valid_attacks: vec!["Bash".to_string()],
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct GrabBlockShield;
+
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
 pub struct GrabMeleeAttackState {
     pub attack_timer: f32,
     pub cooldown_timer: f32,
     pub hitbox_active: bool,
     pub recoil_timer: f32,
+    pub attack_range: f32,
+    pub damage: f32,
 }
 
 impl Default for GrabMeleeAttackState {
@@ -270,6 +303,8 @@ impl Default for GrabMeleeAttackState {
             cooldown_timer: 0.0,
             hitbox_active: false,
             recoil_timer: 0.0,
+            attack_range: 1.2,
+            damage: 8.0,
         }
     }
 }

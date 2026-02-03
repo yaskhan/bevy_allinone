@@ -21,6 +21,8 @@ impl Plugin for GrabPlugin {
             .register_type::<OutlineSettings>()
             .register_type::<GrabMeleeWeapon>()
             .register_type::<ImprovisedWeapon>()
+            .register_type::<ImprovisedWeaponStats>()
+            .register_type::<GrabBlockShield>()
             .register_type::<GrabMeleeAttackState>()
             .register_type::<GrabPhysicalObjectSettings>()
             .add_systems(Update, (
@@ -35,6 +37,8 @@ impl Plugin for GrabPlugin {
                 systems::update_outlines,
                 systems::handle_grab_melee,
                 systems::update_grab_melee_attacks,
+                systems::update_grab_melee_hitboxes,
+                systems::update_grab_blocking,
                 systems::perform_grab_melee_damage,
                 systems::apply_throw_damage_on_collision,
             ));

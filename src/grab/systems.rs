@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction};
-use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
+use crate::combat::{DamageEventQueue, DamageEvent, DamageType, DamageZone, Blocking};
 use crate::stats::stats_system::StatsSystem;
 use crate::stats::types::DerivedStat;
+use crate::abilities::types::{SetAbilityEnabledEventQueue, SetAbilityEnabledEvent};
 use super::types::*;
 use bevy::audio::{AudioSource, PlaybackSettings};
 
@@ -45,6 +46,7 @@ pub fn process_grab_events(
     parent_redirect_query: Query<&GrabObjectParent>,
     event_system_query: Query<&GrabObjectEventSystem>,
     physical_settings_query: Query<&GrabPhysicalObjectSettings>,
+    mut ability_queue: ResMut<SetAbilityEnabledEventQueue>,
 ) {
     let events: Vec<GrabEvent> = event_queue.0.drain(..).collect();
 
@@ -102,9 +104,12 @@ pub fn process_grab_events(
                                 attacks: vec![GrabAttackInfo {
                                     name: "Grab Swing".to_string(),
                                     damage: 8.0,
+                                    damage_multiplier: 1.0,
                                     attack_type: "Bash".to_string(),
                                     stamina_cost: 8.0,
                                     duration: 0.45,
+                                    force_on_hit: 0.0,
+                                    animation_id: "GrabSwing".to_string(),
                                 }],
                                 ..default()
                             });
@@ -123,6 +128,26 @@ pub fn process_grab_events(
                 // Trigger event
                 if let Ok(_event_sys) = event_system_query.get(target_entity) {
                     info!("Grab event triggered for object: {:?}", target_entity);
+                }
+
+                if let Ok(weapon) = weapon_query.get(target_entity) {
+                    if weapon.can_block {
+                        commands.entity(grabber_entity).insert(GrabBlockShield);
+                        commands.entity(grabber_entity).insert(Blocking {
+                            is_blocking: false,
+                            block_reduction: weapon.block_protection,
+                            parry_window: 0.2,
+                            current_block_time: 0.0,
+                        });
+                    }
+
+                    for ability in &weapon.unlock_abilities {
+                        ability_queue.0.push(SetAbilityEnabledEvent {
+                            player_entity: grabber_entity,
+                            ability_name: ability.clone(),
+                            enabled: true,
+                        });
+                    }
                 }
             }
             GrabEvent::Drop(grabber_entity, target_entity) => {
@@ -146,6 +171,8 @@ pub fn process_grab_events(
 
                 commands.entity(target_entity).remove::<ImprovisedWeapon>();
                 commands.entity(target_entity).remove::<GrabMeleeAttackState>();
+                commands.entity(grabber_entity).remove::<GrabBlockShield>();
+                commands.entity(grabber_entity).remove::<Blocking>();
 
                 if let Ok(settings) = physical_settings_query.get(target_entity) {
                     if let Some(sound) = &settings.drop_sound {
@@ -160,6 +187,16 @@ pub fn process_grab_events(
                                 g.0 = 1.0;
                             }
                         }
+                    }
+                }
+
+                if let Ok(weapon) = weapon_query.get(target_entity) {
+                    for ability in &weapon.unlock_abilities {
+                        ability_queue.0.push(SetAbilityEnabledEvent {
+                            player_entity: grabber_entity,
+                            ability_name: ability.clone(),
+                            enabled: false,
+                        });
                     }
                 }
             }
@@ -194,6 +231,18 @@ pub fn process_grab_events(
 
                 commands.entity(target_entity).remove::<ImprovisedWeapon>();
                 commands.entity(target_entity).remove::<GrabMeleeAttackState>();
+                commands.entity(grabber_entity).remove::<GrabBlockShield>();
+                commands.entity(grabber_entity).remove::<Blocking>();
+
+                if let Ok(weapon) = weapon_query.get(target_entity) {
+                    for ability in &weapon.unlock_abilities {
+                        ability_queue.0.push(SetAbilityEnabledEvent {
+                            player_entity: grabber_entity,
+                            ability_name: ability.clone(),
+                            enabled: false,
+                        });
+                    }
+                }
             }
         }
     }
@@ -409,25 +458,30 @@ pub fn update_outlines(
 pub fn handle_grab_melee(
     input: Res<InputState>,
     mut grabber_query: Query<(Entity, &Grabber, Option<&mut StatsSystem>)>,
-    mut weapon_query: Query<(&GrabMeleeWeapon, &mut GrabMeleeAttackState, Option<&ImprovisedWeapon>, &GlobalTransform)>,
+    mut weapon_query: Query<(&GrabMeleeWeapon, &mut GrabMeleeAttackState, Option<&ImprovisedWeapon>, &GlobalTransform, Option<&ImprovisedWeaponStats>)>,
     spatial_query: SpatialQuery,
 ) {
     for (grabber_entity, grabber, stats_opt) in grabber_query.iter_mut() {
         let Some(held) = grabber.held_object else { continue };
-        let Ok((weapon, mut state, _improv, weapon_transform)) = weapon_query.get_mut(held) else { continue };
+        let Ok((weapon, mut state, _improv, weapon_transform, improvised_stats)) = weapon_query.get_mut(held) else { continue };
         if !input.attack_pressed || state.cooldown_timer > 0.0 || state.recoil_timer > 0.0 {
             continue;
         }
 
         let Some(attack) = weapon.attacks.first() else { continue };
+        let (attack_damage, stamina_cost, attack_range) = if let Some(stats) = improvised_stats {
+            (stats.damage * stats.damage_multiplier, stats.stamina_cost, stats.range)
+        } else {
+            (attack.damage * attack.damage_multiplier, attack.stamina_cost, 1.2)
+        };
 
         // Check stamina
         if let Some(mut stats) = stats_opt {
             if let Some(current) = stats.get_derived_stat(DerivedStat::CurrentStamina).copied() {
-                if current < attack.stamina_cost {
+                if current < stamina_cost {
                     continue;
                 }
-                stats.decrease_derived_stat(DerivedStat::CurrentStamina, attack.stamina_cost);
+                stats.decrease_derived_stat(DerivedStat::CurrentStamina, stamina_cost);
             }
         }
 
@@ -450,6 +504,8 @@ pub fn handle_grab_melee(
         state.attack_timer = attack.duration;
         state.cooldown_timer = attack.duration * 0.75;
         state.hitbox_active = true;
+        state.attack_range = attack_range;
+        state.damage = attack_damage;
         info!("Melee attack with grabbed object: {:?}", held);
     }
 }
@@ -474,6 +530,26 @@ pub fn update_grab_melee_attacks(
         }
         if weapon.attacks.is_empty() {
             state.hitbox_active = false;
+        }
+    }
+}
+
+pub fn update_grab_blocking(
+    input: Res<InputState>,
+    time: Res<Time>,
+    mut query: Query<&mut Blocking, With<GrabBlockShield>>,
+) {
+    for mut blocking in query.iter_mut() {
+        if input.block_pressed {
+            if !blocking.is_blocking {
+                blocking.is_blocking = true;
+                blocking.current_block_time = 0.0;
+            } else {
+                blocking.current_block_time += time.delta_secs();
+            }
+        } else {
+            blocking.is_blocking = false;
+            blocking.current_block_time = 0.0;
         }
     }
 }
@@ -511,12 +587,12 @@ pub fn perform_grab_melee_damage(
             origin,
             transform.rotation(),
             forward.into(),
-            &ShapeCastConfig::default().with_max_distance(1.2),
+            &ShapeCastConfig::default().with_max_distance(state.attack_range),
             &SpatialQueryFilter::default().with_excluded_entities([weapon_entity]),
         ) {
             if targets.get(hit.entity).is_ok() {
                 damage_queue.0.push(DamageEvent {
-                    amount: attack.damage,
+                    amount: state.damage,
                     damage_type,
                     source: owner_entity,
                     target: hit.entity,
@@ -577,5 +653,18 @@ fn map_attack_type(attack_type: &str, damage_type_id: i32) -> DamageType {
         DamageType::Explosion
     } else {
         DamageType::Melee
+    }
+}
+
+pub fn update_grab_melee_hitboxes(
+    mut zones: Query<&mut DamageZone>,
+    weapon_query: Query<(Entity, &GrabMeleeAttackState)>,
+) {
+    for (weapon_entity, state) in weapon_query.iter() {
+        for mut zone in zones.iter_mut() {
+            if zone.owner == weapon_entity {
+                zone.active = state.hitbox_active;
+            }
+        }
     }
 }
