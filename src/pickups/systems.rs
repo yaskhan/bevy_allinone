@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use rand::Rng;
 
 use crate::currency::{AddCurrencyEventQueue, AddCurrencyEvent, CurrencyType};
+use crate::experience::types::{ExperienceObtainedQueue, ExperienceObtainedEvent};
 use crate::inventory::{Inventory, types::{InventoryItem, ItemType}};
 use crate::abilities::OxygenSystem;
 use crate::weapons::{Weapon, WeaponManager};
@@ -13,6 +14,7 @@ use super::melee_shield_pickup::MeleeShieldPickup;
 use super::melee_weapon_pickup::MeleeWeaponPickup;
 use super::oxygen_pickup::OxygenPickup;
 use super::money_pickup::MoneyPickup;
+use super::experience_pickup::ExperiencePickup;
 use super::weapon_pickup::WeaponPickup;
 
 pub fn process_pickup_events(
@@ -23,12 +25,14 @@ pub fn process_pickup_events(
     mut inventory_query: Query<&mut Inventory>,
     mut oxygen_query: Query<&mut OxygenSystem>,
     mut currency_events: ResMut<AddCurrencyEventQueue>,
+    mut experience_queue: ResMut<ExperienceObtainedQueue>,
     weapon_pickup_query: Query<&WeaponPickup>,
     melee_weapon_pickup_query: Query<&MeleeWeaponPickup>,
     melee_weapon_consumable_pickup_query: Query<&MeleeWeaponConsumablePickup>,
     melee_shield_pickup_query: Query<&MeleeShieldPickup>,
     oxygen_pickup_query: Query<&OxygenPickup>,
     money_pickup_query: Query<&MoneyPickup>,
+    experience_pickup_query: Query<&ExperiencePickup>,
 ) {
     for event in events.0.drain(..) {
         let mut picked = false;
@@ -72,6 +76,12 @@ pub fn process_pickup_events(
         if !picked {
             if let Ok(pickup) = money_pickup_query.get(event.target) {
                 picked = handle_money_pickup(event.source, pickup, &mut currency_events);
+            }
+        }
+
+        if !picked {
+            if let Ok(pickup) = experience_pickup_query.get(event.target) {
+                picked = handle_experience_pickup(event.source, pickup, &mut experience_queue);
             }
         }
 
@@ -308,4 +318,27 @@ fn parse_currency_type(name: &str) -> CurrencyType {
         "special" => CurrencyType::Special,
         _ => CurrencyType::Gold,
     }
+}
+
+fn handle_experience_pickup(
+    player: Entity,
+    pickup: &ExperiencePickup,
+    experience_queue: &mut ResMut<ExperienceObtainedQueue>,
+) -> bool {
+    let amount = if pickup.use_experience_random_range {
+        let mut rng = rand::rng();
+        let min = pickup.experience_random_range.x.min(pickup.experience_random_range.y);
+        let max = pickup.experience_random_range.x.max(pickup.experience_random_range.y);
+        rng.random_range(min..=max) as u32
+    } else {
+        pickup.amount
+    };
+
+    experience_queue.0.push(ExperienceObtainedEvent {
+        entity: player,
+        amount,
+        source_position: None,
+    });
+
+    true
 }
