@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction};
+use crate::combat::{DamageEventQueue, DamageEvent, DamageType};
+use crate::stats::stats_system::StatsSystem;
+use crate::stats::types::DerivedStat;
 use super::types::*;
 
 /// System to handle grab/drop input.
@@ -32,10 +35,12 @@ pub fn handle_grab_input(
 
 /// System to process Grab events.
 pub fn process_grab_events(
+    mut commands: Commands,
     mut event_queue: ResMut<GrabEventQueue>,
     mut grabber_query: Query<&mut Grabber>,
     mut powerer_query: Query<&mut GrabPowerer>,
     mut grabbable_query: Query<(&Grabbable, &mut LinearVelocity, Option<&mut Mass>, Option<&mut Collider>)>,
+    weapon_query: Query<&GrabMeleeWeapon>,
     parent_redirect_query: Query<&GrabObjectParent>,
     event_system_query: Query<&GrabObjectEventSystem>,
     physical_settings_query: Query<&GrabPhysicalObjectSettings>,
@@ -66,6 +71,21 @@ pub fn process_grab_events(
                                 }
                                 // Collider toggle usually needs to be deferred or handled via commands
                             }
+                        }
+
+                        commands.entity(target_entity).insert(ImprovisedWeapon);
+                        commands.entity(target_entity).insert(GrabMeleeAttackState::default());
+                        if weapon_query.get(target_entity).is_err() {
+                            commands.entity(target_entity).insert(GrabMeleeWeapon {
+                                attacks: vec![GrabAttackInfo {
+                                    name: "Grab Swing".to_string(),
+                                    damage: 8.0,
+                                    attack_type: "Bash".to_string(),
+                                    stamina_cost: 8.0,
+                                    duration: 0.45,
+                                }],
+                                ..default()
+                            });
                         }
                     }
                 }
@@ -101,6 +121,9 @@ pub fn process_grab_events(
                 if let Ok(_event_sys) = event_system_query.get(target_entity) {
                     info!("Drop event triggered for object: {:?}", target_entity);
                 }
+
+                commands.entity(target_entity).remove::<ImprovisedWeapon>();
+                commands.entity(target_entity).remove::<GrabMeleeAttackState>();
             }
             GrabEvent::Throw(grabber_entity, target_entity, direction, force) => {
                 let mut thrown = false;
@@ -130,6 +153,9 @@ pub fn process_grab_events(
                         }
                     }
                 }
+
+                commands.entity(target_entity).remove::<ImprovisedWeapon>();
+                commands.entity(target_entity).remove::<GrabMeleeAttackState>();
             }
         }
     }
@@ -344,16 +370,138 @@ pub fn update_outlines(
 /// System to handle melee attack input for grabbed objects.
 pub fn handle_grab_melee(
     input: Res<InputState>,
-    grabber_query: Query<&Grabber>,
-    weapon_query: Query<&GrabMeleeWeapon>,
+    mut grabber_query: Query<(Entity, &Grabber, Option<&mut StatsSystem>)>,
+    mut weapon_query: Query<(&GrabMeleeWeapon, &mut GrabMeleeAttackState, Option<&ImprovisedWeapon>, &GlobalTransform)>,
+    spatial_query: SpatialQuery,
 ) {
-    for grabber in grabber_query.iter() {
+    for (grabber_entity, grabber, stats_opt) in grabber_query.iter_mut() {
         let Some(held) = grabber.held_object else { continue };
-        if let Ok(_weapon) = weapon_query.get(held) {
-            if input.attack_pressed {
-                info!("Melee attack with grabbed object: {:?}", held);
-                // Trigger animation and damage systems
+        let Ok((weapon, mut state, _improv, weapon_transform)) = weapon_query.get_mut(held) else { continue };
+        if !input.attack_pressed || state.cooldown_timer > 0.0 || state.recoil_timer > 0.0 {
+            continue;
+        }
+
+        let Some(attack) = weapon.attacks.first() else { continue };
+
+        // Check stamina
+        if let Some(mut stats) = stats_opt {
+            if let Some(current) = stats.get_derived_stat(DerivedStat::CurrentStamina).copied() {
+                if current < attack.stamina_cost {
+                    continue;
+                }
+                stats.decrease_derived_stat(DerivedStat::CurrentStamina, attack.stamina_cost);
             }
         }
+
+        // Recoil if wall hit
+        let ray_origin = weapon_transform.translation();
+        let ray_dir = weapon_transform.forward();
+        let filter = SpatialQueryFilter::from_excluded_entities([grabber_entity, held]);
+        if let Some(_hit) = spatial_query.cast_ray(
+            ray_origin,
+            Dir3::new(*ray_dir).unwrap_or(Dir3::NEG_Z),
+            0.6,
+            true,
+            &filter,
+        ) {
+            state.recoil_timer = 0.25;
+            state.hitbox_active = false;
+            continue;
+        }
+
+        state.attack_timer = attack.duration;
+        state.cooldown_timer = attack.duration * 0.75;
+        state.hitbox_active = true;
+        info!("Melee attack with grabbed object: {:?}", held);
+    }
+}
+
+pub fn update_grab_melee_attacks(
+    time: Res<Time>,
+    mut query: Query<(&GrabMeleeWeapon, &mut GrabMeleeAttackState)>,
+) {
+    let dt = time.delta_secs();
+    for (weapon, mut state) in query.iter_mut() {
+        if state.attack_timer > 0.0 {
+            state.attack_timer = (state.attack_timer - dt).max(0.0);
+            if state.attack_timer <= 0.0 {
+                state.hitbox_active = false;
+            }
+        }
+        if state.cooldown_timer > 0.0 {
+            state.cooldown_timer = (state.cooldown_timer - dt).max(0.0);
+        }
+        if state.recoil_timer > 0.0 {
+            state.recoil_timer = (state.recoil_timer - dt).max(0.0);
+        }
+        if weapon.attacks.is_empty() {
+            state.hitbox_active = false;
+        }
+    }
+}
+
+pub fn perform_grab_melee_damage(
+    mut damage_queue: ResMut<DamageEventQueue>,
+    spatial_query: SpatialQuery,
+    grabber_query: Query<(Entity, &Grabber)>,
+    weapon_query: Query<(Entity, &GlobalTransform, &GrabMeleeWeapon, &GrabMeleeAttackState)>,
+    targets: Query<Entity, Or<(With<crate::combat::Health>, With<crate::combat::DamageReceiver>)>>,
+) {
+    for (weapon_entity, transform, weapon, state) in weapon_query.iter() {
+        if !state.hitbox_active {
+            continue;
+        }
+
+        let Some(attack) = weapon.attacks.first() else { continue };
+        let damage_type = map_attack_type(&attack.attack_type, weapon.damage_type_id);
+
+        // Find owner to exclude
+        let mut owner_entity = None;
+        for (grabber_entity, grabber) in grabber_query.iter() {
+            if grabber.held_object == Some(weapon_entity) {
+                owner_entity = Some(grabber_entity);
+                break;
+            }
+        }
+
+        let origin = transform.translation();
+        let forward = transform.forward();
+        let shape = Collider::sphere(0.6);
+
+        if let Some(hit) = spatial_query.cast_shape(
+            &shape,
+            origin,
+            transform.rotation(),
+            forward.into(),
+            &ShapeCastConfig::default().with_max_distance(1.2),
+            &SpatialQueryFilter::default().with_excluded_entities([weapon_entity]),
+        ) {
+            if targets.get(hit.entity).is_ok() {
+                damage_queue.0.push(DamageEvent {
+                    amount: attack.damage,
+                    damage_type,
+                    source: owner_entity,
+                    target: hit.entity,
+                    position: Some(origin + *forward * hit.distance),
+                    direction: Some(*forward),
+                    ignore_shield: false,
+                });
+            }
+        }
+    }
+}
+
+fn map_attack_type(attack_type: &str, damage_type_id: i32) -> DamageType {
+    let lower = attack_type.to_lowercase();
+    if lower.contains("fire") {
+        DamageType::Fire
+    } else if lower.contains("poison") {
+        DamageType::Poison
+    } else if lower.contains("electric") || lower.contains("shock") {
+        DamageType::Electric
+    } else if lower.contains("explosion") || damage_type_id == 3 {
+        DamageType::Explosion
+    } else {
+        DamageType::Melee
     }
 }

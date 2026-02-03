@@ -249,6 +249,31 @@ impl Default for GrabMeleeWeapon {
     }
 }
 
+/// Marker for objects used as improvised melee weapons when grabbed.
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct ImprovisedWeapon;
+
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct GrabMeleeAttackState {
+    pub attack_timer: f32,
+    pub cooldown_timer: f32,
+    pub hitbox_active: bool,
+    pub recoil_timer: f32,
+}
+
+impl Default for GrabMeleeAttackState {
+    fn default() -> Self {
+        Self {
+            attack_timer: 0.0,
+            cooldown_timer: 0.0,
+            hitbox_active: false,
+            recoil_timer: 0.0,
+        }
+    }
+}
+
 /// Extended physics settings for grab objects.
 #[derive(Component, Debug, Clone, Reflect)]
 #[reflect(Component)]
