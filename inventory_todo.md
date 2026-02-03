@@ -1,0 +1,59 @@
+# Inventory System To-Do List
+
+Based on the comparison with the legacy C# `inventoryManager.cs`, here is the breakdown of implemented vs. missing features in the Rust/Bevy implementation.
+
+## Features Status
+
+### Basic Management
+- [x] **Add Items** (`Inventory::add_item`)
+- [x] **Remove/Drop Items** (`inventory_drop_system.rs`)
+- [x] **Examine Items** (`inventory_examine_system.rs`)
+    - *Note:* Basic 3D preview and rotation implemented. Camera dynamic zoom (input-driven) is missing (currently config-based).
+- [x] **Combine Items** (`inventory_combine_system.rs`)
+- [x] **Stacking Logic** (Merge on add / Split stack)
+- [x] **Weight System** (Calculated in `Inventory` component)
+
+### Equipment & Interaction
+- [x] **Quick Access Slots** (`InventoryQuickAccessSlotsSystem`)
+- [x] **Equipping Weapons** (`melee_weapon_equipment_system.rs`, `weapon_equip_system.rs`)
+- [/] **Usage** (`use_inventory_object.rs`)
+    - *Status:* Basic event flow exists. Needs specific effect implementations matching all C# item types.
+
+### User Interface (UI) - **Priorities**
+The UI layer has the most gaps compared to the Unity implementation.
+
+- [ ] **Visual Polish & Layout**
+    - [ ] Implement Scroll View for inventory slots (currently fixed grid).
+    - [ ] Create detailed item icons.
+    - [ ] Add background panels and blur effects (if desired).
+- [ ] **Interactive Features**
+    - [ ] **Drag & Drop**: Implement drag-and-drop reordering of items.
+    - [ ] **Selection**: persistent selection state to show details in a side panel.
+- [ ] **Info Panels / Tooltips**
+    - [ ] Show `Description` and `Object Info` in a dedicated UI panel when an item is selected.
+    - [ ] "Full Inventory" / "Too Heavy" on-screen feedback messages.
+- [ ] **Zoom Controls**
+    - [x] Implement input handling to zoom in/out with scroll wheel during item examination.
+
+## Missing Backend Features
+- [ ] **Save/Load System Integration**: Ensure `Inventory` component is serialized/deserialized correctly with the save system.
+
+### Advanced C# Features to Port
+- [ ] **Dual Weapon Slot**: Logic for handling dual-wielding (left/right weapon assignment) in `InventoryQuickAccessSlotsSystem`.
+- [ ] **Drop Customization**:
+    - [ ] `dropSingleObjectOnInfiniteAmount`: Config to drop 1 vs reset stack when dropping infinite items.
+    - [ ] `setTotalAmountWhenDropObject`: Option to drop entire stack as one physical object vs multiple individual objects.
+- [ ] **Inventory Slot Options Panel**:
+    - [ ] Context menu on slot click (Use, Equip, Drop, Combine, Examine, Discard). C# has `inventoryOptionsOnSlotPanel`.
+- [ ] **Auto-Equip Rules**:
+    - [ ] `equipWeaponsWhenPicked`: Auto-equip weapon on pickup.
+    - [ ] `equipPickedWeaponOnlyItNotPreviousWeaponEquipped`: Logic to avoid replacing currently active weapon.
+    - [ ] `swapping`: Logic to swap currently held weapon with picked one if full.
+- [ ] **Ammo Integration**:
+    - [x] `checkIfWeaponUseAmmoFromInventory`: Logic to sync weapon ammo clip with inventory reserves. (Implemented in `ammo_sync_system.rs`, gated by `use_ammo_from_inventory`).
+- [ ] **Audio Feedback**:
+    - [ ] `useAudioSounds`: Play specific clips on open/close, pickup, drop, use, combine.
+- [ ] **Examine Mode Polish**:
+    - [ ] `placeObjectInCameraPosition` / `Rotation`: Smooth coroutine-like transitions for preview object appearing/rotating.
+    - [ ] `takeObjectInExaminePanelButton`: Logic to pick up an object directly from the examine screen (e.g. reading a note found in world).
+

@@ -19,6 +19,9 @@ pub struct InventoryExamineSettings {
     pub rotate_speed: f32,
     pub preview_distance: f32,
     pub camera_fov: f32,
+    pub zoom_speed: f32,
+    pub min_distance: f32,
+    pub max_distance: f32,
 }
 
 impl Default for InventoryExamineSettings {
@@ -28,6 +31,9 @@ impl Default for InventoryExamineSettings {
             rotate_speed: 0.6,
             preview_distance: 2.0,
             camera_fov: 45.0_f32.to_radians(),
+            zoom_speed: 0.4,
+            min_distance: 0.6,
+            max_distance: 6.0,
         }
     }
 }
@@ -96,5 +102,27 @@ pub fn rotate_examine_preview(
     let angle = settings.rotate_speed * time.delta_secs();
     for mut transform in query.iter_mut() {
         transform.rotate_y(angle);
+    }
+}
+
+pub fn update_examine_zoom(
+    mut mouse_wheel: EventReader<bevy::input::mouse::MouseWheel>,
+    mut settings: ResMut<InventoryExamineSettings>,
+    mut camera_query: Query<&mut Transform, With<InventoryExamineCamera>>,
+) {
+    let mut scroll_delta = 0.0;
+    for event in mouse_wheel.read() {
+        scroll_delta += event.y;
+    }
+
+    if scroll_delta.abs() <= f32::EPSILON {
+        return;
+    }
+
+    settings.preview_distance = (settings.preview_distance - scroll_delta * settings.zoom_speed)
+        .clamp(settings.min_distance, settings.max_distance);
+
+    if let Ok(mut transform) = camera_query.get_single_mut() {
+        transform.translation.z = settings.preview_distance;
     }
 }

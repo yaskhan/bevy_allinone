@@ -204,6 +204,7 @@ impl Plugin for InventoryPlugin {
             hotbar_ui_sync_system::sync_hotbar_ui,
             inventory_examine_system::handle_examine_item,
             inventory_examine_system::rotate_examine_preview,
+            inventory_examine_system::update_examine_zoom,
             weapon_equip_system::handle_request_equip_weapon,
         ))
         .add_systems(Startup, (
