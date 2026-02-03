@@ -77,6 +77,16 @@ pub struct ObjectiveTrigger {
     pub map_icon_type: crate::map::types::MapIconType,
 }
 
+/// UI root for the quest tracker HUD.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct QuestTrackerRoot;
+
+/// UI text element for quest tracker.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct QuestTrackerText;
+
 pub struct QuestPlugin;
 
 impl Plugin for QuestPlugin {
@@ -85,12 +95,16 @@ impl Plugin for QuestPlugin {
             .register_type::<QuestLog>()
             .register_type::<QuestStation>()
             .register_type::<ObjectiveTrigger>()
+            .register_type::<QuestTrackerRoot>()
+            .register_type::<QuestTrackerText>()
+            .add_systems(Startup, setup_quest_tracker_ui)
             .add_systems(Update, (
                 handle_quest_events,
                 update_quest_status,
                 handle_quest_interactions,
                 handle_objective_trigger_interactions,
                 handle_objective_trigger_enter,
+                update_quest_tracker_ui,
             ));
     }
 }
@@ -258,4 +272,59 @@ fn mark_objective_completed(log: &mut QuestLog, quest_id: u32, objective_index: 
     }
 
     false
+}
+
+fn setup_quest_tracker_ui(mut commands: Commands) {
+    let text_style = TextFont {
+        font_size: 20.0,
+        ..default()
+    };
+
+    commands
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(20.0),
+                left: Val::Px(20.0),
+                padding: UiRect::all(Val::Px(8.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.05, 0.05, 0.05, 0.7)),
+            QuestTrackerRoot,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text::new("Objectives"),
+                text_style,
+                TextColor(Color::WHITE),
+                TextLayout::default(),
+                QuestTrackerText,
+            ));
+        });
+}
+
+fn update_quest_tracker_ui(
+    quest_logs: Query<&QuestLog, With<crate::character::Player>>,
+    mut text_query: Query<&mut Text, With<QuestTrackerText>>,
+) {
+    let Some(log) = quest_logs.iter().next() else { return };
+    let Ok(mut text) = text_query.get_single_mut() else { return };
+
+    if log.active_quests.is_empty() {
+        text.0 = "Objectives\nNo active quests".to_string();
+        return;
+    }
+
+    let mut lines = Vec::new();
+    lines.push("Objectives".to_string());
+
+    for quest in &log.active_quests {
+        lines.push(format!("• {}", quest.name));
+        for objective in &quest.objectives {
+            let status = if objective.status == QuestStatus::Completed { "[x]" } else { "[ ]" };
+            lines.push(format!("  {} {}", status, objective.name));
+        }
+    }
+
+    text.0 = lines.join("\n");
 }
