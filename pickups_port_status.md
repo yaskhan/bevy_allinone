@@ -35,7 +35,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `oxygenPickup.cs`
 - [x] `pickupType.cs`
 - [x] `powerPickup.cs`
-- [ ] `shieldPickup.cs`
+- [x] `shieldPickup.cs`
 - [ ] `skillPointPickup.cs`
 - [ ] `staminaPickup.cs`
 - [ ] `vehicleFuelPickup.cs`

@@ -30,6 +30,7 @@ pub mod melee_weapon_pickup;
 pub mod money_pickup;
 pub mod oxygen_pickup;
 pub mod power_pickup;
+pub mod shield_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -61,6 +62,7 @@ pub use melee_weapon_pickup::MeleeWeaponPickup;
 pub use money_pickup::MoneyPickup;
 pub use oxygen_pickup::OxygenPickup;
 pub use power_pickup::PowerPickup;
+pub use shield_pickup::ShieldPickup;
 
 pub struct PickupsPlugin;
 
