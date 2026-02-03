@@ -13,10 +13,12 @@ impl Plugin for GameManagerPlugin {
             .register_type::<types::PrefabRegistry>()
             .register_type::<types::PlayerManager>()
             .register_type::<types::CursorManagerSettings>()
+            .register_type::<types::CursorState>()
             .init_resource::<types::GameManagerSettings>()
             .init_resource::<types::PrefabRegistry>()
             .init_resource::<types::PlayerManager>()
             .init_resource::<types::CursorManagerSettings>()
+            .init_resource::<types::CursorState>()
             .init_resource::<types::SwitchPlayerQueue>()
             .add_systems(Update, (
                 systems::update_play_time,

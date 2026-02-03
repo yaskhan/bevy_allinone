@@ -53,6 +53,24 @@ impl Default for CursorManagerSettings {
     }
 }
 
+#[derive(Resource, Debug, Reflect, Clone)]
+#[reflect(Resource)]
+pub struct CursorState {
+    pub visible_override: Option<bool>,
+    pub grab_mode_override: Option<CursorGrabMode>,
+    pub icon_override: Option<CursorIcon>,
+}
+
+impl Default for CursorState {
+    fn default() -> Self {
+        Self {
+            visible_override: None,
+            grab_mode_override: None,
+            icon_override: None,
+        }
+    }
+}
+
 #[derive(Resource, Default, Debug, Reflect)]
 #[reflect(Resource)]
 pub struct PrefabRegistry {

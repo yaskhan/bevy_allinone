@@ -3,7 +3,7 @@ use super::types::*;
 use crate::character::Player;
 use crate::ai::{AiController, AiBehaviorState};
 use crate::camera::types::CameraController;
-use crate::game_manager::types::GameState;
+use crate::game_manager::types::{GameState, CursorState};
 use crate::input::InputState;
 use crate::inventory::InventoryUIRoot;
 
@@ -108,6 +108,7 @@ pub fn handle_cursor_state(
     settings: Res<CursorManagerSettings>,
     state: Res<State<GameState>>,
     inventory_query: Query<&Visibility, With<InventoryUIRoot>>,
+    cursor_state: Res<CursorState>,
 ) {
     let inventory_open = inventory_query
         .iter()
@@ -118,16 +119,34 @@ pub fn handle_cursor_state(
         || (inventory_open && settings.show_cursor_when_inventory_open);
 
     for mut window in windows.iter_mut() {
-        if show_cursor {
-            window.cursor.visible = true;
-            window.cursor.grab_mode = CursorGrabMode::None;
+        let mut visible = if show_cursor {
+            true
         } else if settings.lock_in_game {
-            window.cursor.visible = false;
-            window.cursor.grab_mode = CursorGrabMode::Locked;
+            false
         } else {
-            window.cursor.visible = true;
-            window.cursor.grab_mode = CursorGrabMode::None;
+            true
+        };
+
+        let mut grab_mode = if show_cursor {
+            CursorGrabMode::None
+        } else if settings.lock_in_game {
+            CursorGrabMode::Locked
+        } else {
+            CursorGrabMode::None
+        };
+
+        if let Some(override_visible) = cursor_state.visible_override {
+            visible = override_visible;
         }
+        if let Some(override_grab) = cursor_state.grab_mode_override {
+            grab_mode = override_grab;
+        }
+        if let Some(icon) = cursor_state.icon_override {
+            window.cursor.icon = icon;
+        }
+
+        window.cursor.visible = visible;
+        window.cursor.grab_mode = grab_mode;
     }
 }
 
