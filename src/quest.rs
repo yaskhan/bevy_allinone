@@ -55,6 +55,26 @@ pub struct QuestEventQueue(pub Vec<QuestEvent>);
 #[reflect(Component)]
 pub struct QuestStation {
     pub quest: Quest,
+    pub show_on_map: bool,
+    pub map_description: String,
+    pub map_icon_type: crate::map::types::MapIconType,
+}
+
+/// Component for entities that complete objectives when triggered.
+#[derive(Component, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct ObjectiveTrigger {
+    pub quest_id: u32,
+    pub objective_index: usize,
+    pub activate_on_interaction: bool,
+    pub activate_on_enter: bool,
+    pub enter_radius: f32,
+    pub single_use: bool,
+    pub is_active: bool,
+    pub show_debug_log: bool,
+    pub show_on_map: bool,
+    pub map_description: String,
+    pub map_icon_type: crate::map::types::MapIconType,
 }
 
 pub struct QuestPlugin;
@@ -64,10 +84,13 @@ impl Plugin for QuestPlugin {
         app.init_resource::<QuestEventQueue>()
             .register_type::<QuestLog>()
             .register_type::<QuestStation>()
+            .register_type::<ObjectiveTrigger>()
             .add_systems(Update, (
                 handle_quest_events,
                 update_quest_status,
                 handle_quest_interactions,
+                handle_objective_trigger_interactions,
+                handle_objective_trigger_enter,
             ));
     }
 }
@@ -102,6 +125,66 @@ fn handle_quest_interactions(
             } else {
                 // If source doesn't have QuestLog, give them one
                 commands.entity(event.source).insert(QuestLog::default());
+            }
+        }
+    }
+}
+
+/// System to handle interactions with ObjectiveTriggers.
+fn handle_objective_trigger_interactions(
+    mut interaction_events: ResMut<crate::interaction::InteractionEventQueue>,
+    trigger_query: Query<&ObjectiveTrigger>,
+    mut quest_logs: Query<&mut QuestLog>,
+    mut quest_events: ResMut<QuestEventQueue>,
+) {
+    for event in interaction_events.0.iter() {
+        let Ok(trigger) = trigger_query.get(event.target) else { continue };
+        if !trigger.is_active || !trigger.activate_on_interaction {
+            continue;
+        }
+
+        let Ok(mut log) = quest_logs.get_mut(event.source) else { continue };
+        if mark_objective_completed(&mut log, trigger.quest_id, trigger.objective_index) {
+            quest_events.0.push(QuestEvent::ObjectiveCompleted(trigger.quest_id, trigger.objective_index));
+        }
+    }
+}
+
+/// System to handle proximity-based ObjectiveTriggers.
+fn handle_objective_trigger_enter(
+    player_query: Query<(Entity, &GlobalTransform), With<crate::character::Player>>,
+    mut trigger_query: Query<(Entity, &GlobalTransform, &mut ObjectiveTrigger)>,
+    mut quest_logs: Query<&mut QuestLog>,
+    mut quest_events: ResMut<QuestEventQueue>,
+) {
+    let Some((player_entity, player_transform)) = player_query.iter().next() else {
+        return;
+    };
+
+    let player_pos = player_transform.translation();
+
+    for (entity, transform, mut trigger) in trigger_query.iter_mut() {
+        if !trigger.is_active || !trigger.activate_on_enter {
+            continue;
+        }
+
+        let distance = player_pos.distance(transform.translation());
+        if distance > trigger.enter_radius {
+            continue;
+        }
+
+        let Ok(mut log) = quest_logs.get_mut(player_entity) else { continue };
+        if mark_objective_completed(&mut log, trigger.quest_id, trigger.objective_index) {
+            quest_events.0.push(QuestEvent::ObjectiveCompleted(trigger.quest_id, trigger.objective_index));
+            if trigger.single_use {
+                trigger.is_active = false;
+            }
+            if trigger.show_debug_log {
+                info!(
+                    "Objective trigger activated (quest {}, objective {})",
+                    trigger.quest_id,
+                    trigger.objective_index
+                );
             }
         }
     }
@@ -160,4 +243,19 @@ fn update_quest_status(
             log.completed_quests.push(quest);
         }
     }
+}
+
+fn mark_objective_completed(log: &mut QuestLog, quest_id: u32, objective_index: usize) -> bool {
+    for quest in log.active_quests.iter_mut() {
+        if quest.id == quest_id {
+            if let Some(objective) = quest.objectives.get_mut(objective_index) {
+                if objective.status != QuestStatus::Completed {
+                    objective.status = QuestStatus::Completed;
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
 }
