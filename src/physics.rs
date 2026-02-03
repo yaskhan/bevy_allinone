@@ -6,11 +6,31 @@ pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(FixedUpdate, (
+        app
+            .init_resource::<GravitySettings>()
+            .add_systems(FixedUpdate, (
             apply_custom_gravity,
             detect_ground,
             handle_slopes,
+            align_gravity_to_surface,
         ).chain());
+    }
+}
+
+/// Global gravity settings to enable custom gravity alignment.
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
+pub struct GravitySettings {
+    pub global_gravity: Vec3,
+    pub use_custom_gravity: bool,
+}
+
+impl Default for GravitySettings {
+    fn default() -> Self {
+        Self {
+            global_gravity: Vec3::new(0.0, -9.81, 0.0),
+            use_custom_gravity: false,
+        }
     }
 }
 
@@ -32,6 +52,29 @@ impl Default for CustomGravity {
         Self {
             gravity: None,
             multiplier: 1.0,
+        }
+    }
+}
+
+/// Aligns an entity's up vector with the detected surface normal.
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct GravityAlignment {
+    pub enabled: bool,
+    pub sticky_mode: bool,
+    pub align_speed: f32,
+    pub local_up: Vec3,
+    pub is_grounded_on_wall: bool,
+}
+
+impl Default for GravityAlignment {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            sticky_mode: true,
+            align_speed: 8.0,
+            local_up: Vec3::Y,
+            is_grounded_on_wall: false,
         }
     }
 }
@@ -153,5 +196,47 @@ fn handle_slopes(
         } else {
             state.slope_slide_active = false;
         }
+    }
+}
+
+/// Align gravity direction and orientation to the detected surface.
+fn align_gravity_to_surface(
+    time: Res<Time>,
+    settings: Res<GravitySettings>,
+    mut query: Query<(
+        &mut Transform,
+        &mut CustomGravity,
+        &GroundDetection,
+        &mut GravityAlignment,
+    )>,
+) {
+    if !settings.use_custom_gravity {
+        for (_transform, mut gravity, _ground, mut alignment) in query.iter_mut() {
+            gravity.gravity = None;
+            alignment.is_grounded_on_wall = false;
+        }
+        return;
+    }
+
+    let gravity_strength = settings.global_gravity.length().max(0.01);
+    let dt = time.delta_secs();
+
+    for (mut transform, mut gravity, ground, mut alignment) in query.iter_mut() {
+        if !alignment.enabled {
+            continue;
+        }
+
+        if ground.is_grounded && alignment.sticky_mode {
+            let target_up = ground.ground_normal.normalize_or_zero();
+            alignment.is_grounded_on_wall = target_up != Vec3::Y;
+            alignment.local_up = target_up;
+
+            let current_up = transform.up();
+            let rot = Quat::from_rotation_arc(current_up, target_up);
+            let blend = (alignment.align_speed * dt).clamp(0.0, 1.0);
+            transform.rotation = transform.rotation.slerp(rot * transform.rotation, blend);
+        }
+
+        gravity.gravity = Some(-alignment.local_up * gravity_strength);
     }
 }
