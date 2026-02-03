@@ -20,6 +20,7 @@ pub mod inventory_quick_access_slot_element;
 pub mod inventory_quick_access_slots_system;
 pub mod quick_access_use_system;
 pub mod hotbar_sync_system;
+pub mod hotbar_ui_sync_system;
 pub mod inventory_list_manager_data;
 pub mod carry_physically_object_from_inventory;
 pub mod consumable_inventory_prefab_creation_system;
@@ -85,6 +86,7 @@ pub use inventory_quick_access_slot_element::InventoryQuickAccessSlotElement;
 pub use inventory_quick_access_slots_system::InventoryQuickAccessSlotsSystem;
 pub use quick_access_use_system::handle_quick_access_use;
 pub use hotbar_sync_system::sync_hotbar_with_inventory;
+pub use hotbar_ui_sync_system::sync_hotbar_ui;
 pub use inventory_list_manager_data::InventoryListManagerData;
 pub use carry_physically_object_from_inventory::{CarryPhysicallyObjectFromInventory, CarriedInventoryItem};
 pub use consumable_inventory_prefab_creation_system::ConsumableInventoryPrefabCreationSystem;
@@ -127,7 +129,7 @@ pub use use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent
 pub use weapon_attachment_inventory_prefab_creation_system::WeaponAttachmentInventoryPrefabCreationSystem;
 pub use weapon_inventory_prefab_creation_system::WeaponInventoryPrefabCreationSystem;
 pub use item_effects::{ItemEffectRegistry, ItemEffect};
-pub use weapon_equip_system::RequestEquipWeaponEvent;
+pub use weapon_equip_system::{RequestEquipWeaponEvent, WeaponSpawnRegistry};
 
 /// Plugin for the Inventory System
 pub struct InventoryPlugin;
@@ -139,6 +141,7 @@ impl Plugin for InventoryPlugin {
         .init_resource::<InventoryItemPreviewRegistry>()
         .init_resource::<InventoryExamineSettings>()
         .init_resource::<CombineRecipeRegistry>()
+        .init_resource::<WeaponSpawnRegistry>()
         .add_event::<CurrencyTransactionEvent>()
         .add_event::<GetInventoryObjectEvent>()
         .add_event::<GetObjectFromInventoryEvent>()
@@ -195,6 +198,7 @@ impl Plugin for InventoryPlugin {
             inventory_quick_access_slots_system::update_inventory_quick_access_slots_system,
             quick_access_use_system::handle_quick_access_use,
             hotbar_sync_system::sync_hotbar_with_inventory,
+            hotbar_ui_sync_system::sync_hotbar_ui,
             inventory_examine_system::handle_examine_item,
             inventory_examine_system::rotate_examine_preview,
             weapon_equip_system::handle_request_equip_weapon,
