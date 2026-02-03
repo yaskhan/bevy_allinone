@@ -8,7 +8,7 @@ Based on the comparison with the legacy C# `inventoryManager.cs`, here is the br
 - [x] **Add Items** (`Inventory::add_item`)
 - [x] **Remove/Drop Items** (`inventory_drop_system.rs`)
 - [x] **Examine Items** (`inventory_examine_system.rs`)
-    - *Note:* Basic 3D preview and rotation implemented. Camera dynamic zoom (input-driven) is missing (currently config-based).
+    - *Note:* 3D preview, rotation, and input-driven zoom are implemented.
 - [x] **Combine Items** (`inventory_combine_system.rs`)
 - [x] **Stacking Logic** (Merge on add / Split stack)
 - [x] **Weight System** (Calculated in `Inventory` component)
@@ -36,7 +36,7 @@ The UI layer has the most gaps compared to the Unity implementation.
     - [x] Implement input handling to zoom in/out with scroll wheel during item examination.
 
 ## Missing Backend Features
-- [ ] **Save/Load System Integration**: Ensure `Inventory` component is serialized/deserialized correctly with the save system.
+- [x] **Save/Load System Integration**: Ensure `Inventory` component is serialized/deserialized correctly with the save system.
 
 ### Advanced C# Features to Port
 - [ ] **Dual Weapon Slot**: Logic for handling dual-wielding (left/right weapon assignment) in `InventoryQuickAccessSlotsSystem`.
