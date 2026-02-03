@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use super::PickUpIconInfo;
 
 /// Pickup icon marker.
 ///
@@ -6,13 +7,13 @@ use bevy::prelude::*;
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct PickUpIcon {
-    pub icon_path: String,
+    pub pickup_element_info: PickUpIconInfo,
 }
 
 impl Default for PickUpIcon {
     fn default() -> Self {
         Self {
-            icon_path: String::new(),
+            pickup_element_info: PickUpIconInfo::default(),
         }
     }
 }
