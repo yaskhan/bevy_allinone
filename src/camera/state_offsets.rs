@@ -80,7 +80,7 @@ pub fn update_camera_state_offsets(
 
 fn resolve_state_name(movement: &CharacterMovementState, state: &CameraState) -> &'static str {
     if movement.is_in_vehicle {
-        return "Vehicle";
+        return "Driving";
     }
     if movement.wall_running_active {
         return "WallRun";
@@ -108,8 +108,21 @@ fn find_state_info<'a>(
     state_name: &str,
 ) -> Option<&'a CameraStateInfo> {
     let target = state_name.to_lowercase();
-    controller
+    let direct = controller
         .states
         .iter()
-        .find(|state| state.name.to_lowercase() == target)
+        .find(|state| state.name.to_lowercase() == target);
+
+    if direct.is_some() {
+        return direct;
+    }
+
+    if target == "driving" {
+        return controller
+            .states
+            .iter()
+            .find(|state| state.name.to_lowercase() == "vehicle");
+    }
+
+    None
 }
