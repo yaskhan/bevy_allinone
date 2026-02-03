@@ -48,7 +48,7 @@ pub use pickup_manager::PickUpManager;
 pub use pickup_object::PickUpObject;
 pub use pickups_screen_info::PickUpsScreenInfo;
 pub use player_pickup_icon_manager::PlayerPickupIconManager;
-pub use pickup_type::PickupType;
+pub use pickup_type::{PickupKind, PickupTypeSettings};
 pub use ammo_pickup::AmmoPickup;
 pub use energy_pickup::EnergyPickup;
 pub use experience_multiplier_pickup::ExperienceMultiplierPickup;
