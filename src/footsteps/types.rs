@@ -57,6 +57,7 @@ pub struct FootstepEvent {
     pub entity: Entity,
     pub surface_id: String,
     pub position: Vec3,
+    pub normal: Vec3,
     pub volume: f32,
     pub noise_radius: f32,
     pub is_left: bool,
@@ -64,3 +65,31 @@ pub struct FootstepEvent {
 
 #[derive(Resource, Default)]
 pub struct FootstepEventQueue(pub Vec<FootstepEvent>);
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct FootstepDecal {
+    pub lifetime: f32,
+}
+
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
+pub struct FootstepDecalSettings {
+    pub enabled: bool,
+    pub size: Vec2,
+    pub lifetime: f32,
+    pub offset: f32,
+    pub color: Color,
+}
+
+impl Default for FootstepDecalSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            size: Vec2::new(0.2, 0.35),
+            lifetime: 8.0,
+            offset: 0.01,
+            color: Color::srgb(0.12, 0.12, 0.12),
+        }
+    }
+}

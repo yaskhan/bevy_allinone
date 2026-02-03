@@ -55,9 +55,11 @@ pub fn update_footsteps(
 
             let mut surface_id = "Default".to_string(); // Fallback
             let mut hit_pos = transform.translation();
+            let mut hit_normal = Vec3::Y;
 
             if let Some(hit) = spatial_query.cast_ray(ray_pos, ray_dir, 1.0, true, &filter) {
                 hit_pos = ray_pos + ray_dir.as_vec3() * hit.distance;
+                hit_normal = hit.normal;
                 if let Ok(surface) = surface_query.get(hit.entity) {
                     surface_id = surface.surface_id.clone();
                 }
@@ -74,6 +76,7 @@ pub fn update_footsteps(
                 entity,
                 surface_id,
                 position: hit_pos,
+                normal: hit_normal,
                 volume,
                 noise_radius: footstep.noise_radius,
                 is_left: footstep.last_foot_left,
@@ -86,6 +89,9 @@ pub fn handle_footstep_audio(
     mut event_queue: ResMut<FootstepEventQueue>,
     assets: Res<FootstepAssets>,
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    settings: Res<FootstepDecalSettings>,
 ) {
     for event in event_queue.0.drain(..) {
         let sound_pool = assets.surface_sounds.get(&event.surface_id)
@@ -107,7 +113,52 @@ pub fn handle_footstep_audio(
             }
         }
         
+        if settings.enabled {
+            let rotation = Quat::from_rotation_arc(Vec3::Z, event.normal.normalize_or_zero());
+            let position = event.position + event.normal.normalize_or_zero() * settings.offset;
+            let size = if event.is_left {
+                settings.size
+            } else {
+                Vec2::new(settings.size.x, settings.size.y)
+            };
+
+            let mesh = meshes.add(Mesh::from(Rectangle::from_size(size)));
+            let material = materials.add(StandardMaterial {
+                base_color: settings.color,
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            });
+
+            commands.spawn((
+                PbrBundle {
+                    mesh,
+                    material,
+                    transform: Transform::from_translation(position).with_rotation(rotation),
+                    ..default()
+                },
+                FootstepDecal {
+                    lifetime: settings.lifetime,
+                },
+                Name::new("FootstepDecal"),
+            ));
+        }
+
         // Note: Noise signal for AI would be sent here as well
         // apply_damage::send_noise_signal(event.noise_radius, event.position, ...)
+    }
+}
+
+pub fn update_footstep_decals(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut FootstepDecal)>,
+) {
+    let dt = time.delta_secs();
+    for (entity, mut decal) in query.iter_mut() {
+        decal.lifetime -= dt;
+        if decal.lifetime <= 0.0 {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 }
