@@ -227,10 +227,7 @@ pub fn handle_slice_results(
             continue;
         }
 
-        let mesh = meshes.add(Mesh::from(shape::Icosphere {
-            radius: settings.marker_radius,
-            subdivisions: 2,
-        }));
+        let mesh = meshes.add(Mesh::from(Sphere::new(settings.marker_radius)));
         let material = materials.add(StandardMaterial {
             base_color: settings.marker_color,
             unlit: true,
@@ -238,12 +235,11 @@ pub fn handle_slice_results(
         });
 
         commands.spawn((
-            PbrBundle {
-                mesh,
-                material,
-                transform: Transform::from_translation(result.position),
-                ..default()
-            },
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            Transform::from_translation(result.position),
+            GlobalTransform::default(),
+            Visibility::default(),
             SliceFxMarker {
                 lifetime: settings.marker_lifetime,
             },
@@ -255,7 +251,7 @@ pub fn handle_slice_results(
         };
 
         if sliceable.spawn_simple_chunks {
-            let chunk_mesh = meshes.add(Mesh::from(shape::Box::new(
+            let chunk_mesh = meshes.add(Mesh::from(Cuboid::new(
                 sliceable.chunk_size.x,
                 sliceable.chunk_size.y,
                 sliceable.chunk_size.z,
@@ -276,12 +272,11 @@ pub fn handle_slice_results(
                 let impulse = normal * sliceable.chunk_impulse * dir;
 
                 commands.spawn((
-                    PbrBundle {
-                        mesh: chunk_mesh.clone(),
-                        material: material_handle.clone(),
-                        transform: Transform::from_translation(position),
-                        ..default()
-                    },
+                    Mesh3d(chunk_mesh.clone()),
+                    MeshMaterial3d(material_handle.clone()),
+                    Transform::from_translation(position),
+                    GlobalTransform::default(),
+                    Visibility::default(),
                     RigidBody::Dynamic,
                     Collider::cuboid(
                         sliceable.chunk_size.x * 0.5,

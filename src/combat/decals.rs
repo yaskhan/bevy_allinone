@@ -156,12 +156,11 @@ pub fn spawn_decals_from_damage(
 
         let decal_entity = commands
             .spawn((
-                PbrBundle {
-                    mesh,
-                    material,
-                    transform: Transform::from_translation(world_pos).with_rotation(rotation),
-                    ..default()
-                },
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
+                Transform::from_translation(world_pos).with_rotation(rotation),
+                GlobalTransform::default(),
+                Visibility::default(),
                 Decal {
                     lifetime: info.lifetime,
                 },

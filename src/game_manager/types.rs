@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::{CursorGrabMode, CursorIcon};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

@@ -131,12 +131,11 @@ pub fn handle_footstep_audio(
             });
 
             commands.spawn((
-                PbrBundle {
-                    mesh,
-                    material,
-                    transform: Transform::from_translation(position).with_rotation(rotation),
-                    ..default()
-                },
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
+                Transform::from_translation(position).with_rotation(rotation),
+                GlobalTransform::default(),
+                Visibility::default(),
                 FootstepDecal {
                     lifetime: settings.lifetime,
                 },

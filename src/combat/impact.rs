@@ -128,10 +128,7 @@ pub fn spawn_surface_fx_from_damage(
             .cloned()
             .unwrap_or_default();
 
-        let mesh = meshes.add(Mesh::from(shape::Icosphere {
-            radius: settings.marker_radius,
-            subdivisions: 2,
-        }));
+        let mesh = meshes.add(Mesh::from(Sphere::new(settings.marker_radius)));
         let material = materials.add(StandardMaterial {
             base_color: fx.color,
             unlit: true,
@@ -139,12 +136,11 @@ pub fn spawn_surface_fx_from_damage(
         });
 
         commands.spawn((
-            PbrBundle {
-                mesh,
-                material,
-                transform: Transform::from_translation(transform.translation()),
-                ..default()
-            },
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            Transform::from_translation(transform.translation()),
+            GlobalTransform::default(),
+            Visibility::default(),
             SurfaceFxMarker {
                 lifetime: settings.marker_lifetime,
             },

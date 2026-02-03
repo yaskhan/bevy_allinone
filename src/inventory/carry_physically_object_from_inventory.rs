@@ -5,7 +5,7 @@ use super::types::InventoryItem;
 
 /// Spawns a physical item from inventory and attaches it to the carrier.
 ///
-/// GKC reference: `carryPhysicallyObjectFromInventory.cs`
+///
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct CarryPhysicallyObjectFromInventory {
@@ -50,10 +50,10 @@ pub fn update_carry_physically_object_from_inventory(
             let Some(item) = system.item.clone() else { continue };
             commands.entity(carrier).with_children(|parent| {
                 parent.spawn((
-                    SpatialBundle {
-                        transform: Transform::from_translation(system.attach_offset),
-                        ..default()
-                    },
+                    (
+                        Transform::from_translation(system.attach_offset),
+                        Visibility::default(),
+                    ),
                     PhysicalItem { item },
                     CarriedInventoryItem,
                     Name::new("Carried Inventory Item"),

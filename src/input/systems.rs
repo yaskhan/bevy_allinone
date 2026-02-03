@@ -6,7 +6,7 @@ use crate::game_manager::types::GameState;
 use crate::inventory::InventoryUIRoot;
 use crate::character::{CharacterMovementState, Player};
 use bevy::input::axis::Axis;
-use bevy::input::gamepad::{Gamepad, GamepadAxis, GamepadAxisType, GamepadButton, GamepadButtonType};
+use bevy::input::gamepad::{Gamepad, GamepadAxis, GamepadButton};
 
 /// Update input state from devices based on current InputMap
 pub fn update_input_state(
@@ -337,44 +337,44 @@ fn build_gamepad_input_state(
 ) -> InputState {
     let mut state = InputState::default();
 
-    let axis = |axis_type: GamepadAxisType| -> f32 {
+    let axis = |axis_type: GamepadAxis| -> f32 {
         axes.get(GamepadAxis::new(gamepad, axis_type)).unwrap_or(0.0)
     };
 
-    let button = |button_type: GamepadButtonType| -> bool {
+    let button = |button_type: GamepadButton| -> bool {
         buttons.pressed(GamepadButton::new(gamepad, button_type))
     };
 
-    let button_just = |button_type: GamepadButtonType| -> bool {
+    let button_just = |button_type: GamepadButton| -> bool {
         buttons.just_pressed(GamepadButton::new(gamepad, button_type))
     };
 
-    let button_released = |button_type: GamepadButtonType| -> bool {
+    let button_released = |button_type: GamepadButton| -> bool {
         buttons.just_released(GamepadButton::new(gamepad, button_type))
     };
 
-    let movement = Vec2::new(axis(GamepadAxisType::LeftStickX), axis(GamepadAxisType::LeftStickY));
+    let movement = Vec2::new(axis(GamepadAxis::LeftStickX), axis(GamepadAxis::LeftStickY));
     state.movement = movement.normalize_or_zero();
-    state.look = Vec2::new(axis(GamepadAxisType::RightStickX), axis(GamepadAxisType::RightStickY));
+    state.look = Vec2::new(axis(GamepadAxis::RightStickX), axis(GamepadAxis::RightStickY));
 
-    state.jump_pressed = button_just(GamepadButtonType::South);
-    state.interact_pressed = button_just(GamepadButtonType::West);
-    state.crouch_pressed = button(GamepadButtonType::East);
-    state.sprint_pressed = button(GamepadButtonType::LeftStick);
-    state.aim_pressed = button(GamepadButtonType::LeftTrigger2);
-    state.attack_pressed = button_just(GamepadButtonType::RightShoulder);
-    state.fire_pressed = button(GamepadButtonType::RightTrigger2);
-    state.fire_just_pressed = button_just(GamepadButtonType::RightTrigger2);
-    state.reload_pressed = button_just(GamepadButtonType::North);
-    state.block_pressed = button(GamepadButtonType::LeftShoulder);
+    state.jump_pressed = button_just(GamepadButton::South);
+    state.interact_pressed = button_just(GamepadButton::West);
+    state.crouch_pressed = button(GamepadButton::East);
+    state.sprint_pressed = button(GamepadButton::LeftStick);
+    state.aim_pressed = button(GamepadButton::LeftTrigger2);
+    state.attack_pressed = button_just(GamepadButton::RightShoulder);
+    state.fire_pressed = button(GamepadButton::RightTrigger2);
+    state.fire_just_pressed = button_just(GamepadButton::RightTrigger2);
+    state.reload_pressed = button_just(GamepadButton::North);
+    state.block_pressed = button(GamepadButton::LeftShoulder);
 
-    state.switch_camera_mode_pressed = button_just(GamepadButtonType::Select);
-    state.toggle_inventory_pressed = button_just(GamepadButtonType::Start);
-    state.reset_camera_pressed = button_just(GamepadButtonType::DPadUp);
+    state.switch_camera_mode_pressed = button_just(GamepadButton::Select);
+    state.toggle_inventory_pressed = button_just(GamepadButton::Start);
+    state.reset_camera_pressed = button_just(GamepadButton::DPadUp);
 
-    state.ability_use_pressed = button_just(GamepadButtonType::RightShoulder);
-    state.ability_use_released = button_released(GamepadButtonType::RightShoulder);
-    state.ability_use_held = button(GamepadButtonType::RightShoulder);
+    state.ability_use_pressed = button_just(GamepadButton::RightShoulder);
+    state.ability_use_released = button_released(GamepadButton::RightShoulder);
+    state.ability_use_held = button(GamepadButton::RightShoulder);
 
     // TODO: map weapon/ability selection to D-Pad or face buttons based on user config.
 

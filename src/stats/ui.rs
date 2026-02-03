@@ -182,11 +182,11 @@ pub fn update_stats_hud(
         stats.get_derived_stat(DerivedStat::CurrentHealth),
         stats.get_derived_stat(DerivedStat::MaxHealth)
     ) {
-        if let Ok(mut bar) = health_bar_query.get_single_mut() {
+        if let Some(mut bar) = health_bar_query.iter_mut().next() {
             let percent = (current / max).clamp(0.0, 1.0) * 100.0;
             bar.width = Val::Percent(percent);
         }
-        if let Ok(mut text) = health_text_query.get_single_mut() {
+        if let Some(mut text) = health_text_query.iter_mut().next() {
             text.0 = format!("{:.0}/{:.0}", current, max);
         }
     }
@@ -196,11 +196,11 @@ pub fn update_stats_hud(
         stats.get_derived_stat(DerivedStat::CurrentStamina),
         stats.get_derived_stat(DerivedStat::MaxStamina)
     ) {
-        if let Ok(mut bar) = stamina_bar_query.get_single_mut() {
+        if let Some(mut bar) = stamina_bar_query.iter_mut().next() {
              let percent = (current / max).clamp(0.0, 1.0) * 100.0;
              bar.width = Val::Percent(percent);
         }
-        if let Ok(mut text) = stamina_text_query.get_single_mut() {
+        if let Some(mut text) = stamina_text_query.iter_mut().next() {
             text.0 = format!("{:.0}/{:.0}", current, max);
         }
     }
@@ -210,11 +210,11 @@ pub fn update_stats_hud(
         stats.get_derived_stat(DerivedStat::CurrentMana),
         stats.get_derived_stat(DerivedStat::MaxMana)
     ) {
-        if let Ok(mut bar) = mana_bar_query.get_single_mut() {
+        if let Some(mut bar) = mana_bar_query.iter_mut().next() {
              let percent = (current / max).clamp(0.0, 1.0) * 100.0;
              bar.width = Val::Percent(percent);
         }
-        if let Ok(mut text) = mana_text_query.get_single_mut() {
+        if let Some(mut text) = mana_text_query.iter_mut().next() {
              text.0 = format!("{:.0}/{:.0}", current, max);
         }
     }

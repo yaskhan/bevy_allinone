@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ecs::event::EventReader;
 use avian3d::prelude::*;
 use crate::input::{InputState, InputAction};
 use crate::combat::{DamageEventQueue, DamageEvent, DamageType, DamageZone, Blocking, AreaEffect};
@@ -41,7 +42,7 @@ pub fn process_grab_events(
     mut event_queue: ResMut<GrabEventQueue>,
     mut grabber_query: Query<&mut Grabber>,
     mut powerer_query: Query<&mut GrabPowerer>,
-    mut grabbable_query: Query<(&Grabbable, &mut LinearVelocity, Option<&mut Mass>, Option<&mut Collider>, Option<&mut GravityScale>, Option<&mut Damping>)>,
+    mut grabbable_query: Query<(&Grabbable, &mut LinearVelocity, Option<&mut Mass>, Option<&mut Collider>, Option<&mut GravityScale>, (Option<&mut LinearDamping>, Option<&mut AngularDamping>))>,
     weapon_query: Query<&GrabMeleeWeapon>,
     parent_redirect_query: Query<&GrabObjectParent>,
     event_system_query: Query<&GrabObjectEventSystem>,
@@ -66,7 +67,7 @@ pub fn process_grab_events(
 
                         // Apply physical settings
                         if let Ok(settings) = physical_settings_query.get(target_entity) {
-                            if let Ok((_g, _v, mut mass, mut _collider, mut gravity, mut damping)) = grabbable_query.get_mut(target_entity) {
+                            if let Ok((_g, _v, mut mass, mut _collider, mut gravity, (mut lin_damping, mut ang_damping))) = grabbable_query.get_mut(target_entity) {
                                 if settings.set_mass {
                                     if let Some(ref mut m) = mass {
                                         m.0 = settings.mass_value;
@@ -79,13 +80,13 @@ pub fn process_grab_events(
                                     }
                                 }
                                 if let Some(drag) = settings.drag_override {
-                                    if let Some(ref mut damping) = damping {
-                                        damping.linear = drag;
+                                    if let Some(ref mut damping) = lin_damping {
+                                        damping.0 = drag;
                                     }
                                 }
                                 if let Some(angular_drag) = settings.angular_drag_override {
-                                    if let Some(ref mut damping) = damping {
-                                        damping.angular = angular_drag;
+                                    if let Some(ref mut damping) = ang_damping {
+                                        damping.0 = angular_drag;
                                     }
                                 }
                             }
@@ -754,22 +755,18 @@ pub fn apply_throw_damage_on_collision(
             ));
 
             if power.spawn_fx {
-                let mesh = meshes.add(Mesh::from(shape::Icosphere {
-                    radius: power.fx_radius,
-                    subdivisions: 2,
-                }));
+                let mesh = meshes.add(Mesh::from(Sphere::new(power.fx_radius)));
                 let material = materials.add(StandardMaterial {
                     base_color: power.fx_color,
                     unlit: true,
                     ..default()
                 });
                 commands.spawn((
-                    PbrBundle {
-                        mesh,
-                        material,
-                        transform: Transform::from_translation(position),
-                        ..default()
-                    },
+                    Mesh3d(mesh),
+                    MeshMaterial3d(material),
+                    Transform::from_translation(position),
+                    GlobalTransform::default(),
+                    Visibility::default(),
                     GrabPowerFx {
                         lifetime: power.fx_lifetime,
                     },
@@ -814,22 +811,18 @@ pub fn apply_throw_damage_on_collision(
             ));
 
             if power.spawn_fx {
-                let mesh = meshes.add(Mesh::from(shape::Icosphere {
-                    radius: power.fx_radius,
-                    subdivisions: 2,
-                }));
+                let mesh = meshes.add(Mesh::from(Sphere::new(power.fx_radius)));
                 let material = materials.add(StandardMaterial {
                     base_color: power.fx_color,
                     unlit: true,
                     ..default()
                 });
                 commands.spawn((
-                    PbrBundle {
-                        mesh,
-                        material,
-                        transform: Transform::from_translation(position),
-                        ..default()
-                    },
+                    Mesh3d(mesh),
+                    MeshMaterial3d(material),
+                    Transform::from_translation(position),
+                    GlobalTransform::default(),
+                    Visibility::default(),
                     GrabPowerFx {
                         lifetime: power.fx_lifetime,
                     },

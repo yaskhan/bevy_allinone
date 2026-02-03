@@ -246,10 +246,7 @@ pub fn perform_melee_ranged_attacks(
         }
 
         if settings.spawn_follow_object {
-            let mesh = meshes.add(Mesh::from(shape::Icosphere {
-                radius: settings.follow_marker_radius,
-                subdivisions: 2,
-            }));
+            let mesh = meshes.add(Mesh::from(Sphere::new(settings.follow_marker_radius)));
             let material = materials.add(StandardMaterial {
                 base_color: settings.follow_marker_color,
                 unlit: true,
@@ -257,12 +254,11 @@ pub fn perform_melee_ranged_attacks(
             });
 
             commands.spawn((
-                PbrBundle {
-                    mesh,
-                    material,
-                    transform: Transform::from_translation(spawn_pos + settings.follow_offset),
-                    ..default()
-                },
+                Mesh3d(mesh),
+                MeshMaterial3d(material),
+                Transform::from_translation(spawn_pos + settings.follow_offset),
+                GlobalTransform::default(),
+                Visibility::default(),
                 FollowThrownWeapon {
                     target: projectile_entity,
                     lifetime: settings.follow_lifetime,

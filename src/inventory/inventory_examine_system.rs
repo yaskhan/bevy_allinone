@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy::render::view::RenderLayers;
+use bevy::render::view::visibility::RenderLayers;
 use std::collections::HashMap;
 
 #[derive(Event, Debug, Clone)]
