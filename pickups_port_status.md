@@ -40,4 +40,4 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `staminaPickup.cs`
 - [x] `vehicleFuelPickup.cs`
 - [x] `weaponAttachmentPickup.cs`
-- [ ] `weaponPickup.cs`
+- [x] `weaponPickup.cs`
