@@ -4,6 +4,32 @@ use crate::abilities::LaserVisionSliceEventQueue;
 use crate::combat::result_queue::DamageResultQueue;
 use crate::combat::types::DamageType;
 
+#[derive(Resource, Debug, Reflect)]
+#[reflect(Resource)]
+pub struct SliceFxSettings {
+    pub spawn_debug_marker: bool,
+    pub marker_lifetime: f32,
+    pub marker_radius: f32,
+    pub marker_color: Color,
+}
+
+impl Default for SliceFxSettings {
+    fn default() -> Self {
+        Self {
+            spawn_debug_marker: true,
+            marker_lifetime: 1.5,
+            marker_radius: 0.12,
+            marker_color: Color::srgb(1.0, 0.2, 0.2),
+        }
+    }
+}
+
+#[derive(Component, Debug, Reflect)]
+#[reflect(Component)]
+pub struct SliceFxMarker {
+    pub lifetime: f32,
+}
+
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct Sliceable {
@@ -161,6 +187,63 @@ pub fn apply_slice_events(
             });
 
             // TODO: Integrate actual mesh slicing once a Bevy-compatible slicer is chosen.
+        }
+    }
+}
+
+pub fn handle_slice_results(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut results: ResMut<SliceResultQueue>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    settings: Res<SliceFxSettings>,
+) {
+    if !settings.spawn_debug_marker {
+        results.0.clear();
+        return;
+    }
+
+    for result in results.0.drain(..) {
+        if !result.sliced {
+            continue;
+        }
+
+        let mesh = meshes.add(Mesh::from(shape::Icosphere {
+            radius: settings.marker_radius,
+            subdivisions: 2,
+        }));
+        let material = materials.add(StandardMaterial {
+            base_color: settings.marker_color,
+            unlit: true,
+            ..default()
+        });
+
+        commands.spawn((
+            PbrBundle {
+                mesh,
+                material,
+                transform: Transform::from_translation(result.position),
+                ..default()
+            },
+            SliceFxMarker {
+                lifetime: settings.marker_lifetime,
+            },
+            Name::new("SliceFxMarker"),
+        ));
+    }
+}
+
+pub fn update_slice_fx_markers(
+    time: Res<Time>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut SliceFxMarker)>,
+) {
+    let dt = time.delta_secs();
+    for (entity, mut marker) in query.iter_mut() {
+        marker.lifetime -= dt;
+        if marker.lifetime <= 0.0 {
+            commands.entity(entity).despawn();
         }
     }
 }

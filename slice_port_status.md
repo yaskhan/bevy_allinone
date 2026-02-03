@@ -21,3 +21,4 @@
 - [ ] Cut surface caps + UVs
 - [ ] Physics bodies on sliced parts
 - [x] DamageResult -> SliceEvent (configurable filter)
+- [x] Slice FX hooks (debug marker)

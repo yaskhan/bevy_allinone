@@ -30,6 +30,7 @@ impl Plugin for CombatPlugin {
             .init_resource::<DamageResultQueue>()
             .init_resource::<SliceEventQueue>()
             .init_resource::<SliceResultQueue>()
+            .init_resource::<SliceFxSettings>()
             .init_resource::<DamageFeedbackSettings>()
             .init_resource::<AttackDatabase>()
             .register_type::<Health>()
@@ -52,6 +53,7 @@ impl Plugin for CombatPlugin {
             .register_type::<DamageIndicator>()
             .register_type::<Sliceable>()
             .register_type::<SliceOnDamage>()
+            .register_type::<SliceFxMarker>()
             .add_systems(Startup, damage_ui::setup_damage_ui)
             .add_systems(Update, (
                 systems::clear_damage_results, // Clear results at start of frame/update
@@ -59,6 +61,8 @@ impl Plugin for CombatPlugin {
                 slice::queue_slice_events_from_laser,
                 slice::queue_slice_events_from_damage_results,
                 slice::apply_slice_events,
+                slice::handle_slice_results,
+                slice::update_slice_fx_markers,
                 systems::handle_air_attack_to_land,
                 systems::update_melee_attack_state,
                 systems::update_melee_hitboxes,
