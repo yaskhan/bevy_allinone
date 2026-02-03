@@ -47,6 +47,7 @@ impl Plugin for AiPlugin {
             .register_type::<HidePosition>()
             .register_type::<FactionRelation>()
             .register_type::<Turret>()
+            .register_type::<TurretCombat>()
             .register_type::<AiCombatSettings>()
             .register_type::<PatrolPath>()
             .register_type::<AIPerceptionSettings>()
@@ -65,6 +66,7 @@ impl Plugin for AiPlugin {
                 update_ai_movement,
                 update_patrol,
                 update_turrets,
+                update_turret_firing,
                 update_ai_combat,
                 update_ai_hiding,
                 draw_ai_vision_cones,
