@@ -8,6 +8,7 @@ use bevy::prelude::*;
 pub struct MeleeShieldPickup {
     pub shield_id: String,
     pub shield_name: String,
+    pub store_picked_shields_on_inventory: bool,
 }
 
 impl Default for MeleeShieldPickup {
@@ -15,6 +16,7 @@ impl Default for MeleeShieldPickup {
         Self {
             shield_id: String::new(),
             shield_name: String::new(),
+            store_picked_shields_on_inventory: false,
         }
     }
 }
