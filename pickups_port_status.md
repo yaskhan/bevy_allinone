@@ -16,7 +16,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `playerPickupIconManager.cs`
 
 ## Pickups Behaviour
-- [ ] `ammoPickup.cs`
+- [x] `ammoPickup.cs`
 - [ ] `energyPickup.cs`
 - [ ] `experienceMultiplierPickup.cs`
 - [ ] `experiencePickup.cs`

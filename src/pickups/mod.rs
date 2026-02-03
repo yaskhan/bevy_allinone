@@ -12,6 +12,7 @@ pub mod pickup_object;
 pub mod pickups_screen_info;
 pub mod player_pickup_icon_manager;
 pub mod pickup_type;
+pub mod ammo_pickup;
 
 pub use chest_system::ChestSystem;
 pub use crate_system::CrateSystem;
@@ -25,6 +26,7 @@ pub use pickup_object::PickUpObject;
 pub use pickups_screen_info::PickUpsScreenInfo;
 pub use player_pickup_icon_manager::PlayerPickupIconManager;
 pub use pickup_type::PickupType;
+pub use ammo_pickup::AmmoPickup;
 
 pub struct PickupsPlugin;
 
