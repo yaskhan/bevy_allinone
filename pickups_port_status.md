@@ -7,7 +7,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `crate.cs`
 - [x] `dropPickUpSystem.cs`
 - [x] `explosiveBarrel.cs`
-- [ ] `pickUpElementInfo.cs`
+- [x] `pickUpElementInfo.cs`
 - [ ] `pickUpIcon.cs`
 - [ ] `pickUpIconInfo.cs`
 - [ ] `pickUpManager.cs`
