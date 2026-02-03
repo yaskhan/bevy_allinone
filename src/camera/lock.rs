@@ -62,12 +62,18 @@ pub fn update_target_marking(
 pub fn update_target_lock(
     time: Res<Time>,
     input: Res<InputState>,
-    mut camera_query: Query<(&CameraController, &mut CameraState, &mut CameraTargetState, Option<&LookAtPoint>)>,
-    target_gt_query: Query<&GlobalTransform>,
+    mut camera_query: Query<(
+        &CameraController,
+        &mut CameraState,
+        &mut CameraTargetState,
+        Option<&LookAtPoint>,
+        &GlobalTransform,
+    )>,
+    target_query: Query<(Entity, &GlobalTransform, &Health)>,
 ) {
     let dt = time.delta_secs();
 
-    for (controller, mut state, mut target_state, look_at_point) in camera_query.iter_mut() {
+    for (controller, mut state, mut target_state, look_at_point, camera_gt) in camera_query.iter_mut() {
         // Look At Point Logic (High Priority)
         if let Some(look_at) = look_at_point {
             if look_at.active {
@@ -80,6 +86,11 @@ pub fn update_target_lock(
                 state.pitch = state.pitch + (target_pitch - state.pitch) * alpha;
                 continue; // Skip target lock if LookAtPoint is active
             }
+        }
+
+        if target_state.switch_cooldown_timer > 0.0 {
+            target_state.switch_cooldown_timer =
+                (target_state.switch_cooldown_timer - dt).max(0.0);
         }
 
         // Toggle Lock
@@ -95,7 +106,24 @@ pub fn update_target_lock(
 
         // Maintain Lock
         if let Some(locked_ent) = target_state.locked_target {
-            if let Ok(target_gt) = target_gt_query.get(locked_ent) {
+            if target_state.is_locking
+                && input.look.length() >= controller.target_lock.flick_switch_threshold
+                && target_state.switch_cooldown_timer <= 0.0
+            {
+                if let Some(new_target) = find_flick_target(
+                    locked_ent,
+                    camera_gt,
+                    state.current_pivot,
+                    input.look,
+                    &controller.target_lock,
+                    &target_query,
+                ) {
+                    target_state.locked_target = Some(new_target);
+                    target_state.switch_cooldown_timer = controller.target_lock.flick_switch_cooldown;
+                }
+            }
+
+            if let Ok((_, target_gt, _)) = target_query.get(locked_ent) {
                 let target_pos = target_gt.translation();
                 let pivot_pos = state.current_pivot;
                 
@@ -118,4 +146,55 @@ pub fn update_target_lock(
             }
         }
     }
+}
+
+fn find_flick_target(
+    locked_target: Entity,
+    camera_gt: &GlobalTransform,
+    pivot_pos: Vec3,
+    input_look: Vec2,
+    settings: &TargetLockSettings,
+    target_query: &Query<(Entity, &GlobalTransform, &Health)>,
+) -> Option<Entity> {
+    let flick_dir = input_look.normalize_or_zero();
+    if flick_dir.length_squared() <= f32::EPSILON {
+        return None;
+    }
+
+    let camera_right = camera_gt.right();
+    let camera_up = camera_gt.up();
+
+    let mut best_target = None;
+    let mut best_dot = settings.flick_switch_min_dot;
+    let mut best_dist = f32::MAX;
+
+    for (entity, target_gt, health) in target_query.iter() {
+        if entity == locked_target || health.current <= 0.0 {
+            continue;
+        }
+
+        let target_pos = target_gt.translation();
+        let to_target = target_pos - pivot_pos;
+        let dist = to_target.length();
+        if dist > settings.max_distance {
+            continue;
+        }
+
+        let to_dir = to_target / dist;
+        let screen_vec = Vec2::new(camera_right.dot(to_dir), camera_up.dot(to_dir));
+        let screen_dir = screen_vec.normalize_or_zero();
+        let dot = screen_dir.dot(flick_dir);
+
+        if dot < best_dot {
+            continue;
+        }
+
+        if dot > best_dot || dist < best_dist {
+            best_dot = dot;
+            best_dist = dist;
+            best_target = Some(entity);
+        }
+    }
+
+    best_target
 }

@@ -129,6 +129,9 @@ pub struct TargetLockSettings {
     pub fov_threshold: f32, // Angle threshold to maintain lock
     pub scan_radius: f32,   // Radius of the "sticky" area at screen center
     pub lock_smooth_speed: f32,
+    pub flick_switch_threshold: f32,
+    pub flick_switch_cooldown: f32,
+    pub flick_switch_min_dot: f32,
 }
 
 impl Default for TargetLockSettings {
@@ -139,6 +142,9 @@ impl Default for TargetLockSettings {
             fov_threshold: 45.0,
             scan_radius: 2.0,
             lock_smooth_speed: 10.0,
+            flick_switch_threshold: 0.6,
+            flick_switch_cooldown: 0.25,
+            flick_switch_min_dot: 0.4,
         }
     }
 }
@@ -315,6 +321,7 @@ pub struct CameraTargetState {
     pub marked_target: Option<Entity>,
     pub locked_target: Option<Entity>,
     pub is_locking: bool,
+    pub switch_cooldown_timer: f32,
 }
 
 /// Camera state tracking
