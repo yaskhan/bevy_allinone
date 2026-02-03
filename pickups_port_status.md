@@ -26,7 +26,7 @@ Source: `gkit/Scripts/PickUps/`
 - [x] `inventoryExtraSpacePickup.cs`
 - [x] `inventoryPickup.cs`
 - [x] `inventoryWeightBagPickup.cs`
-- [ ] `jetpackFuelPickup.cs`
+- [x] `jetpackFuelPickup.cs`
 - [ ] `mapPickup.cs`
 - [ ] `meleeShieldPickup.cs`
 - [ ] `meleeWeaponConsumablePickup.cs`
