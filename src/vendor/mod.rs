@@ -2,6 +2,7 @@ pub mod types;
 pub mod components;
 pub mod events;
 pub mod systems;
+pub mod stock_template;
 
 use bevy::prelude::*;
 use types::*;
@@ -11,6 +12,7 @@ use systems::*;
 
 pub use types::{ShopItem, VendorCategory, PurchaseFailureReason, SaleFailureReason};
 pub use components::{Vendor, VendorInventory};
+pub use stock_template::VendorStockTemplate;
 pub use events::{
     PurchaseItemEvent, PurchaseItemEventQueue,
     SellItemEvent, SellItemEventQueue,
