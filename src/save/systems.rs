@@ -169,7 +169,8 @@ pub fn handle_load_requests(
                     value: 0.0,
                     category: String::new(),
                     min_level: 0,
-                    info: String::new(),
+                    info: "Loaded item".to_string(),
+                    is_infinite: false,
                 }));
             }
             inventory.recalculate_weight();

@@ -4,6 +4,7 @@ use super::types::InventoryItem;
 use super::use_inventory_object::UseInventoryObjectEvent;
 use super::inventory_drop_system::DropInventoryItemEvent;
 use super::weapon_equip_system::RequestEquipWeaponEvent;
+use super::inventory_examine_system::ExamineInventoryItemEvent;
 use crate::interaction::InteractionDetector;
 
 #[derive(Component)]
@@ -124,6 +125,7 @@ pub fn handle_context_button_interaction(
     mut use_events: EventWriter<UseInventoryObjectEvent>,
     mut drop_events: EventWriter<DropInventoryItemEvent>,
     mut equip_events: EventWriter<RequestEquipWeaponEvent>,
+    mut examine_events: EventWriter<ExamineInventoryItemEvent>,
     inventory_query: Query<Entity, (With<Inventory>, With<InteractionDetector>)>,
     menu_query: Query<Entity, With<InventoryContextMenu>>,
 ) {
@@ -156,7 +158,11 @@ pub fn handle_context_button_interaction(
                      });
                 }
                 "Examine" => {
-                    info!("Examining {}", button.item_id);
+                    examine_events.send(ExamineInventoryItemEvent {
+                        owner,
+                        item_id: button.item_id.clone(),
+                        source_entity: None,
+                    });
                 }
                 _ => {}
             }

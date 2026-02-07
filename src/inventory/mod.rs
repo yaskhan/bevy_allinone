@@ -220,6 +220,8 @@ impl Plugin for InventoryPlugin {
             inventory_examine_system::handle_examine_item,
             inventory_examine_system::rotate_examine_preview,
             inventory_examine_system::update_examine_zoom,
+            inventory_examine_system::update_examine_animation,
+            inventory_examine_system::handle_examine_ui_interaction,
             weapon_equip_system::handle_request_equip_weapon,
             inventory_context_menu::handle_slot_right_click,
             inventory_context_menu::handle_context_button_interaction,

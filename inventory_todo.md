@@ -53,7 +53,7 @@ The UI layer has the most gaps compared to the Unity implementation.
     - [x] `checkIfWeaponUseAmmoFromInventory`: Logic to sync weapon ammo clip with inventory reserves. (Implemented in `ammo_sync_system.rs`, gated by `use_ammo_from_inventory`).
 - [ ] **Audio Feedback**:
     - [ ] `useAudioSounds`: Play specific clips on open/close, pickup, drop, use, combine.
-- [ ] **Examine Mode Polish**:
-    - [ ] `placeObjectInCameraPosition` / `Rotation`: Smooth coroutine-like transitions for preview object appearing/rotating.
-    - [ ] `takeObjectInExaminePanelButton`: Logic to pick up an object directly from the examine screen (e.g. reading a note found in world).
+- [x] **Examine Mode Polish**:
+    - [x] `placeObjectInCameraPosition` / `Rotation`: Smooth coroutine-like transitions for preview object appearing/rotating.
+    - [x] `takeObjectInExaminePanelButton`: Logic to pick up an object directly from the examine screen (e.g. reading a note found in world).
 
