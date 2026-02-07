@@ -11,6 +11,7 @@ pub struct UseInventoryObjectEvent {
     pub owner: Entity,
     pub item_id: String,
     pub quantity: i32,
+    pub hand_preference: Option<crate::inventory::types::HandType>,
 }
 
 /// Event emitted after an item is used.
@@ -18,6 +19,7 @@ pub struct UseInventoryObjectEvent {
 pub struct InventoryObjectUsedEvent {
     pub owner: Entity,
     pub item: InventoryItem,
+    pub hand_preference: Option<crate::inventory::types::HandType>,
 }
 
 pub fn update_use_inventory_object(
@@ -53,6 +55,7 @@ pub fn update_use_inventory_object(
             used_events.send(InventoryObjectUsedEvent {
                 owner: event.owner,
                 item,
+                hand_preference: event.hand_preference,
             });
         }
     }

@@ -39,12 +39,12 @@ The UI layer has the most gaps compared to the Unity implementation.
 - [x] **Save/Load System Integration**: Ensure `Inventory` component is serialized/deserialized correctly with the save system.
 
 ### Advanced C# Features to Port
-- [ ] **Dual Weapon Slot**: Logic for handling dual-wielding (left/right weapon assignment) in `InventoryQuickAccessSlotsSystem`.
-- [ ] **Drop Customization**:
-    - [ ] `dropSingleObjectOnInfiniteAmount`: Config to drop 1 vs reset stack when dropping infinite items.
-    - [ ] `setTotalAmountWhenDropObject`: Option to drop entire stack as one physical object vs multiple individual objects.
-- [ ] **Inventory Slot Options Panel**:
-    - [ ] Context menu on slot click (Use, Equip, Drop, Combine, Examine, Discard). C# has `inventoryOptionsOnSlotPanel`.
+- [x] **Dual Weapon Slot**: Logic for handling dual-wielding (left/right weapon assignment) in `InventoryQuickAccessSlotsSystem`.
+- [x] **Drop Customization**:
+    - [x] `dropSingleObjectOnInfiniteAmount`: Config to drop 1 vs reset stack when dropping infinite items.
+    - [x] `setTotalAmountWhenDropObject`: Option to drop entire stack as one physical object vs multiple individual objects.
+- [x] **Inventory Slot Options Panel**:
+    - [x] Context menu on slot click (Use, Equip, Drop, Combine, Examine, Discard). C# has `inventoryOptionsOnSlotPanel`.
 - [ ] **Auto-Equip Rules**:
     - [x] `equipWeaponsWhenPicked`: Auto-equip weapon on pickup.
     - [x] `equipPickedWeaponOnlyItNotPreviousWeaponEquipped`: Logic to avoid replacing currently active weapon.

@@ -1,13 +1,21 @@
 use bevy::prelude::*;
 
+use super::types::HandType;
+
 /// Manages quick access slots for inventory.
 ///
 ///
+#[derive(Debug, Clone, Reflect)]
+pub struct QuickAccessSlot {
+    pub item_id: String,
+    pub hand_preference: HandType,
+}
+
 #[derive(Component, Debug, Reflect)]
 #[reflect(Component)]
 pub struct InventoryQuickAccessSlotsSystem {
     pub owner: Entity,
-    pub slots: Vec<Option<String>>,
+    pub slots: Vec<Option<QuickAccessSlot>>,
 }
 
 impl Default for InventoryQuickAccessSlotsSystem {
@@ -15,6 +23,7 @@ impl Default for InventoryQuickAccessSlotsSystem {
         Self {
             owner: Entity::PLACEHOLDER,
             slots: vec![None; 10],
+
         }
     }
 }

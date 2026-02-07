@@ -11,12 +11,13 @@ pub fn handle_quick_access_use(
 ) {
     let Some(index) = input.select_weapon else { return };
     for system in query.iter() {
-        if let Some(item_id) = system.slots.get(index).and_then(|slot| slot.clone()) {
+        if let Some(slot) = system.slots.get(index).and_then(|slot| slot.as_ref()) {
             if system.owner != Entity::PLACEHOLDER {
                 use_events.send(UseInventoryObjectEvent {
                     owner: system.owner,
-                    item_id,
+                    item_id: slot.item_id.clone(),
                     quantity: 1,
+                    hand_preference: Some(slot.hand_preference),
                 });
             }
         }

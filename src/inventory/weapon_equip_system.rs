@@ -7,6 +7,7 @@ use crate::weapons::{WeaponBundle, WeaponManager, Weapon, WeaponType};
 pub struct RequestEquipWeaponEvent {
     pub owner: Entity,
     pub weapon_id: String,
+    pub hand_preference: Option<crate::inventory::types::HandType>,
 }
 
 #[derive(Debug, Clone)]

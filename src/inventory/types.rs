@@ -1,3 +1,10 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Default)]
+pub enum HandType {
+    #[default]
+    MainHand,
+    OffHand,
+}
+
 use bevy::prelude::*;
 
 /// Inventory item
@@ -18,6 +25,8 @@ pub struct InventoryItem {
     pub min_level: u32,
     /// Additional information about the item
     pub info: String,
+    /// If true, the item is not consumed when used/dropped (quantity remains same or resets)
+    pub is_infinite: bool,
 }
 
 /// Item type enumeration

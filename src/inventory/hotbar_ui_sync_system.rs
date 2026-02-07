@@ -13,7 +13,8 @@ pub fn sync_hotbar_ui(
         let item_id = hotbar
             .slots
             .get(slot.slot_index)
-            .and_then(|slot| slot.clone())
+            .and_then(|slot| slot.as_ref())
+            .map(|s| s.item_id.clone())
             .unwrap_or_default();
 
         if slot.item_id != item_id {

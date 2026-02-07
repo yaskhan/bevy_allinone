@@ -81,6 +81,7 @@ pub fn handle_pickup_events(
                                                     equip_events.send(RequestEquipWeaponEvent {
                                                         owner: event.source,
                                                         weapon_id: physical_item.item.name.clone(),
+                                                        hand_preference: None,
                                                     });
                                                     
                                                     // 5. Despawn picked up entity
@@ -122,6 +123,7 @@ pub fn handle_pickup_events(
                                     equip_events.send(RequestEquipWeaponEvent {
                                         owner: event.source,
                                         weapon_id: physical_item.item.name.clone(),
+                                        hand_preference: None,
                                     });
                                 }
                             }

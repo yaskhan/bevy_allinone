@@ -49,6 +49,7 @@ pub mod inventory_combine_system;
 pub mod ammo_sync_system;
 pub mod auto_equip_settings;
 pub mod inventory_slot_options_buttons;
+pub mod inventory_context_menu;
 pub mod melee_shield_inventory_prefab_creation_system;
 pub mod melee_weapon_consumable_inventory_prefab_creation_system;
 pub mod melee_weapon_inventory_prefab_creation_system;
@@ -199,6 +200,8 @@ impl Plugin for InventoryPlugin {
             inventory_stack_system::handle_split_stack,
             inventory_combine_system::handle_combine_inventory_items,
             ammo_sync_system::sync_weapon_ammo_with_inventory,
+        ))
+        .add_systems(Update, (
             melee_shield_inventory_prefab_creation_system::update_melee_shield_inventory_prefab_creation_system,
             melee_weapon_consumable_inventory_prefab_creation_system::update_melee_weapon_consumable_inventory_prefab_creation_system,
             melee_weapon_inventory_prefab_creation_system::update_melee_weapon_inventory_prefab_creation_system,
@@ -218,6 +221,9 @@ impl Plugin for InventoryPlugin {
             inventory_examine_system::rotate_examine_preview,
             inventory_examine_system::update_examine_zoom,
             weapon_equip_system::handle_request_equip_weapon,
+            inventory_context_menu::handle_slot_right_click,
+            inventory_context_menu::handle_context_button_interaction,
+            inventory_context_menu::handle_context_menu_outside_click,
         ))
         .add_systems(Startup, (
             setup_inventory_ui,

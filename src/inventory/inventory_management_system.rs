@@ -11,6 +11,8 @@ pub struct InventoryConfig {
     pub infinite_slots: bool,
     pub auto_equip_weapon_on_pickup: bool,
     pub auto_equip_only_if_empty: bool,
+    pub drop_single_object_on_infinite_amount: bool,
+    pub set_total_amount_when_drop_object: bool,
 }
 
 impl Default for InventoryConfig {
@@ -21,6 +23,8 @@ impl Default for InventoryConfig {
             infinite_slots: false,
             auto_equip_weapon_on_pickup: true,
             auto_equip_only_if_empty: true,
+            drop_single_object_on_infinite_amount: true,
+            set_total_amount_when_drop_object: true,
         }
     }
 }

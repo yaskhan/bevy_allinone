@@ -8,6 +8,7 @@ use crate::vehicles::{VehicleStats};
 use crate::weapons::{WeaponManager, Weapon};
 
 use super::components::Inventory;
+use super::types::{InventoryItem, ItemType, HandType};
 use super::item_effects::{ItemEffectRegistry, ItemEffect};
 use super::use_inventory_object::{UseInventoryObjectEvent, InventoryObjectUsedEvent};
 use super::melee_weapon_equipment_system::EquipMeleeWeaponEvent;
@@ -61,6 +62,7 @@ pub fn apply_inventory_item_effects(
             event.owner,
             &effects,
             quantity,
+            event.hand_preference,
             &mut health_query,
             &mut shield_query,
             &mut stats_query,
@@ -97,6 +99,7 @@ fn apply_effects(
     owner: Entity,
     effects: &[ItemEffect],
     quantity: i32,
+    hand_preference: Option<HandType>,
     health_query: &mut Query<&mut Health>,
     shield_query: &mut Query<&mut Shield>,
     stats_query: &mut Query<&mut StatsSystem>,
@@ -178,6 +181,7 @@ fn apply_effects(
                 request_weapon_equip.send(RequestEquipWeaponEvent {
                     owner,
                     weapon_id: weapon_id.clone(),
+                    hand_preference,
                 });
             }
             ItemEffect::EquipMeleeWeapon { weapon_id } => {
